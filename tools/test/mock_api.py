@@ -132,7 +132,7 @@ class H(BaseHTTPRequestHandler):
         if p=="/obd/dedupepolicy":
             return self.send({"rc":0,"data":{"policies":[
               {"name":"Default_Policy","id":1,"status":"idle","suspended":False,"nextrun":0,"lastrun":0,"trigger":"inline","tapes":0},
-              {"name":"Nightly","id":2,"status":"running","suspended":False,"nextrun":1481101200,"lastrun":1481097605,"trigger":"schedule","tapes":3},
+              {"name":"Nightly","id":2,"status":"running","suspended":False,"nextrun":1481101200,"lastrun":1481097605,"trigger":"schedule","tapes":3,"replicationmode":"single","targetservers":[{"name":"VTL-B","suspended":False}]},
               {"name":"Held","id":3,"status":"idle","suspended":True,"nextrun":0,"lastrun":0,"trigger":"schedule","tapes":1},
               {"name":"Weird","id":4,"status":"degraded","suspended":False,"nextrun":0,"lastrun":0,"trigger":"manual","tapes":1}]}})
         if p=="/obd/deduplication/reclamation/status":

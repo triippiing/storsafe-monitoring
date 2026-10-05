@@ -3290,7 +3290,7 @@
             "uid": "${datasource}"
           },
           "refId": "D",
-          "expr": "storsafe_replica_tapes_not_replicated_within{server=\"$server\",age=\"24h\"}",
+          "expr": "max by (server, source) (storsafe_replica_tapes_not_replicated_within{server=\"$server\",age=\"24h\"})",
           "format": "table",
           "instant": true
         },
@@ -3300,7 +3300,7 @@
             "uid": "${datasource}"
           },
           "refId": "E",
-          "expr": "storsafe_replica_tapes_not_replicated_within{server=\"$server\",age=\"7d\"}",
+          "expr": "max by (server, source) (storsafe_replica_tapes_not_replicated_within{server=\"$server\",age=\"7d\"})",
           "format": "table",
           "instant": true
         },
@@ -3310,7 +3310,7 @@
             "uid": "${datasource}"
           },
           "refId": "F",
-          "expr": "storsafe_replica_tapes_not_replicated_within{server=\"$server\",age=\"never\"}",
+          "expr": "max by (server, source) (storsafe_replica_tapes_not_replicated_within{server=\"$server\",age=\"never\"})",
           "format": "table",
           "instant": true
         }
@@ -3375,8 +3375,7 @@
               "__name__": true,
               "instance": true,
               "job": true,
-              "Time": true,
-              "age": true
+              "Time": true
             },
             "renameByName": {
               "Value #A": "Replicas",

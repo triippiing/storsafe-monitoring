@@ -376,8 +376,9 @@ def instance():
     d.table("Policy targets", [f'storsafe_dedupe_policy_info{{{S}}}', f'storsafe_dedupe_policy_replication_suspended{{{S}}}'], rename={"A": None, "B": "Target suspended"}, w=8, h=8)
     d.table("Replication partners", [f'storsafe_dedupe_replication_partner_info{{{S}}}'], rename={"A": None}, w=8, h=8)
     d.table("Replica tapes by source", [f'storsafe_replica_tapes{{{S}}}', f'storsafe_replica_newest_replicated_timestamp_seconds{{{S}}} * 1000', f'storsafe_replica_oldest_replicated_timestamp_seconds{{{S}}} * 1000',
-                                        f'storsafe_replica_tapes_not_replicated_within{{{S},age="24h"}}', f'storsafe_replica_tapes_not_replicated_within{{{S},age="7d"}}', f'storsafe_replica_tapes_not_replicated_within{{{S},age="never"}}'],
-            rename={"A": "Replicas", "B": "Newest", "C": "Oldest", "D": "> 24h", "E": "> 7d", "F": "Never"}, units={"Newest": "dateTimeAsIso", "Oldest": "dateTimeAsIso"}, hide=["age"], w=8, h=8)
+                                        f'max by (server, source) (storsafe_replica_tapes_not_replicated_within{{{S},age="24h"}})', f'max by (server, source) (storsafe_replica_tapes_not_replicated_within{{{S},age="7d"}})',
+                                        f'max by (server, source) (storsafe_replica_tapes_not_replicated_within{{{S},age="never"}})'],
+            rename={"A": "Replicas", "B": "Newest", "C": "Oldest", "D": "> 24h", "E": "> 7d", "F": "Never"}, units={"Newest": "dateTimeAsIso", "Oldest": "dateTimeAsIso"}, w=8, h=8)
     d.ts("Replication queues", [(f'storsafe_replication_queue_jobs{{{S}}}', "{{queue}} {{state}}")], "none", w=12, stack=True)
     d.ts("Replicas not updated within", [(f'storsafe_replica_tapes_not_replicated_within{{{S}}}', "{{source}} {{age}}")], "none", w=12)
 
