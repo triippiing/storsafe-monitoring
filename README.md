@@ -7,6 +7,38 @@ StorSafe API --(Export-StorSafeMetrics.ps1, every 5 min)--> metrics\storsafe.pro
    --> windows_exporter :9182 --> Prometheus 127.0.0.1:9090 --> Grafana :3000 (dashboard + alerts)
 ```
 
+## Screenshots
+
+Rendered from the test kit's mock API (`tools\test`), so the appliance names are template names. Each dashboard links to the others from its top bar.
+
+**Fleet**: one row per appliance with API state, failed checks, failover, pool usage, device faults, dedupe and replication at a glance.
+
+![StorSafe Fleet dashboard](docs/images/grafana-fleet-1080p.png)
+
+**Activity**: running dedupe, replication, reclamation and prune jobs across the estate, with throughput and queue trends.
+
+![StorSafe Activity dashboard](docs/images/grafana-activity.png)
+
+**Instance**: one appliance (server picker, one URL per appliance): health, capacity, LUNs and repository devices, deduplication, replication and the collector itself.
+
+![StorSafe Instance dashboard](docs/images/grafana-instance.png)
+
+**Events**: event-log counts by severity, per-hour trends and the newest warnings, errors and criticals per appliance.
+
+![StorSafe Events dashboard](docs/images/grafana-events.png)
+
+**Patch Management**: versions, builds, OS and installed patches across the estate.
+
+![StorSafe Patch Management dashboard](docs/images/grafana-patches.png)
+
+**Prometheus and the exporter**: the collector writes `metrics\storsafe.prom`, windows_exporter serves it on port 9182, and Prometheus scrapes it as job `storsafe`. These two pages are the first place to look when a dashboard is empty.
+
+![Prometheus targets page](docs/images/prometheus-targets.png)
+
+![windows_exporter metrics page](docs/images/exporter-metrics.png)
+
+More: the [full-height Fleet page](docs/images/grafana-fleet.png), the [Grafana dashboard folder](docs/images/grafana-folder.png) and the [Prometheus graph page](docs/images/prometheus-graph.png).
+
 ## Layout
 
 | Path | Contents |
@@ -257,7 +289,7 @@ The package is the repository root, so a clone is an install folder. Not part of
 | `tools\build-dashboards.py` | Generates the five dashboards in `monitoring\dashboards\` (edit this, not the JSON) |
 | `tools\build-package.py` | Builds `dist\StorSafe-monitoring-v<VERSION>.zip` |
 | `tools\test\` | Mock StorSafe API, test config and dashboard query validator; see `tools\test\README.md` |
-| `docs\` | API map and plan, review of the original scripts, dashboard design notes |
+| `docs\` | API map and plan, review of the original scripts, dashboard design notes; `docs\images\` holds the screenshots above |
 
 Releasing a change: bump `VERSION`, add a `CHANGELOG.md` entry, regenerate dashboards if `tools\build-dashboards.py` changed, run the tests in `tools\test\README.md`, commit, tag `v<VERSION>`, and build the zip. `creds\`, `state\`, `events\`, `metrics\`, `reports\` and `installers\` are ignored by git apart from their README.txt, so a clone that is also a running install stays clean.
 

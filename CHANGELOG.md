@@ -6,6 +6,7 @@ The package version is in `VERSION`, printed by the installer, and published by 
 
 - Dashboards: tables built from several queries (dedupe jobs, replication jobs, policies, reclamation policy, and the others that combine an `_info` series with values) now show one row per item. Grafana's merge transformation refused to join rows because each query's `__name__` differed, so the generator drops `__name__` and `Time` before merging.
 - Instance dashboard: Collector row shows the package version, last run, failing checks and collection time.
+- README: screenshots of the five dashboards and the Prometheus/exporter pages (`docs/images`), rendered from the test kit's mock API.
 - Test kit: the mock API uses documentation addresses (192.0.2.x) only, names replica sources VTL-SRC-1/2 and gives the Nightly policy a replication target, so the Instance replication tables render with data.
 
 ## 5.0.0 (2026-10-01)

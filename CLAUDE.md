@@ -36,6 +36,7 @@ monitoring host per site, collector running as a scheduled task under Windows Po
 - `tools\test\`: mock StorSafe API (`mock_api.py`), test config, dashboard query validator, README with
   the test procedure. No real appliance is needed or reachable from a cloud session.
 - `docs\`: API map and plan, review of the original scripts, dashboard design notes and decisions.
+  `docs\images\`: README screenshots rendered from the mock API (template names only).
 
 ## How the collector is built
 
