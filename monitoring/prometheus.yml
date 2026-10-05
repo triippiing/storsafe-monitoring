@@ -1,0 +1,15 @@
+# Prometheus config for the StorSafe monitoring desktop.
+# windows_exporter serves the StorSafe textfile metrics (and the desktop's own metrics) on :9182.
+global:
+  scrape_interval: 60s
+  evaluation_interval: 60s
+
+scrape_configs:
+  - job_name: storsafe
+    static_configs:
+      - targets: ['127.0.0.1:9182']
+    # Keep only the StorSafe series plus the textfile collector's own health metric.
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'storsafe_.*|windows_textfile_.*'
+        action: keep

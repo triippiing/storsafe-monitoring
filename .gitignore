@@ -1,0 +1,23 @@
+# Runtime data of a monitoring host. Only the README.txt placeholders are tracked.
+creds/*
+!creds/README.txt
+state/*
+!state/README.txt
+events/*
+!events/README.txt
+metrics/*
+!metrics/README.txt
+reports/*
+!reports/README.txt
+installers/*
+!installers/README.txt
+prometheus/
+
+# Build output and test scratch
+dist/
+tools/test/out/
+*.part
+__pycache__/
+
+# Site configuration (appliance names and addresses); start from StorSafe.config.example.json
+StorSafe.config.json

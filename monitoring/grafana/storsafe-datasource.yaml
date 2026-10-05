@@ -1,0 +1,9 @@
+# Copied by Install-StorSafeMonitoring.ps1 into <grafana>\conf\provisioning\datasources\
+apiVersion: 1
+datasources:
+  - name: StorSafe Prometheus
+    uid: storsafe-prometheus
+    type: prometheus
+    access: proxy
+    url: http://127.0.0.1:9090
+    editable: true

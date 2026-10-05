@@ -1,0 +1,3 @@
+{ "Defaults": { "Scheme": "http", "Port": 18080, "DisabledChecks": ["tapecaching"], "StateDirectory": "out/state", "EventLogDirectory": "out/events" },
+  "Servers": [ { "Name": "MOCK-A", "Host": "127.0.0.1", "CredentialFile": "mock-credential.xml" },
+               { "Name": "MOCK-B", "Host": "127.0.0.1", "CredentialFile": "mock-credential.xml" } ] }

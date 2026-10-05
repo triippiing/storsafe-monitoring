@@ -1,0 +1,9 @@
+# Keep LF in git; PowerShell and Grafana are fine with either. Windows checkouts get CRLF for text files.
+* text=auto
+*.ps1 text eol=crlf
+*.psm1 text eol=crlf
+*.json text
+*.md text
+*.txt text eol=crlf
+*.yml text
+*.yaml text

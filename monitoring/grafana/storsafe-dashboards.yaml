@@ -1,0 +1,11 @@
+# Copied by Install-StorSafeMonitoring.ps1 into <grafana>\conf\provisioning\dashboards\
+# __DASHBOARD_DIR__ is replaced with <install root>\monitoring\dashboards at install time.
+apiVersion: 1
+providers:
+  - name: StorSafe
+    folder: StorSafe
+    type: file
+    allowUiUpdates: true
+    updateIntervalSeconds: 60
+    options:
+      path: '__DASHBOARD_DIR__'

@@ -1,0 +1,32 @@
+{
+  "Defaults": {
+    "Scheme": "https",
+    "Port": 0,
+    "SkipCertificateCheck": false,
+    "TimeoutSec": 30,
+    "OutputDirectory": "reports",
+    "RetentionDays": 30,
+    "TextfileDirectory": "metrics",
+    "StateDirectory": "state",
+    "CollectEventLog": true,
+    "EventLogDirectory": "events",
+    "EventLogRetentionDays": 90,
+    "DisabledChecks": []
+  },
+  "Servers": [
+    {
+      "Name": "STORSAFE-01",
+      "Host": "storsafe-01.example.com",
+      "ServerAddress": "",
+      "CredentialFile": "creds\\storsafe-01.xml"
+    },
+    {
+      "Name": "STORSAFE-02",
+      "Host": "192.0.2.12",
+      "Scheme": "https",
+      "Port": 0,
+      "SkipCertificateCheck": false,
+      "CredentialFile": "creds\\storsafe-02.xml"
+    }
+  ]
+}
