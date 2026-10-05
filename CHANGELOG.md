@@ -2,6 +2,12 @@
 
 The package version is in `VERSION`, printed by the installer, and published by the collector as `storsafe_collector_info{version="..."}` (visible on the Instance dashboard, Collector row).
 
+## 5.0.1 (2026-10-05)
+
+- Dashboards: tables built from several queries (dedupe jobs, replication jobs, policies, reclamation policy, and the others that combine an `_info` series with values) now show one row per item. Grafana's merge transformation refused to join rows because each query's `__name__` differed, so the generator drops `__name__` and `Time` before merging.
+- Instance dashboard: Collector row shows the package version, last run, failing checks and collection time.
+- Test kit: the mock API uses documentation addresses (192.0.2.x) only.
+
 ## 5.0.0 (2026-10-01)
 
 - Five dashboards for a multi-appliance estate replace Estate and Detail: **Fleet**, **Activity**, **Instance**, **Patch Management**, **Events**. When upgrading, delete `monitoring\dashboards\storsafe-estate.json` and `storsafe-detail.json`.

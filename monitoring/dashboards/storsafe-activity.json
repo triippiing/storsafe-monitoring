@@ -697,6 +697,14 @@
       },
       "transformations": [
         {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
           "id": "merge",
           "options": {}
         },
@@ -1194,6 +1202,14 @@
       },
       "transformations": [
         {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
           "id": "merge",
           "options": {}
         },
@@ -1504,6 +1520,14 @@
       },
       "transformations": [
         {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
           "id": "merge",
           "options": {}
         },
@@ -1691,6 +1715,14 @@
         }
       },
       "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
         {
           "id": "merge",
           "options": {}
@@ -1985,6 +2017,14 @@
         }
       },
       "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
         {
           "id": "merge",
           "options": {}

@@ -129,6 +129,9 @@ class Dashboard:
             overrides.append({"matcher": {"id": "byName", "options": "server"}, "properties": [{"id": "links", "value": links}]})
         tr = []
         if merge and len(exprs) > 1:
+            # Merge joins rows only when every shared column matches. Raw series carry __name__ (which differs per
+            # query) and Time, so drop both first or the rows from each query land one under the other.
+            tr.append({"id": "filterFieldsByName", "options": {"exclude": {"pattern": "^(__name__|Time)$"}}})
             tr.append({"id": "merge", "options": {}})
         org = {"excludeByName": exclude, "renameByName": ren}
         if order:
