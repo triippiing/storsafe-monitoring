@@ -10,7 +10,7 @@ def loc(i):
     return {"type":"replica"}
 TAPES=[{"id":10000000+i,"name":f"VT-{i:05}","barcode":f"B{i:05}","sizemb":1024,"usedmb":0 if i%10==0 else 10,
         "location":loc(i),"parentlibvid":(15 if i<1500 else 22) if i<2000 else 0,"worm":i%50==0,
-        "source":"STORSAFE-PRIMARY" if i>=2100 else "","replicated":(NOW-3600*(i-2100)) if i>=2105 else 0,
+        "source":"VTL-SRC-1" if i>=2100 else "","replicated":(NOW-3600*(i-2100)) if i>=2105 else 0,
         "devicestatus":"online","dedupestatus":"failed" if i==7 else ("pending" if i==8 else "completed"),
         "vitstatus":"pure","encryptionstatus":"","replicationenabled":i<1500,
         "replstatus":"completedfailed" if i==9 else ""} for i in range(2500)]

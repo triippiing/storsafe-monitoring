@@ -1586,7 +1586,7 @@
             "uid": "${datasource}"
           },
           "refId": "G",
-          "expr": "storsafe_dedupe_runs_24h{server=\"$server\",status=\"failed\"}",
+          "expr": "max by (server, policy) (storsafe_dedupe_runs_24h{server=\"$server\",status=\"failed\"})",
           "format": "table",
           "instant": true
         }
@@ -1698,7 +1698,6 @@
               "instance": true,
               "job": true,
               "Time": true,
-              "status_1": true,
               "Value #A": true
             },
             "renameByName": {

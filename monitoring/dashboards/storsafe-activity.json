@@ -1597,7 +1597,7 @@
             "uid": "${datasource}"
           },
           "refId": "B",
-          "expr": "storsafe_reclamation_policy_enabled{server=~\"$server\",trigger=\"usage\"}",
+          "expr": "max by (server) (storsafe_reclamation_policy_enabled{server=~\"$server\",trigger=\"usage\"})",
           "format": "table",
           "instant": true
         },
@@ -1607,7 +1607,7 @@
             "uid": "${datasource}"
           },
           "refId": "C",
-          "expr": "storsafe_reclamation_policy_enabled{server=~\"$server\",trigger=\"schedule\"}",
+          "expr": "max by (server) (storsafe_reclamation_policy_enabled{server=~\"$server\",trigger=\"schedule\"})",
           "format": "table",
           "instant": true
         },
@@ -1901,7 +1901,7 @@
             "uid": "${datasource}"
           },
           "refId": "G",
-          "expr": "storsafe_dedupe_runs_24h{server=~\"$server\",status=\"failed\"}",
+          "expr": "max by (server, policy) (storsafe_dedupe_runs_24h{server=~\"$server\",status=\"failed\"})",
           "format": "table",
           "instant": true
         }
@@ -2037,7 +2037,6 @@
               "instance": true,
               "job": true,
               "Time": true,
-              "status_1": true,
               "Value #A": true
             },
             "renameByName": {

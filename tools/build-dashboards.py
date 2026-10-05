@@ -278,8 +278,8 @@ def activity():
         color_cols=["status"], order=["server", "process", "status", "Running since"],
         sort=("Running since", False), w=12, h=8, filterable=True, links=[{"title": "Open instance", "url": INSTANCE_URL}],
         desc="Only jobs with status 'running' are listed; the table is empty when no reclamation or prune is in progress. 'Running since' is when the collector first saw the run (the API gives only idle/running/failed, no start time or space figures).")
-    d.table("Reclamation policy", [f'storsafe_reclamation_schedule_info{{{S}}}', f'storsafe_reclamation_policy_enabled{{{S},trigger="usage"}}',
-                                   f'storsafe_reclamation_policy_enabled{{{S},trigger="schedule"}}', f'storsafe_reclamation_usage_check_interval_seconds{{{S}}}'],
+    d.table("Reclamation policy", [f'storsafe_reclamation_schedule_info{{{S}}}', f'max by (server) (storsafe_reclamation_policy_enabled{{{S},trigger="usage"}})',
+                                   f'max by (server) (storsafe_reclamation_policy_enabled{{{S},trigger="schedule"}})', f'storsafe_reclamation_usage_check_interval_seconds{{{S}}}'],
             rename={"A": None, "B": "Usage trigger", "C": "Scheduled", "D": "Usage check every"}, units={"Usage check every": "s"}, hide=["trigger"],
             order=["server", "Usage trigger", "Usage check every", "Scheduled", "weekdays", "starttime"], w=12, h=8, bool_cols=["Usage trigger", "Scheduled"])
     d.ts("Reclamation / prune running (history)", [(f'count by (server, process) (storsafe_dedupe_maintenance_status{{{S},status="running"}})', "{{server}} {{process}}")], "none", w=24, h=7, bars=True)
@@ -292,9 +292,9 @@ def activity():
         f'storsafe_dedupe_completed_run_scanned_bytes{{{S}}}',
         f'storsafe_dedupe_completed_run_unique_bytes{{{S}}}',
         f'storsafe_dedupe_completed_run_duration_seconds{{{S}}}',
-        f'storsafe_dedupe_runs_24h{{{S},status="failed"}}',
+        f'max by (server, policy) (storsafe_dedupe_runs_24h{{{S},status="failed"}})',
     ], rename={"A": None, "B": "Last run", "C": "Ratio (completed)", "D": "Scanned", "E": "Unique", "F": "Duration", "G": "Failed runs 24h"},
-        units={"Last run": "dateTimeAsIso", "Scanned": "bytes", "Unique": "bytes", "Duration": "s"}, color_cols=["status"], hide=["status_1"],
+        units={"Last run": "dateTimeAsIso", "Scanned": "bytes", "Unique": "bytes", "Duration": "s"}, color_cols=["status"],
         order=["server", "policy", "status", "trigger", "Last run", "Ratio (completed)", "Scanned", "Unique", "Duration", "Failed runs 24h"],
         sort=("Last run", True), w=14, h=10, filterable=True, desc="Ratio, scanned, unique and duration are from the most recent completed run; status and trigger are from the most recent run of any status.")
     d.table("Import/export jobs", [f'storsafe_iejob_jobs_by_type{{{S}}} > 0'], rename={"A": "Jobs"}, color_cols=["status"], w=10, h=10, sort=("Jobs", True))
@@ -339,9 +339,9 @@ def instance():
     d.row("Deduplication")
     d.table("Policies", [f'storsafe_dedupe_policy_status{{{S}}} == 1', f'storsafe_dedupe_policy_tapes{{{S}}}', f'storsafe_dedupe_policy_suspended{{{S}}}',
                          f'storsafe_dedupe_policy_last_run_timestamp_seconds{{{S}}} * 1000 > 0', f'storsafe_dedupe_policy_next_run_timestamp_seconds{{{S}}} * 1000 > 0',
-                         f'storsafe_dedupe_completed_run_ratio{{{S}}}', f'storsafe_dedupe_runs_24h{{{S},status="failed"}}'],
+                         f'storsafe_dedupe_completed_run_ratio{{{S}}}', f'max by (server, policy) (storsafe_dedupe_runs_24h{{{S},status="failed"}})'],
             rename={"A": None, "B": "Tapes", "C": "Suspended", "D": "Last run", "E": "Next run", "F": "Ratio (last completed)", "G": "Failed runs 24h"},
-            units={"Last run": "dateTimeAsIso", "Next run": "dateTimeAsIso"}, color_cols=["status"], hide=["status_1"],
+            units={"Last run": "dateTimeAsIso", "Next run": "dateTimeAsIso"}, color_cols=["status"],
             order=["server", "policy", "status", "trigger", "Tapes", "Suspended", "Last run", "Next run", "Ratio (last completed)", "Failed runs 24h"], w=14, h=8)
     d.table("Reclamation / prune", [f'storsafe_dedupe_maintenance_status{{{S}}} == 1', f'storsafe_dedupe_maintenance_running_since_timestamp_seconds{{{S}}} * 1000 > 0',
                                     f'storsafe_dedupe_maintenance_last_run_end_timestamp_seconds{{{S}}} * 1000', f'storsafe_dedupe_maintenance_last_run_duration_seconds{{{S}}}'],
