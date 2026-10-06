@@ -1,6 +1,6 @@
 [Unit]
 Description=StorSafe monitoring: collector timer
-Requires=storsafe-collector.service
+Wants=storsafe-collector.service
 
 [Timer]
 OnBootSec=1min
