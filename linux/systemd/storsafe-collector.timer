@@ -1,0 +1,12 @@
+[Unit]
+Description=StorSafe monitoring: collector timer
+Requires=storsafe-collector.service
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=__INTERVAL__min
+AccuracySec=15s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

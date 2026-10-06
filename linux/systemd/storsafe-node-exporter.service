@@ -1,0 +1,16 @@
+[Unit]
+Description=StorSafe monitoring: node_exporter
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+ExecStart=__ROOT__/node_exporter/node_exporter --collector.textfile.directory=__ROOT__/metrics --web.listen-address=__LISTEN__
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
