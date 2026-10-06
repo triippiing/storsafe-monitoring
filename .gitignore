@@ -12,6 +12,8 @@ reports/*
 installers/*
 !installers/README.txt
 prometheus/
+/grafana/
+/node_exporter/
 
 # Build output and test scratch
 dist/
