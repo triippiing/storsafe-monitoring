@@ -669,10 +669,11 @@ wait_for_http() {
 # Reloads systemd, enables and starts every rendered unit (the collector's timer, not the oneshot
 # service it triggers: the timer's Wants= makes it run once at once), restarts a service whose
 # unit file, config or program changed while it was running, and waits until the metrics endpoint
-# (and, with the full stack, Prometheus and Grafana) answers. The collector units are never
-# restarted: the daemon-reload is all a changed service or timer needs. Which changed units run is
-# asked before enable --now, which would start the others. With --no-services the commands are only
-# printed and nothing is waited for.
+# (and, with the full stack, Prometheus and Grafana) answers. The collector service is never
+# restarted: it is a oneshot that its timer starts. A changed timer that runs is restarted, because
+# a running timer keeps its old schedule until then (the restart also runs the collector once, through
+# the timer's Wants=). Which changed units run is asked before enable --now, which would start the
+# others. With --no-services the commands are only printed and nothing is waited for.
 step_services() {
     local unit host port=${LISTEN##*:} timeout=${STORSAFE_HTTP_TIMEOUT:-60} failed=0
     local -a restart=()
@@ -683,7 +684,7 @@ step_services() {
     fi
     if [[ ${#CHANGED_UNITS[@]} -gt 0 ]]; then
         for unit in "${CHANGED_UNITS[@]}"; do
-            if [[ $unit == storsafe-collector.* ]]; then
+            if [[ $unit == storsafe-collector.service ]]; then
                 continue
             fi
             if [[ $NO_SERVICES -eq 1 ]] || systemctl is-active --quiet "$unit" > /dev/null 2>&1; then
@@ -740,7 +741,7 @@ step_services() {
 # PowerShell stay: they may hold the operator's config, credentials and data, and other things may
 # use them, so the commands that remove them are printed instead.
 do_uninstall() {
-    local unit file
+    local unit file note
     require_root
     log_step 'Uninstall'
     for unit in "${CORE_UNITS[@]}" "${STACK_UNITS[@]}"; do
@@ -752,7 +753,11 @@ do_uninstall() {
         elif ! rm -f "$file"; then
             summary_add "$unit" Check "cannot remove $file; see the output above"
         else
-            summary_add "$unit" OK 'disabled and removed'
+            note='disabled and removed'
+            if [[ $NO_SERVICES -eq 1 ]]; then
+                note='removed (disable not run: --no-services)'
+            fi
+            summary_add "$unit" OK "$note"
         fi
     done
     if ! systemctl_run daemon-reload; then
