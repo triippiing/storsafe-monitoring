@@ -10,6 +10,7 @@ WorkingDirectory=__ROOT__
 ExecStart=__PWSH__ -NoProfile -NonInteractive -File __ROOT__/Export-StorSafeMetrics.ps1 -All -NonInteractive
 RuntimeMaxSec=__RUNTIME__
 TimeoutStartSec=__RUNTIME__
+SuccessExitStatus=2
 NoNewPrivileges=true
 PrivateTmp=true
 

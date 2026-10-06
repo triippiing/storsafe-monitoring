@@ -11,6 +11,7 @@ done
 assert_grep "$tmp/storsafe-collector.service" '^ExecStart=/usr/bin/pwsh -NoProfile -NonInteractive -File /opt/sm/Export-StorSafeMetrics.ps1 -All -NonInteractive$'
 assert_grep "$tmp/storsafe-collector.service" '^RuntimeMaxSec=240$'
 assert_grep "$tmp/storsafe-collector.service" '^TimeoutStartSec=240$'
+assert_grep "$tmp/storsafe-collector.service" '^SuccessExitStatus=2$'
 assert_grep "$tmp/storsafe-collector.timer" '^OnUnitActiveSec=5min$'
 assert_grep "$tmp/storsafe-node-exporter.service" -- '--web.listen-address=127.0.0.1:9182'
 assert_grep "$tmp/storsafe-prometheus.service" -- '--storage.tsdb.retention.time=180d --web.listen-address=127.0.0.1:9090'
