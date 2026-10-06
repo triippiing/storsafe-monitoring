@@ -129,8 +129,13 @@ fake_stub() {
 #   cat <unit>                  exits 0 when the unit is in $SYSTEMCTL_PRESENT, else 1
 #   is-enabled <unit>           exits 0 and prints enabled when the unit is in $SYSTEMCTL_PRESENT,
 #                               else exits 1
-#   show <unit> -p <key>        ignores its arguments and prints fixed NextElapseUSecRealtime, ExecMainExitTimestamp and
-#                               ExecMainStatus lines whatever the key is; the status is
+#   list-timers ... <timer>     prints one fixed line for storsafe-collector.timer: next run
+#                               "Tue 2026-10-06 22:10:00 UTC" when the timer is in
+#                               $SYSTEMCTL_ACTIVE, else n/a in the first four fields
+#   show <unit> -p <key>        ignores its arguments and prints fixed ExecMainExitTimestamp and
+#                               ExecMainStatus lines whatever the key is; the timestamp is
+#                               $SYSTEMCTL_EXIT_TIMESTAMP (default "Tue 2026-10-06 22:05:00 UTC";
+#                               set it empty for a service that never ran) and the status is
 #                               $SYSTEMCTL_EXEC_STATUS (default 0)
 # Put <dir> first on the PATH of the run under test.
 make_systemctl_shim() {
@@ -161,9 +166,21 @@ case $1 in
         esac
         exit 1
         ;;
+    list-timers)
+        case " ${SYSTEMCTL_ACTIVE:-} " in
+            *" storsafe-collector.timer "*)
+                echo 'Tue 2026-10-06 22:10:00 UTC 4min 32s left' \
+                    'Tue 2026-10-06 22:05:00 UTC 27s ago' \
+                    'storsafe-collector.timer storsafe-collector.service'
+                ;;
+            *)
+                echo 'n/a n/a n/a n/a storsafe-collector.timer storsafe-collector.service'
+                ;;
+        esac
+        exit 0
+        ;;
     show)
-        echo 'NextElapseUSecRealtime=Tue 2026-10-06 22:10:00 UTC'
-        echo 'ExecMainExitTimestamp=Tue 2026-10-06 22:05:00 UTC'
+        echo "ExecMainExitTimestamp=${SYSTEMCTL_EXIT_TIMESTAMP-Tue 2026-10-06 22:05:00 UTC}"
         echo "ExecMainStatus=${SYSTEMCTL_EXEC_STATUS:-0}"
         exit 0
         ;;

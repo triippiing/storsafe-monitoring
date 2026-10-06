@@ -4,15 +4,14 @@
 #
 # Components: the collector timer (storsafe-collector.timer) and the oneshot service it starts
 # (storsafe-collector.service; journalctl -u storsafe-collector shows the output of its last run),
-# and the node_exporter, Prometheus and Grafana services (storsafe-node-exporter, storsafe-prometheus
-# and storsafe-grafana). A collector-only install has the first three units only; a unit that is
-# not installed is reported as absent and skipped.
+# and the node_exporter, Prometheus and Grafana services (storsafe-node-exporter,
+# storsafe-prometheus and storsafe-grafana). A collector-only install has the first three units
+# only; a unit that is not installed is reported as absent and skipped.
 #
 #   status   state of each component, the last collector result, and whether node_exporter,
 #            Prometheus and Grafana answer on their ports
 #   stop     before host maintenance: stop the collector timer, then node_exporter, Prometheus and
-#            Grafana. The units stay enabled, so they start again at the next boot unless you run
-#            stop again.
+#            Grafana. The units stay enabled, so they start again at the next boot.
 #   start    start Grafana, Prometheus and node_exporter, then the collector timer, which runs the
 #            collector once
 #   pause    appliance maintenance: stop the collector timer only, so a rebooting appliance produces
@@ -93,6 +92,34 @@ unit_prop() {
     echo "${value:-n/a}"
 }
 
+# timer_next_run: prints when the collector timer runs next, as systemctl list-timers prints it
+# ("Tue 2026-10-06 22:10:00 UTC"), or n/a when the timer is not scheduled. The property
+# NextElapseUSecRealtime is no use here: systemd fills it for OnCalendar timers only, and this
+# timer is monotonic (OnBootSec, OnUnitActiveSec).
+timer_next_run() {
+    local out next date clock zone
+    out=$(systemctl list-timers --all --no-legend "$TIMER" 2> /dev/null) || true
+    # The first line only: NEXT is its first four fields (day, date, time, time zone).
+    read -r next date clock zone _ <<< "$out" || true
+    if [[ -z $zone || $next == n/a || $next == - ]]; then
+        echo n/a
+    else
+        echo "$next $date $clock $zone"
+    fi
+}
+
+# collector_detail: prints "last run <time>, result <...>", or "not run yet" when the service has
+# no exit time.
+collector_detail() {
+    local when
+    when=$(unit_prop "$COLLECTOR" ExecMainExitTimestamp)
+    if [[ $when == n/a ]]; then
+        echo 'not run yet'
+    else
+        echo "last run $when, result $(exec_result "$(unit_prop "$COLLECTOR" ExecMainStatus)")"
+    fi
+}
+
 # exec_result <ExecMainStatus>: the collector's exit code in words.
 exec_result() {
     case $1 in
@@ -116,8 +143,8 @@ probe() {
 # unit_detail <unit>: the Detail column of the status table.
 unit_detail() {
     case $1 in
-        "$TIMER") echo "next run $(unit_prop "$1" NextElapseUSecRealtime)" ;;
-        "$COLLECTOR") echo "last run $(unit_prop "$1" ExecMainExitTimestamp), result $(exec_result "$(unit_prop "$1" ExecMainStatus)")" ;;
+        "$TIMER") echo "next run $(timer_next_run)" ;;
+        "$COLLECTOR") collector_detail ;;
         "$NODE_EXPORTER") probe http://127.0.0.1:9182/metrics 9182 ;;
         "$PROMETHEUS") probe http://127.0.0.1:9090/-/ready 9090 ;;
         "$GRAFANA") probe http://127.0.0.1:3000/api/health 3000 ;;
@@ -126,7 +153,8 @@ unit_detail() {
 }
 
 # show_status: prints the table Unit, Active, Enabled, Detail, one row per unit, columns fitted to
-# the content and separated by two spaces. A unit that is not installed gets the row "<unit>  absent".
+# the content and separated by two spaces. A unit that is not installed gets the row
+# "<unit>  absent".
 show_status() {
     local -a units=("$TIMER" "$COLLECTOR" "$NODE_EXPORTER" "$PROMETHEUS" "$GRAFANA")
     local -a col1=() col2=() col3=() col4=()
@@ -151,15 +179,17 @@ show_status() {
     line=$(printf '%-*s  %-*s  %-*s  %s' "$w1" Unit "$w2" Active "$w3" Enabled Detail)
     printf '%s\n' "$line"
     for ((i = 0; i < ${#units[@]}; i++)); do
-        line=$(printf '%-*s  %-*s  %-*s  %s' "$w1" "${col1[i]}" "$w2" "${col2[i]}" "$w3" "${col3[i]}" "${col4[i]}")
+        line=$(printf '%-*s  %-*s  %-*s  %s' \
+            "$w1" "${col1[i]}" "$w2" "${col2[i]}" "$w3" "${col3[i]}" "${col4[i]}")
         # Cut the padding left behind by empty columns.
         printf '%s\n' "${line%"${line##*[! ]}"}"
     done
     return 0
 }
 
-# change_units <start|stop> <unit>...: runs systemctl with the verb on each installed unit, in order.
-# A failure is reported here and judged by check_units, which looks at the state that resulted.
+# change_units <start|stop> <unit>...: runs systemctl with the verb on each installed unit, in
+# order. A failure is reported here and judged by check_units, which looks at the state that
+# resulted.
 change_units() {
     local verb=$1 unit
     shift
@@ -228,20 +258,26 @@ finish() {
 
 action_stop() {
     local -a units=("$TIMER" "$NODE_EXPORTER" "$PROMETHEUS" "$GRAFANA")
+    local msg='Stopped. The units stay enabled and start again at the next boot;'
+    msg+=' run start when the maintenance is over.'
     change_units stop "${units[@]}"
-    finish inactive 'Stopped. The units stay enabled and start again at the next boot; run start when the maintenance is over.' "${units[@]}"
+    finish inactive "$msg" "${units[@]}"
 }
 
 action_start() {
     local -a units=("$GRAFANA" "$PROMETHEUS" "$NODE_EXPORTER" "$TIMER")
+    local msg='Started. The collector runs once now and then on its timer; Prometheus replays'
+    msg+=' its write-ahead log first (a minute or two after a long run).'
     change_units start "${units[@]}"
     # The timer wants the collector service, so starting the timer runs the collector once.
-    finish active 'Started. The collector runs once now and then on its timer; Prometheus replays its write-ahead log first (a minute or two after a long run).' "${units[@]}" "$COLLECTOR"
+    finish active "$msg" "${units[@]}" "$COLLECTOR"
 }
 
 action_pause() {
+    local msg='Paused. Dashboards keep the last collected values. The timer starts again at the'
+    msg+=' next boot; use resume afterwards.'
     change_units stop "$TIMER"
-    finish inactive 'Paused. Dashboards keep the last collected values. The timer starts again at the next boot; use resume afterwards.' "$TIMER"
+    finish inactive "$msg" "$TIMER"
 }
 
 action_resume() {

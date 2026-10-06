@@ -106,10 +106,11 @@ render_template() {
 
 # http_ok <url> <timeout_seconds>: returns 0 as soon as a GET of the url succeeds, trying every
 # 2 s, or 1 when it has not succeeded after the timeout. The curl errors of failed tries are hidden.
+# A proxy from the environment (http_proxy) is not used: the probes are loopback addresses.
 http_ok() {
     local url=$1 timeout=$2 start=$SECONDS left
     while :; do
-        if curl -fsS -o /dev/null --max-time 5 "$url" 2> /dev/null; then
+        if curl -fsS -o /dev/null --noproxy '*' --max-time 5 "$url" 2> /dev/null; then
             return 0
         fi
         left=$((timeout - (SECONDS - start)))
