@@ -2,11 +2,17 @@
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd); source "$here/helpers.sh"; source "$here/../../../linux/lib.sh"
 inst=$here/../../../linux/install.sh; tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
-assert_exit 0 "$inst" --help
-assert_exit 2 "$inst" --bogus
-assert_exit 2 "$inst" --listen 9182 --no-services --root "$tmp/r"
-assert_exit 2 "$inst" --listen :9182 --no-services --root "$tmp/r"
-assert_exit 1 "$inst" --no-services --root "$tmp/with space"
+# quiet cmd...: runs the command with its output discarded, so a passing run prints nothing
+# shellcheck disable=SC2329 # called through assert_exit
+quiet() { "$@" > /dev/null 2>&1; }
+assert_exit 0 quiet "$inst" --help
+assert_exit 2 quiet "$inst" --bogus
+assert_exit 2 quiet "$inst" --listen 9182 --no-services --root "$tmp/r"
+assert_exit 2 quiet "$inst" --listen :9182 --no-services --root "$tmp/r"
+assert_exit 1 quiet "$inst" --no-services --root "$tmp/with space"
+# the refusal is for the space: a root that does not exist would also exit 1, with another message
+out=$("$inst" --no-services --root "$tmp/with space" 2>&1 || true)
+echo "$out" | grep -q 'contains a space' || { echo "FAIL space message"; FAILED=1; }
 mkdir -p "$tmp/noconfig"; cp "$here/../../../StorSafe.config.example.json" "$tmp/noconfig/"
 out=$("$inst" --no-services --root "$tmp/noconfig/" --user "$(id -un)" 2>&1 || true)
 assert_file "$tmp/noconfig/StorSafe.config.json"
@@ -26,19 +32,21 @@ for opt in --root --user --interval-minutes --retention-days --collector-only --
 done
 echo "$usage" | grep -q '/opt/storsafe-monitoring' || { echo "FAIL usage lacks the default root"; FAILED=1; }
 # a missing value or a value out of range is a usage error, not a run
-assert_exit 2 "$inst" --root
-assert_exit 2 "$inst" --user --no-services
-assert_exit 2 "$inst" --interval-minutes 0 --no-services --root "$tmp/r"
-assert_exit 2 "$inst" --interval-minutes 61 --no-services --root "$tmp/r"
-assert_exit 2 "$inst" --interval-minutes 5x --no-services --root "$tmp/r"
-assert_exit 2 "$inst" --retention-days 0 --no-services --root "$tmp/r"
-assert_exit 2 "$inst" --retention-days 3651 --no-services --root "$tmp/r"
-assert_exit 2 "$inst" --listen 127.0.0.1:99999 --no-services --root "$tmp/r"
+assert_exit 2 quiet "$inst" --root
+assert_exit 2 quiet "$inst" --user --no-services
+assert_exit 2 quiet "$inst" --interval-minutes 0 --no-services --root "$tmp/r"
+assert_exit 2 quiet "$inst" --interval-minutes 61 --no-services --root "$tmp/r"
+assert_exit 2 quiet "$inst" --interval-minutes 5x --no-services --root "$tmp/r"
+assert_exit 2 quiet "$inst" --retention-days 0 --no-services --root "$tmp/r"
+assert_exit 2 quiet "$inst" --retention-days 3651 --no-services --root "$tmp/r"
+assert_exit 2 quiet "$inst" --listen 127.0.0.1:99999 --no-services --root "$tmp/r"
+assert_exit 2 quiet "$inst" --listen 127.0.0.1:09182 --no-services --root "$tmp/r"
+assert_exit 2 quiet "$inst" --listen 127.0.0.1:0 --no-services --root "$tmp/r"
 # a folder that is not the package is refused before anything is changed
 mkdir -p "$tmp/empty"
 out=$("$inst" --no-services --root "$tmp/empty" --user "$(id -un)" 2>&1 || true)
 echo "$out" | grep -q 'does not contain the package' || { echo "FAIL package hint"; FAILED=1; }
-assert_exit 1 "$inst" --no-services --root "$tmp/empty" --user "$(id -un)"
+assert_exit 1 quiet "$inst" --no-services --root "$tmp/empty" --user "$(id -un)"
 # no pwsh and no tarball: the summary says what to download, and the installer stops
 mkdir -p "$tmp/minbin"
 for t in bash dirname realpath uname curl tar gzip sort tail id mkdir chown chmod cp ln; do
@@ -46,7 +54,7 @@ for t in bash dirname realpath uname curl tar gzip sort tail id mkdir chown chmo
 done
 out=$(PATH=$tmp/minbin "$inst" --no-services --root "$tmp/noconfig" --user "$(id -un)" 2>&1 || true)
 echo "$out" | grep -Eq '^PowerShell +Missing installer +put powershell-<ver>-linux-x64.tar.gz in installers/ and re-run$' || { echo "FAIL missing pwsh row"; FAILED=1; }
-assert_exit 1 env PATH="$tmp/minbin" "$inst" --no-services --root "$tmp/noconfig" --user "$(id -un)"
+assert_exit 1 quiet env PATH="$tmp/minbin" "$inst" --no-services --root "$tmp/noconfig" --user "$(id -un)"
 # a working pwsh and a config: every step reports OK, the folders exist, creds is 0700, exit 0
 mkdir -p "$tmp/okbin" "$tmp/ok"; printf '#!/bin/sh\necho "PowerShell 7.4.6"\n' > "$tmp/okbin/pwsh"; chmod +x "$tmp/okbin/pwsh"
 cp "$here/../../../StorSafe.config.example.json" "$tmp/ok/"; cp "$tmp/ok/StorSafe.config.example.json" "$tmp/ok/StorSafe.config.json"

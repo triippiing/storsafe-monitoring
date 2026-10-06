@@ -20,8 +20,8 @@
 #
 # Each step is idempotent and can be re-run after adding installers or editing the config. The
 # summary at the end lists every step as OK, Skipped, Missing installer or Check. A step that
-# nothing after it can work without (preconditions, PowerShell, user, config) stops the installer
-# after printing the summary.
+# nothing after it can work without stops the installer: the preconditions with an error message,
+# PowerShell, the user and the config after printing the summary of what was done so far.
 #
 # Exit status: 0 when the installer ran through, 1 when a step stopped it, 2 when the command line
 # is wrong.
@@ -90,10 +90,10 @@ need_int() {
 }
 
 # need_listen <value>: usage error unless the value is ADDR:PORT (no colon or space in ADDR) with a
-# port from 1 to 65535.
+# port from 1 to 65535 and no leading zero, so that the port can be probed and rendered as it is.
 need_listen() {
-    local re='^[^: ]+:[0-9]+$' port=${1##*:}
-    if [[ ! $1 =~ $re || ${#port} -gt 5 ]] || [[ $((10#$port)) -lt 1 || $((10#$port)) -gt 65535 ]]; then
+    local re='^[^: ]+:[0-9]+$' port_re='^[1-9][0-9]{0,4}$' port=${1##*:}
+    if [[ ! $1 =~ $re || ! $port =~ $port_re ]] || [[ $port -gt 65535 ]]; then
         usage_error "--listen must be ADDR:PORT with a port from 1 to 65535, for example 127.0.0.1:9182"
     fi
 }
@@ -126,7 +126,7 @@ parse_args() {
             --listen) need_value "$@"; need_listen "$2"; LISTEN=$2; listen_given=1; shift 2 ;;
             --skip-credentials) SKIP_CREDENTIALS=1; shift ;;
             --no-services) NO_SERVICES=1; shift ;;
-            --unit-dir) need_value "$@"; UNIT_DIR=$2; shift 2 ;;
+            --unit-dir) need_value "$@"; UNIT_DIR=$(realpath -m -- "$2"); shift 2 ;;
             --uninstall) UNINSTALL=1; shift ;;
             *) usage_error "unknown option: $1" ;;
         esac
@@ -186,9 +186,9 @@ icu_package_line() {
 # ---------------------------------------------------------------------------
 # 1. Preconditions
 # ---------------------------------------------------------------------------
-# Root, systemd (unless --no-services), x86_64, curl, tar and gzip (tar -z), and the package itself are required
-# (die). A port that something already listens on is only a Check row: a re-run finds the stack's
-# own services there. With --no-services nothing is started, so the ports are not probed.
+# Root, systemd (unless --no-services), x86_64, curl, tar and gzip (tar -z), and the package itself
+# are required (die). A port that something already listens on is only a Check row: a re-run finds
+# the stack's own services there. With --no-services nothing is started, so no port is probed.
 step_preconditions() {
     local arch family tool port
     local -a ports=()
