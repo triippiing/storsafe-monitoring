@@ -12,8 +12,9 @@
 #                         linux/install.sh --root /opt/storsafe-monitoring --uninstall.
 #
 # The working tree is copied into the install folder (without .git, .claude, .superpowers, dist,
-# the test output and the runtime folders of a working clone), the mock config and credential are
-# put in place, and the installers are downloaded by linux/get-installers.sh. SMOKE_INSTALLERS=<folder>
+# the test output and the extracted prometheus, grafana and node_exporter folders of a used clone;
+# the runtime folders keep only their README.txt), the mock config and credential are put in
+# place, and the installers are downloaded by linux/get-installers.sh. SMOKE_INSTALLERS=<folder>
 # copies the *.tar.gz files of that folder instead, for a host with no internet access. Needs
 # curl, tar, python3, and port 18080 for the mock API; the PowerShell tarball is extracted by the
 # installer when pwsh is not on the PATH, which needs the ICU library.
@@ -121,13 +122,20 @@ prepare_root() {
     mkdir -p "$ROOT"
     chmod 755 "$ROOT"
     touch "$ROOT/.smoke-test"
-    # Version control, tool and planning folders, build and test output, and the runtime folders of
-    # a working clone (a stale metrics/storsafe.prom would make the check below pass without a
-    # collector run).
-    for item in .git .claude .superpowers dist tools/test/out creds state events metrics reports installers; do
+    # Version control, tool and planning folders, build and test output, and the components a used
+    # clone has extracted (monitoring/grafana stays: the exclusions are anchored).
+    for item in .git .claude .superpowers dist tools/test/out prometheus grafana node_exporter; do
         exclude+=("--exclude=./$item")
     done
     tar -C "$REPO" --anchored "${exclude[@]}" -cf - . | tar -C "$ROOT" --no-same-owner -xf -
+    # The runtime folders are copied for their README.txt and emptied otherwise: a stale
+    # metrics/storsafe.prom would make the check below pass without a collector run, and a stale
+    # tarball in installers/ would shadow a fresh one.
+    for item in creds state events metrics reports installers; do
+        if [[ -d $ROOT/$item ]]; then
+            find "$ROOT/$item" -mindepth 1 -maxdepth 1 ! -name README.txt -exec rm -rf {} +
+        fi
+    done
     echo "Copied $REPO to $ROOT"
     return 0
 }
@@ -257,17 +265,24 @@ wait_for_prometheus_data() {
     return 0
 }
 
-# The dashboard queries run against the real Prometheus; the validator's last line must say
-# "errors 0".
+# The dashboard queries run against the real Prometheus. The validator's last line, "queries N
+# errors N empty N", must show no errors and at least one query that returned data.
 validate_dashboards() {
-    local out
+    local out last re='^queries ([0-9]+) +errors ([0-9]+) +empty ([0-9]+)$'
     if ! out=$(python3 "$REPO/tools/test/validate_dashboards.py" --prom http://127.0.0.1:9090 --servers MOCK-A,MOCK-B); then
         printf '%s\n' "$out"
         die 'validate_dashboards.py failed'
     fi
     printf '%s\n' "$out"
-    if ! grep -Eq '(^| )errors 0( |$)' <<< "$out"; then
+    last=${out##*$'\n'}
+    if [[ ! $last =~ $re ]]; then
+        die "unexpected last line of validate_dashboards.py: $last"
+    fi
+    if [[ ${BASH_REMATCH[2]} -ne 0 ]]; then
         die 'validate_dashboards.py did not report "errors 0"'
+    fi
+    if [[ ${BASH_REMATCH[1]} -le ${BASH_REMATCH[3]} ]]; then
+        die 'every dashboard query came back empty: Prometheus holds no data'
     fi
     return 0
 }
