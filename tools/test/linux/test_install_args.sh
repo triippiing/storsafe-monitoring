@@ -55,10 +55,13 @@ done
 out=$(PATH=$tmp/minbin "$inst" --no-services --root "$tmp/noconfig" --user "$(id -un)" 2>&1 || true)
 echo "$out" | grep -Eq '^PowerShell +Missing installer +put powershell-<ver>-linux-x64.tar.gz in installers/ and re-run$' || { echo "FAIL missing pwsh row"; FAILED=1; }
 assert_exit 1 quiet env PATH="$tmp/minbin" "$inst" --no-services --root "$tmp/noconfig" --user "$(id -un)"
-# a working pwsh and a config: every step reports OK, the folders exist, creds is 0700, exit 0
+# a working pwsh and a config: every step up to Config reports OK, the folders exist, creds is 0700.
+# The stub pwsh writes no metrics file, so the installer stops at the collector test run (exit 1).
 mkdir -p "$tmp/okbin" "$tmp/ok"; printf '#!/bin/sh\necho "PowerShell 7.4.6"\n' > "$tmp/okbin/pwsh"; chmod +x "$tmp/okbin/pwsh"
 cp "$here/../../../StorSafe.config.example.json" "$tmp/ok/"; cp "$tmp/ok/StorSafe.config.example.json" "$tmp/ok/StorSafe.config.json"
-out=$(PATH="$tmp/okbin:$PATH" OS_RELEASE_FILE=$tmp/os "$inst" --no-services --root "$tmp/ok" --user "$(id -un)" 2>&1) || { echo "FAIL full run exit"; FAILED=1; }
+rc=0; out=$(PATH="$tmp/okbin:$PATH" OS_RELEASE_FILE=$tmp/os "$inst" --no-services --root "$tmp/ok" --user "$(id -un)" --skip-credentials 2>&1) || rc=$?
+assert_eq 1 "$rc" "full run stops at the collector test"
+echo "$out" | grep -Eq '^Collector test +Check +config error; see the output above$' || { echo "FAIL collector test row"; FAILED=1; }
 echo "$out" | grep -q "^Install folder: $tmp/ok\$" || { echo "FAIL install folder line"; FAILED=1; }
 echo "$out" | grep -Eq '^Preconditions +OK +rhel, x86_64$' || { echo "FAIL preconditions row"; FAILED=1; }
 echo "$out" | grep -Eq "^PowerShell +OK +$tmp/okbin/pwsh 7\.4\.6\$" || { echo "FAIL powershell row"; FAILED=1; }

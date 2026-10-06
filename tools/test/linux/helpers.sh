@@ -83,9 +83,39 @@ assert_exit() {
     fi
 }
 
-# make_fake_tarballs <dir>: placeholder, Task 6 fills in the fake release tarballs.
+# make_fake_tarballs <dir>: writes stand-ins for the four release tarballs the installer extracts
+# into <dir>: node_exporter, Prometheus, Grafana (each in its top folder, with executable stubs
+# that do nothing) and PowerShell (a pwsh stub at the archive root). The names follow the real
+# releases.
 make_fake_tarballs() {
-    mkdir -p "$1"
+    local dir=$1 work top
+    mkdir -p "$dir"
+    work=$(mktemp -d)
+    top=node_exporter-1.9.1.linux-amd64
+    mkdir -p "$work/$top"
+    fake_stub "$work/$top/node_exporter"
+    tar -czf "$dir/$top.tar.gz" -C "$work" "$top"
+    top=prometheus-3.15.0.linux-amd64
+    mkdir -p "$work/$top"
+    fake_stub "$work/$top/prometheus"
+    fake_stub "$work/$top/promtool"
+    printf 'global:\n  scrape_interval: 15s\n' > "$work/$top/prometheus.yml"
+    tar -czf "$dir/$top.tar.gz" -C "$work" "$top"
+    top=grafana-v12.0.2
+    mkdir -p "$work/$top/bin" "$work/$top/conf/provisioning/datasources" "$work/$top/conf/provisioning/dashboards"
+    fake_stub "$work/$top/bin/grafana"
+    tar -czf "$dir/grafana-12.0.2.linux-amd64.tar.gz" -C "$work" "$top"
+    mkdir -p "$work/ps"
+    fake_stub "$work/ps/pwsh"
+    tar -czf "$dir/powershell-7.4.6-linux-x64.tar.gz" -C "$work/ps" pwsh
+    rm -rf "$work"
+    return 0
+}
+
+# fake_stub <file>: writes an executable shell script that does nothing and exits 0.
+fake_stub() {
+    printf '#!/bin/sh\nexit 0\n' > "$1"
+    chmod 755 "$1"
     return 0
 }
 

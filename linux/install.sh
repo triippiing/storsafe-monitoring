@@ -14,6 +14,9 @@
 #   <root>/installers   drop the third-party tarballs here (linux/get-installers.sh fills it)
 #   <root>/state        collector state (event log bookmark, cached hourly checks)
 #   <root>/events       daily raw event log CSVs per appliance
+#   <root>/node_exporter, prometheus, grafana
+#                       extracted from the tarballs in installers/ (Prometheus and Grafana unless
+#                       --collector-only); a newer tarball there is an upgrade, data/ is kept
 #
 # Unlike the Windows installer this does not need to run as the account that runs the collector:
 # the collector runs as a dedicated system account (default storsafe), created if it is missing.
@@ -21,7 +24,8 @@
 # Each step is idempotent and can be re-run after adding installers or editing the config. The
 # summary at the end lists every step as OK, Skipped, Missing installer or Check. A step that
 # nothing after it can work without stops the installer: the preconditions with an error message,
-# PowerShell, the user and the config after printing the summary of what was done so far.
+# PowerShell, the user, the config and the collector test run (a config or credential error) after
+# printing the summary of what was done so far.
 #
 # Exit status: 0 when the installer ran through, 1 when a step stopped it, 2 when the command line
 # is wrong.
@@ -40,6 +44,10 @@ source "$(dirname "$(realpath "$0")")/lib.sh"
 PWSH_HOME=/opt/microsoft/powershell/7
 PWSH_LINK=/usr/bin/pwsh
 PWSH_BIN=""
+
+# Unit names whose service must be restarted if it runs: a rendered unit file or a config or
+# program that changed since the last run. Filled by mark_changed, read by the services step.
+CHANGED_UNITS=()
 
 usage() {
     cat << 'EOF'
@@ -183,6 +191,39 @@ icu_package_line() {
     return 0
 }
 
+# run_as_user <cmd...>: runs the command as the service account: directly when the installer already
+# runs as that account (tests), through runuser otherwise.
+run_as_user() {
+    if [[ $(id -un) == "$USER_NAME" ]]; then
+        "$@"
+    else
+        runuser -u "$USER_NAME" -- "$@"
+    fi
+}
+
+# mark_changed <unit>: records that the unit needs a restart (once; the services step restarts it
+# when it is running).
+mark_changed() {
+    case " ${CHANGED_UNITS[*]:-} " in
+        *" $1 "*) return 0 ;;
+    esac
+    CHANGED_UNITS+=("$1")
+    return 0
+}
+
+# place_file <src> <dst> <unit>: copies src over dst (mode 0644) unless dst already has the same
+# content; a copy that changed dst marks the unit as changed, because the service only reads its
+# config at start. Returns 1 when the copy fails.
+place_file() {
+    if cmp -s "$1" "$2"; then
+        return 0
+    fi
+    if ! install -m 644 "$1" "$2"; then
+        return 1
+    fi
+    mark_changed "$3"
+}
+
 # ---------------------------------------------------------------------------
 # 1. Preconditions
 # ---------------------------------------------------------------------------
@@ -319,6 +360,280 @@ step_config() {
     return 0
 }
 
+# ---------------------------------------------------------------------------
+# 5. Credential files
+# ---------------------------------------------------------------------------
+# Every appliance in the config needs its credential file (CredentialFile, relative paths resolve
+# against the install folder). A missing one is prompted for and saved as the service account, which
+# is the only account that can use it. The Servers list is read with the same module the collector
+# uses, so the paths are the ones it will look for.
+step_credentials() {
+    local listing name file list_ps create_ps made=0 present=0 failed=0
+    local -A seen=()
+    # The PowerShell code is single-quoted on purpose: its $ are PowerShell's, and the paths come in
+    # through the environment so that no quoting of them is needed.
+    # shellcheck disable=SC2016
+    list_ps='
+        $ErrorActionPreference = "Stop"
+        Import-Module (Join-Path $env:STORSAFE_ROOT "StorSafe.psm1") -DisableNameChecking
+        $config = Import-StorSafeConfig -Path (Join-Path $env:STORSAFE_ROOT "StorSafe.config.json")
+        foreach ($s in $config.Servers) { "{0}`t{1}" -f $s.Name, $s.CredentialFile }
+    '
+    # shellcheck disable=SC2016
+    create_ps='
+        $ErrorActionPreference = "Stop"
+        Import-Module (Join-Path $env:STORSAFE_ROOT "StorSafe.psm1") -DisableNameChecking
+        New-StorSafeCredentialFile -Path $env:STORSAFE_FILE
+    '
+    log_step 'Credential files'
+    if [[ $SKIP_CREDENTIALS -eq 1 ]]; then
+        summary_add Credentials Skipped '--skip-credentials'
+        return 0
+    fi
+    if ! listing=$(STORSAFE_ROOT=$ROOT "$PWSH_BIN" -NoProfile -NonInteractive -Command "$list_ps"); then
+        summary_add Credentials Check 'could not read the Servers list; see the output above'
+        return 1
+    fi
+    # The list comes in on fd 3 so that the prompt below keeps the terminal as its stdin.
+    while IFS=$'\t' read -r -u 3 name file; do
+        if [[ -z $file ]]; then
+            echo "warning: $name has no CredentialFile in the config; the collector will fail for it" >&2
+            continue
+        fi
+        # Appliances may share one credential file: ask for it once.
+        if [[ -n ${seen[$file]:-} ]]; then
+            continue
+        fi
+        seen[$file]=1
+        if [[ -f $file ]]; then
+            echo "$name: $file exists"
+            present=$((present + 1))
+            continue
+        fi
+        echo "Creating $file for $name"
+        # Interactive on purpose: no -NonInteractive, Get-Credential asks on the terminal.
+        if (cd "$ROOT" && run_as_user env STORSAFE_ROOT="$ROOT" STORSAFE_FILE="$file" "$PWSH_BIN" -NoProfile -Command "$create_ps") &&
+            [[ -f $file ]] && chmod 600 "$file" && chown "$USER_NAME:" "$file"; then
+            made=$((made + 1))
+        else
+            failed=$((failed + 1))
+        fi
+    done 3<<< "$listing"
+    if [[ $failed -gt 0 ]]; then
+        summary_add Credentials Check "$failed credential file(s) not created; see the output above"
+        return 1
+    fi
+    if [[ $made -gt 0 ]]; then
+        summary_add Credentials OK "created $made"
+    else
+        summary_add Credentials OK "$present file(s) present"
+    fi
+    return 0
+}
+
+# ---------------------------------------------------------------------------
+# 6. Collector test run
+# ---------------------------------------------------------------------------
+# One real run, as the service account and from the install folder like the service, with the output
+# on the screen. Exit 2 (a check failed) is a Check row; exit 3 (config or credential error) or no
+# metrics file means nothing after this step can be verified, so the installer stops.
+step_collector_test() {
+    local log rc=0 wrote prom=$ROOT/metrics/storsafe.prom
+    log_step 'Collector test run'
+    if ! log=$(mktemp); then
+        summary_add 'Collector test' Check 'cannot create a temporary file; see the output above'
+        return 1
+    fi
+    # Under pipefail the pipeline's status is the collector's, tee does not fail.
+    (cd "$ROOT" && run_as_user "$PWSH_BIN" -NoProfile -NonInteractive -File "$ROOT/Export-StorSafeMetrics.ps1" -All -NonInteractive) 2>&1 | tee "$log" || rc=$?
+    wrote=$(grep '^Wrote ' "$log" | tail -n 1 || true)
+    rm -f "$log"
+    if [[ $rc -eq 3 || ! -f $prom ]]; then
+        summary_add 'Collector test' Check 'config error; see the output above'
+        stop_here
+    fi
+    case $rc in
+        0) summary_add 'Collector test' OK "${wrote:-$prom written}" ;;
+        2) summary_add 'Collector test' Check 'a check failed; see the output above' ;;
+        *) summary_add 'Collector test' Check "the collector exited with code $rc; see the output above" ;;
+    esac
+    return 0
+}
+
+# ---------------------------------------------------------------------------
+# 7. node_exporter, Prometheus and Grafana
+# ---------------------------------------------------------------------------
+# extract_component <name> <glob> <strip> [label]: unpacks the newest $INSTALLERS/<glob> into
+# $ROOT/<name> unless the folder already holds it (the tarball's file name is kept in
+# <name>/.version), so a newer tarball in installers/ is an upgrade. An upgrade replaces everything
+# in the folder except data/, and the folder belongs to the service account afterwards (the
+# service writes below it). Adds the summary row (named <label>, default <name>) and returns 1 when
+# there is no tarball or it cannot be unpacked.
+extract_component() {
+    local name=$1 glob=$2 strip=$3 label=${4:-$1} dir=$ROOT/$1 tarball base have=""
+    tarball=$(find_installer "$glob")
+    if [[ -z $tarball ]]; then
+        summary_add "$label" 'Missing installer' "put ${glob/\*/<ver>} in installers/ and re-run"
+        return 1
+    fi
+    base=$(basename "$tarball")
+    if [[ -f $dir/.version ]]; then
+        read -r have < "$dir/.version" || true
+    fi
+    if [[ $have == "$base" ]]; then
+        summary_add "$label" OK "already extracted $base"
+        return 0
+    fi
+    echo "Extracting $base to $dir"
+    if ! mkdir -p "$dir" ||
+        ! find "$dir" -mindepth 1 -maxdepth 1 ! -name data -exec rm -rf {} + ||
+        ! tar -xzf "$tarball" -C "$dir" --strip-components="$strip" ||
+        ! printf '%s\n' "$base" > "$dir/.version" ||
+        ! chown -R "$USER_NAME:" "$dir"; then
+        summary_add "$label" Check "cannot extract $base; see the output above"
+        return 1
+    fi
+    # The program on disk is new, the running one is not.
+    mark_changed "storsafe-${name//_/-}.service"
+    summary_add "$label" OK "extracted $base"
+    return 0
+}
+
+step_node_exporter() {
+    log_step 'node_exporter'
+    extract_component node_exporter 'node_exporter-*.linux-amd64.tar.gz' 1
+}
+
+# monitoring/prometheus.yml is shared with the Windows install and is the source of truth: it
+# replaces the config the tarball ships, on every run.
+step_prometheus() {
+    local dir=$ROOT/prometheus
+    log_step 'Prometheus'
+    if [[ $COLLECTOR_ONLY -eq 1 ]]; then
+        summary_add Prometheus Skipped '--collector-only'
+        return 0
+    fi
+    extract_component prometheus 'prometheus-*.linux-amd64.tar.gz' 1 Prometheus || return 1
+    if ! place_file "$ROOT/monitoring/prometheus.yml" "$dir/prometheus.yml" storsafe-prometheus.service ||
+        ! mkdir -p "$dir/data" ||
+        ! chown "$USER_NAME:" "$dir/data"; then
+        summary_add Prometheus Check "cannot write the config and data folder in $dir; see the output above"
+        return 1
+    fi
+    return 0
+}
+
+# Grafana gets the data source and the dashboard provider from monitoring/grafana/, the same files
+# the Windows install uses; the provider's __DASHBOARD_DIR__ becomes the dashboards in this package.
+step_grafana() {
+    local dir=$ROOT/grafana prov=$ROOT/grafana/conf/provisioning rendered dashboards
+    log_step 'Grafana'
+    if [[ $COLLECTOR_ONLY -eq 1 ]]; then
+        summary_add Grafana Skipped '--collector-only'
+        return 0
+    fi
+    extract_component grafana 'grafana-*.linux-amd64.tar.gz' 1 Grafana || return 1
+    # Escape what sed treats specially in the replacement (backslash, ampersand, delimiter).
+    dashboards=$(printf '%s' "$ROOT/monitoring/dashboards" | sed -e 's/[\\&|]/\\&/g')
+    if ! rendered=$(mktemp); then
+        summary_add Grafana Check 'cannot create a temporary file; see the output above'
+        return 1
+    fi
+    if ! mkdir -p "$prov/datasources" "$prov/dashboards" "$dir/data/log" ||
+        ! chown "$USER_NAME:" "$dir/data" "$dir/data/log" ||
+        ! sed "s|__DASHBOARD_DIR__|$dashboards|g" "$ROOT/monitoring/grafana/storsafe-dashboards.yaml" > "$rendered" ||
+        ! place_file "$ROOT/monitoring/grafana/storsafe-datasource.yaml" "$prov/datasources/storsafe-datasource.yaml" storsafe-grafana.service ||
+        ! place_file "$rendered" "$prov/dashboards/storsafe-dashboards.yaml" storsafe-grafana.service; then
+        rm -f "$rendered"
+        summary_add Grafana Check "cannot write the provisioning files and data folder in $dir; see the output above"
+        return 1
+    fi
+    rm -f "$rendered"
+    return 0
+}
+
+# ---------------------------------------------------------------------------
+# 8. Systemd units
+# ---------------------------------------------------------------------------
+# Renders the unit files from linux/systemd/ into $UNIT_DIR. Each is rendered to a temporary file
+# first, so that a unit is only replaced, and only recorded in CHANGED_UNITS, when its content
+# differs from the file that was there. A placeholder left in a rendered unit is a bug in the
+# package, not in the installation, and stops the installer. Nothing is enabled or started here.
+render_units() {
+    local name rendered changed=0
+    local -a names=(storsafe-collector.service storsafe-collector.timer storsafe-node-exporter.service)
+    if [[ $COLLECTOR_ONLY -eq 0 ]]; then
+        names+=(storsafe-prometheus.service storsafe-grafana.service)
+    fi
+    log_step 'Systemd units'
+    if ! mkdir -p "$UNIT_DIR"; then
+        summary_add Units Check "cannot create $UNIT_DIR; see the output above"
+        return 1
+    fi
+    for name in "${names[@]}"; do
+        if ! rendered=$(mktemp "$UNIT_DIR/.$name.XXXXXX"); then
+            summary_add Units Check "cannot write to $UNIT_DIR; see the output above"
+            return 1
+        fi
+        if ! render_template "$ROOT/linux/systemd/$name" "$rendered" \
+            ROOT="$ROOT" USER="$USER_NAME" PWSH="$PWSH_BIN" LISTEN="$LISTEN" RETENTION="$RETENTION" \
+            INTERVAL="$INTERVAL" RUNTIME="$(runtime_max_sec "$INTERVAL")"; then
+            rm -f "$rendered"
+            die "cannot render the unit $name from $ROOT/linux/systemd: see the message above"
+        fi
+        if cmp -s "$rendered" "$UNIT_DIR/$name"; then
+            rm -f "$rendered"
+            continue
+        fi
+        if ! chmod 644 "$rendered" || ! mv -f "$rendered" "$UNIT_DIR/$name"; then
+            rm -f "$rendered"
+            summary_add Units Check "cannot write $UNIT_DIR/$name; see the output above"
+            return 1
+        fi
+        mark_changed "$name"
+        changed=$((changed + 1))
+    done
+    summary_add Units OK "${#names[@]} unit file(s) in $UNIT_DIR, $changed new or changed"
+    return 0
+}
+
+# What the operator does next, after the summary. The scrape job repeats the one in
+# monitoring/prometheus.yml (same keep regex), with this host as the target.
+print_next_steps() {
+    local host port=${LISTEN##*:}
+    host=$(hostname -f 2> /dev/null || hostname 2> /dev/null || uname -n)
+    log_step 'Next steps'
+    if [[ $COLLECTOR_ONLY -eq 0 ]]; then
+        cat << EOF
+Open Grafana at http://$host:3000 (first login admin / admin, you are asked to change the
+password), then Dashboards > StorSafe.
+
+Check the stack, and pause or resume collecting (for example during appliance maintenance):
+  sudo $ROOT/linux/storsafe-control.sh status
+  sudo $ROOT/linux/storsafe-control.sh pause
+  sudo $ROOT/linux/storsafe-control.sh resume
+EOF
+    else
+        cat << EOF
+node_exporter serves the metrics on $LISTEN. Add this job to scrape_configs in the prometheus.yml
+of your Prometheus server and reload it (allow port $port from that server in the firewall):
+
+  - job_name: storsafe
+    static_configs:
+      - targets: ['$host:$port']
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'storsafe_.*|windows_textfile_.*|node_textfile_.*'
+        action: keep
+
+Import the dashboards in $ROOT/monitoring/dashboards/*.json into your Grafana
+(Dashboards > New > Import) and point them at the Prometheus data source with uid
+storsafe-prometheus.
+EOF
+    fi
+    return 0
+}
+
 main() {
     parse_args "$@"
     echo "Install folder: $ROOT"
@@ -329,8 +644,15 @@ main() {
     step_powershell
     step_user
     step_config
+    run_step Credentials step_credentials
+    run_step 'Collector test' step_collector_test
+    run_step node_exporter step_node_exporter
+    run_step Prometheus step_prometheus
+    run_step Grafana step_grafana
+    run_step Units render_units
     log_step 'Install summary'
     summary_print
+    print_next_steps
 }
 
 main "$@"
