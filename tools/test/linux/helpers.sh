@@ -32,7 +32,8 @@ assert_file() {
 }
 
 # assert_grep file pattern: a line of the file must match the pattern (grep basic regex).
-# A "--" before the pattern is accepted, for patterns that start with a dash.
+# A "--" before the pattern is accepted, for patterns that start with a dash. A grep error
+# (for example an invalid regex) fails the assertion.
 assert_grep() {
     local file=$1 rc=0
     shift
@@ -44,12 +45,15 @@ assert_grep() {
         return 0
     fi
     grep -q -- "$1" "$file" || rc=$?
-    if [[ $rc -ne 0 ]]; then
+    if [[ $rc -gt 1 ]]; then
+        assert_fail "$file matches $1" "grep error (exit $rc)"
+    elif [[ $rc -eq 1 ]]; then
         assert_fail "$file matches $1"
     fi
 }
 
-# assert_not_grep file pattern: no line of the file may match the pattern. The file must exist.
+# assert_not_grep file pattern: no line of the file may match the pattern. The file must exist,
+# and a grep error (for example an invalid regex) fails the assertion.
 assert_not_grep() {
     local file=$1 rc=0
     shift
@@ -61,16 +65,19 @@ assert_not_grep() {
         return 0
     fi
     grep -q -- "$1" "$file" || rc=$?
-    if [[ $rc -eq 0 ]]; then
+    if [[ $rc -gt 1 ]]; then
+        assert_fail "$file does not match $1" "grep error (exit $rc)"
+    elif [[ $rc -eq 0 ]]; then
         assert_fail "$file does not match $1" "a line matches"
     fi
 }
 
-# assert_exit code cmd...: runs the command and compares its exit code with the expected one.
+# assert_exit code cmd...: runs the command in a subshell (so a command that calls exit, like die,
+# does not end the test) and compares its exit code with the expected one.
 assert_exit() {
     local want=$1 rc=0
     shift
-    "$@" || rc=$?
+    ( "$@" ) || rc=$?
     if [[ $rc -ne $want ]]; then
         assert_fail "exit $want from: $*" "got exit $rc"
     fi

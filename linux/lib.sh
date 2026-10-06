@@ -11,9 +11,9 @@ log_step() {
     printf '\n== %s\n' "$1"
 }
 
-# Records one row for the final table. The note may be empty.
+# Records one row for the final table. The note may be empty or left out.
 summary_add() {
-    SUMMARY_ROWS+=("$1"$'\t'"$2"$'\t'"$3")
+    SUMMARY_ROWS+=("$1"$'\t'"$2"$'\t'"${3:-}")
 }
 
 # Prints the collected rows as a three-column table (Step, Result, Note), columns fitted to the
@@ -105,11 +105,11 @@ render_template() {
 }
 
 # http_ok <url> <timeout_seconds>: returns 0 as soon as a GET of the url succeeds, trying every
-# 2 s, or 1 when it has not succeeded after the timeout.
+# 2 s, or 1 when it has not succeeded after the timeout. The curl errors of failed tries are hidden.
 http_ok() {
     local url=$1 timeout=$2 start=$SECONDS left
     while :; do
-        if curl -fsS -o /dev/null --max-time 5 "$url"; then
+        if curl -fsS -o /dev/null --max-time 5 "$url" 2> /dev/null; then
             return 0
         fi
         left=$((timeout - (SECONDS - start)))
@@ -122,18 +122,17 @@ http_ok() {
 }
 
 # port_in_use <port>: returns 0 when something listens on the TCP port, 1 otherwise. Uses ss when
-# it is installed, else tries to connect to 127.0.0.1 through bash's /dev/tcp.
+# it is installed and works, else tries to connect to 127.0.0.1 through bash's /dev/tcp (a loopback
+# connect is answered at once, so it needs no timeout).
 port_in_use() {
-    local port=$1
-    if command -v ss > /dev/null 2>&1; then
-        if ss -ltn 2> /dev/null | awk -v port="$port" '$4 ~ (":" port "$") { found = 1 } END { exit !found }'; then
+    local port=$1 listing
+    if command -v ss > /dev/null 2>&1 && listing=$(ss -ltn 2> /dev/null); then
+        if printf '%s\n' "$listing" | awk -v port="$port" '$4 ~ (":" port "$") { found = 1 } END { exit !found }'; then
             return 0
         fi
         return 1
     fi
-    # The port reaches the inner shell as $1, so the single quotes are intended.
-    # shellcheck disable=SC2016
-    if timeout 1 bash -c 'exec 3<>"/dev/tcp/127.0.0.1/$1"' _ "$port" > /dev/null 2>&1; then
+    if (exec 3<>"/dev/tcp/127.0.0.1/$port") 2> /dev/null; then
         return 0
     fi
     return 1

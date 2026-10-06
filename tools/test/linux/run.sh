@@ -7,12 +7,13 @@ set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 passed=0
 failed=0
+out=$(mktemp)
+trap 'rm -f "$out"' EXIT
 
 for t in "$here"/test_*.sh; do
     # An unmatched glob stays literal: nothing to run.
     [[ -e $t ]] || continue
     name=$(basename "$t")
-    out=$(mktemp)
     if bash "$t" > "$out" 2>&1; then
         echo "PASS $name"
         passed=$((passed + 1))
@@ -21,7 +22,6 @@ for t in "$here"/test_*.sh; do
         sed 's/^/    /' "$out"
         failed=$((failed + 1))
     fi
-    rm -f "$out"
 done
 
 echo "$passed passed, $failed failed"
