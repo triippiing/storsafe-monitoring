@@ -1,0 +1,146 @@
+# Continuous integration for the monitoring package: static checks, the mock-API test kit, the
+# Linux installer in clean containers, and a full systemd install on a runner.
+name: CI
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+# bash -eo pipefail for every run step, so a failure inside a pipeline fails the step.
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  # Shell scripts, PowerShell scripts and Python tools must at least parse. Shellcheck runs at
+  # warning level (the package rule is "no warnings"); its info notes differ between versions.
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: shellcheck
+        run: shellcheck -x -P SCRIPTDIR -S warning linux/*.sh tools/test/linux/*.sh
+      - name: bash -n
+        run: |
+          for f in linux/*.sh tools/test/linux/*.sh; do
+            bash -n "$f"
+          done
+      - name: Parse the PowerShell scripts
+        run: |
+          pwsh -NoProfile -Command '
+            $files = @(Get-ChildItem -Recurse -File -Include *.ps1, *.psm1)
+            $bad = 0
+            foreach ($f in $files) {
+              $errors = $null
+              [void][System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$errors)
+              foreach ($e in $errors) {
+                Write-Host ("{0}:{1}: {2}" -f $f.FullName, $e.Extent.StartLineNumber, $e.Message)
+                $bad++
+              }
+            }
+            Write-Host ("Parsed {0} PowerShell file(s), {1} error(s)" -f $files.Count, $bad)
+            if ($bad -gt 0 -or $files.Count -eq 0) { exit 1 }
+          '
+      - name: Compile the Python tools
+        run: python3 -m py_compile tools/*.py tools/test/*.py
+
+  # The three steps of tools/test/README.md (mock API, collector, dashboard queries against a real
+  # Prometheus), then the Linux installer tests, which need root and the mock on port 18080.
+  kit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - name: Get Prometheus and promtool
+        run: |
+          linux/get-installers.sh --dest /tmp/inst
+          mkdir /tmp/prometheus
+          tar -xzf /tmp/inst/prometheus-*.linux-amd64.tar.gz -C /tmp/prometheus --strip-components=1
+          echo /tmp/prometheus >> "$GITHUB_PATH"
+      - name: Start the mock StorSafe API
+        run: |
+          setsid nohup python3 tools/test/mock_api.py 18080 > /tmp/mock.log 2>&1 &
+          for _ in $(seq 1 20); do
+            if curl -s -o /dev/null --max-time 2 http://127.0.0.1:18080/; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/mock.log
+          exit 1
+      - name: Run the collector against the mock
+        run: |
+          # The second run also records the reclamation run finishing (the mock reports it running
+          # for its first two status calls).
+          for run in 1 2; do
+            pwsh -NoProfile -File ./Export-StorSafeMetrics.ps1 -ConfigPath tools/test/mock.config.json -All -NonInteractive -TextfileDirectory tools/test/out | tee /tmp/collector.out
+            grep -q '^Wrote .* samples for 2 server(s)' /tmp/collector.out
+          done
+          # promtool exits 1 when the file does not parse and 3 when it only has naming notes
+          # (the _total and _count names are kept on purpose), so 3 is not a failure.
+          rc=0
+          promtool check metrics < tools/test/out/storsafe.prom || rc=$?
+          if [[ $rc -ne 0 && $rc -ne 3 ]]; then exit "$rc"; fi
+          if grep -q '^storsafe_check_success{.*} 0$' tools/test/out/storsafe.prom; then
+            echo 'a collector check failed:'
+            grep '^storsafe_check_success{.*} 0$' tools/test/out/storsafe.prom
+            exit 1
+          fi
+      - name: Start Prometheus on the collector output
+        run: |
+          ln -sf storsafe.prom tools/test/out/metrics
+          setsid nohup python3 -m http.server 19100 --bind 127.0.0.1 --directory tools/test/out > /tmp/textserver.log 2>&1 &
+          setsid nohup prometheus --config.file=tools/test/prometheus-test.yml --storage.tsdb.path=tools/test/out/tsdb --web.listen-address=127.0.0.1:19090 > /tmp/prometheus.log 2>&1 &
+          # Ready, and one scrape of the collector output in (the test config scrapes every 5 s).
+          for _ in $(seq 1 60); do
+            answer=$(curl -fsS 'http://127.0.0.1:19090/api/v1/query?query=storsafe_collector_info' 2> /dev/null || true)
+            if [[ $answer == *'"result":[{'* ]]; then exit 0; fi
+            sleep 2
+          done
+          tail -n 20 /tmp/prometheus.log
+          exit 1
+      - name: Validate the dashboard queries
+        run: |
+          python3 tools/test/validate_dashboards.py | tee /tmp/validate.out
+          grep -Eq '(^| )errors 0( |$)' /tmp/validate.out
+      - name: Linux installer tests
+        run: |
+          # Root runs git archive in a checkout owned by the runner user.
+          sudo git config --system --add safe.directory "$GITHUB_WORKSPACE"
+          # sudo resets the PATH, which would hide pwsh and the tools from the tests.
+          sudo env PATH="$PATH" bash tools/test/linux/run.sh
+
+  # The Linux collector-only install, in clean containers of the two supported families. No pwsh
+  # here: the installer extracts PowerShell from the downloaded tarball, which the job proves.
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        container: [rockylinux:9, debian:12]
+    container: ${{ matrix.container }}
+    steps:
+      # --allowerasing: the image carries curl-minimal, which conflicts with the curl package.
+      - name: Install packages (Rocky Linux)
+        if: startsWith(matrix.container, 'rockylinux')
+        run: dnf install -y --allowerasing curl tar gzip python3 git libicu
+      - name: Install packages (Debian)
+        if: startsWith(matrix.container, 'debian')
+        run: apt-get update && apt-get install -y curl tar gzip python3 git libicu72 ca-certificates
+      - uses: actions/checkout@v5
+      - name: Smoke test
+        run: bash tools/test/linux/smoke.sh
+
+  # The full stack as systemd services on a runner (it has systemd and sudo): the three ports, the
+  # dashboard queries against the real Prometheus, the control script, and the uninstall.
+  full:
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Full install with systemd
+        run: sudo bash tools/test/linux/smoke.sh --services
