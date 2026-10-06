@@ -396,6 +396,9 @@ step_credentials() {
     fi
     # The list comes in on fd 3 so that the prompt below keeps the terminal as its stdin.
     while IFS=$'\t' read -r -u 3 name file; do
+        if [[ -z $name ]]; then
+            continue
+        fi
         if [[ -z $file ]]; then
             echo "warning: $name has no CredentialFile in the config; the collector will fail for it" >&2
             continue
@@ -411,8 +414,9 @@ step_credentials() {
             continue
         fi
         echo "Creating $file for $name"
-        # Interactive on purpose: no -NonInteractive, Get-Credential asks on the terminal.
-        if (cd "$ROOT" && run_as_user env STORSAFE_ROOT="$ROOT" STORSAFE_FILE="$file" "$PWSH_BIN" -NoProfile -Command "$create_ps") &&
+        # Interactive on purpose: no -NonInteractive, Get-Credential asks on the terminal. The file is
+        # created under umask 077, so it is never readable by others, not even for a moment.
+        if (umask 077 && cd "$ROOT" && run_as_user env STORSAFE_ROOT="$ROOT" STORSAFE_FILE="$file" "$PWSH_BIN" -NoProfile -Command "$create_ps") &&
             [[ -f $file ]] && chmod 600 "$file" && chown "$USER_NAME:" "$file"; then
             made=$((made + 1))
         else
@@ -467,8 +471,10 @@ step_collector_test() {
 # $ROOT/<name> unless the folder already holds it (the tarball's file name is kept in
 # <name>/.version), so a newer tarball in installers/ is an upgrade. An upgrade replaces everything
 # in the folder except data/, and the folder belongs to the service account afterwards (the
-# service writes below it). Adds the summary row (named <label>, default <name>) and returns 1 when
-# there is no tarball or it cannot be unpacked.
+# service writes below it; data/ is not walked, a Prometheus TSDB can be large and the service owns
+# it already). The trailing slash on $dir lets find look inside a folder that is a symlink. Adds
+# the summary row (named <label>, default <name>) and returns 1 when there is no tarball or it
+# cannot be unpacked.
 extract_component() {
     local name=$1 glob=$2 strip=$3 label=${4:-$1} dir=$ROOT/$1 tarball base have=""
     tarball=$(find_installer "$glob")
@@ -486,10 +492,11 @@ extract_component() {
     fi
     echo "Extracting $base to $dir"
     if ! mkdir -p "$dir" ||
-        ! find "$dir" -mindepth 1 -maxdepth 1 ! -name data -exec rm -rf {} + ||
+        ! find "$dir/" -mindepth 1 -maxdepth 1 ! -name data -exec rm -rf {} + ||
         ! tar -xzf "$tarball" -C "$dir" --strip-components="$strip" ||
         ! printf '%s\n' "$base" > "$dir/.version" ||
-        ! chown -R "$USER_NAME:" "$dir"; then
+        ! chown "$USER_NAME:" "$dir" ||
+        ! find "$dir/" -mindepth 1 -maxdepth 1 ! -name data -exec chown -R "$USER_NAME:" {} +; then
         summary_add "$label" Check "cannot extract $base; see the output above"
         return 1
     fi

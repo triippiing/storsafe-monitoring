@@ -37,9 +37,15 @@ echo "$out" | grep -q 'already extracted node_exporter-1.9.1' || { echo "FAIL id
 # the credential file of the mock config is there, so a run without --skip-credentials asks for nothing
 out=$("$inst" --no-services --root "$root" --user "$(id -un)" --unit-dir "$tmp/units" < /dev/null)
 echo "$out" | grep -Eq '^Credentials +OK +1 file\(s\) present$' || { echo "FAIL credentials present"; FAILED=1; }
+# an upgrade empties the component folder except data/, also when the folder is a symlink (a data disk)
+mkdir -p "$root/node_exporter/data"; touch "$root/node_exporter/data/keep" "$root/node_exporter/stray"
+mv "$root/node_exporter" "$tmp/ne_real"; ln -s "$tmp/ne_real" "$root/node_exporter"
 cp "$root/installers/node_exporter-1.9.1.linux-amd64.tar.gz" "$root/installers/node_exporter-1.9.2.linux-amd64.tar.gz"
 "$inst" --no-services --root "$root" --user "$(id -un)" --unit-dir "$tmp/units" --skip-credentials > /dev/null
 assert_eq node_exporter-1.9.2.linux-amd64.tar.gz "$(cat "$root/node_exporter/.version")" "newer tarball wins"
+assert_file "$root/node_exporter/data/keep"
+[ -e "$root/node_exporter/stray" ] && { echo "FAIL stray file kept by the upgrade"; FAILED=1; }
+assert_file "$root/node_exporter/node_exporter"
 # collector-only: no Prometheus or Grafana, node_exporter on all interfaces, scrape job printed
 rm -rf "$tmp/units2"
 out=$("$inst" --no-services --collector-only --root "$root" --user "$(id -un)" --unit-dir "$tmp/units2" --skip-credentials)
