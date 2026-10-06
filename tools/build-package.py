@@ -42,6 +42,7 @@ def tar_filter(ti):
     ti.mode = 0o755 if os.path.dirname(ti.name) == TOP + "linux" and ti.name.endswith(".sh") else 0o644
     ti.uid = ti.gid = 0
     ti.uname = ti.gname = "root"
+    ti.mtime = int(ti.mtime)  # whole seconds: the same header layout on every Python version
     return ti
 
 with tarfile.open(OUT_TGZ, "w:gz") as t:
