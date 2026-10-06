@@ -119,8 +119,26 @@ fake_stub() {
     return 0
 }
 
-# make_systemctl_shim <dir>: placeholder, Task 7 fills in the systemctl stand-in.
+# make_systemctl_shim <dir>: writes an executable <dir>/systemctl, a stand-in for the real one. It
+# appends its arguments as one space-joined line to $SYSTEMCTL_LOG and exits 0. "is-active [--quiet]
+# <unit>" exits 0 when the unit is named in $SYSTEMCTL_ACTIVE (space-separated), else 3 like the
+# real systemctl. Put <dir> first on the PATH of the installer run.
 make_systemctl_shim() {
     mkdir -p "$1"
+    cat > "$1/systemctl" << 'EOF'
+#!/bin/sh
+printf '%s\n' "$*" >> "${SYSTEMCTL_LOG:-/dev/null}"
+case $1 in
+    is-active)
+        for unit in "$@"; do :; done
+        case " ${SYSTEMCTL_ACTIVE:-} " in
+            *" $unit "*) exit 0 ;;
+        esac
+        exit 3
+        ;;
+esac
+exit 0
+EOF
+    chmod 755 "$1/systemctl"
     return 0
 }

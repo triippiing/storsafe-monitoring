@@ -27,8 +27,8 @@
 # PowerShell, the user, the config and the collector test run (a config or credential error) after
 # printing the summary of what was done so far.
 #
-# Exit status: 0 when the installer ran through, 1 when a step stopped it, 2 when the command line
-# is wrong.
+# Exit status: 0 when the installer ran through and no row of the summary is Check or Missing
+# installer, 1 when a step stopped it or such a row is there, 2 when the command line is wrong.
 #
 # Examples:
 #   sudo /opt/storsafe-monitoring/linux/install.sh
@@ -48,6 +48,15 @@ PWSH_BIN=""
 # Unit names whose service must be restarted if it runs: a rendered unit file or a config or
 # program that changed since the last run. Filled by mark_changed, read by the services step.
 CHANGED_UNITS=()
+
+# The unit files this installer manages: the first three always, the last two with the full stack.
+# The collector service is run by its timer, so only the timer is enabled.
+CORE_UNITS=(storsafe-collector.timer storsafe-collector.service storsafe-node-exporter.service)
+STACK_UNITS=(storsafe-prometheus.service storsafe-grafana.service)
+
+# The unit files render_units wrote or found up to date. Filled by render_units, read by the
+# services step; empty when the unit files could not be written.
+RENDERED_UNITS=()
 
 usage() {
     cat << 'EOF'
@@ -151,6 +160,14 @@ parse_args() {
     INSTALLERS=$ROOT/installers
 }
 
+# Stops with an error message unless the script runs as root.
+require_root() {
+    if [[ $EUID -ne 0 ]]; then
+        die 'run this script as root (for example with sudo)'
+    fi
+    return 0
+}
+
 # Prints the summary collected so far and exits 1: the end of a step that nothing after it can work
 # without.
 stop_here() {
@@ -211,11 +228,24 @@ mark_changed() {
     return 0
 }
 
+# same_file <a> <b>: returns 0 when both files exist and have the same content, 1 otherwise. Compares
+# SHA-256 sums (coreutils; diffutils' cmp is not in every minimal image).
+same_file() {
+    local sum1 sum2
+    if [[ ! -f $1 || ! -f $2 ]]; then
+        return 1
+    fi
+    if ! sum1=$(sha256sum < "$1") || ! sum2=$(sha256sum < "$2"); then
+        return 1
+    fi
+    [[ $sum1 == "$sum2" ]]
+}
+
 # place_file <src> <dst> <unit>: copies src over dst (mode 0644) unless dst already has the same
 # content; a copy that changed dst marks the unit as changed, because the service only reads its
 # config at start. Returns 1 when the copy fails.
 place_file() {
-    if cmp -s "$1" "$2"; then
+    if same_file "$1" "$2"; then
         return 0
     fi
     if ! install -m 644 "$1" "$2"; then
@@ -228,15 +258,14 @@ place_file() {
 # 1. Preconditions
 # ---------------------------------------------------------------------------
 # Root, systemd (unless --no-services), x86_64, curl, tar and gzip (tar -z), and the package itself
-# are required (die). A port that something already listens on is only a Check row: a re-run finds
-# the stack's own services there. With --no-services nothing is started, so no port is probed.
+# are required (die). A port that something else listens on is only a Check row; a port whose own
+# storsafe unit is active is not probed, because a re-run finds the stack's own services there.
+# With --no-services nothing is started, so no port is probed.
 step_preconditions() {
-    local arch family tool port
-    local -a ports=()
+    local arch family tool probe port unit
+    local -a probes=()
     log_step 'Preconditions'
-    if [[ $EUID -ne 0 ]]; then
-        die 'run this script as root (for example with sudo)'
-    fi
+    require_root
     if [[ $NO_SERVICES -eq 0 ]] && ! command -v systemctl > /dev/null 2>&1; then
         die 'systemctl not found: this installer needs systemd (use --no-services to write the files only)'
     fi
@@ -255,12 +284,18 @@ step_preconditions() {
     family=$(detect_family)
     summary_add Preconditions OK "$family, $arch"
     if [[ $NO_SERVICES -eq 0 ]]; then
-        # The collector's port is the one node_exporter is told to listen on.
-        ports=("${LISTEN##*:}")
+        # Each probe is <port>:<unit that serves it>. The collector's port is the one node_exporter
+        # is told to listen on.
+        probes=("${LISTEN##*:}:storsafe-node-exporter.service")
         if [[ $COLLECTOR_ONLY -eq 0 ]]; then
-            ports+=(9090 3000)
+            probes+=(9090:storsafe-prometheus.service 3000:storsafe-grafana.service)
         fi
-        for port in "${ports[@]}"; do
+        for probe in "${probes[@]}"; do
+            port=${probe%%:*}
+            unit=${probe#*:}
+            if systemctl is-active --quiet "$unit" > /dev/null 2>&1; then
+                continue
+            fi
             if port_in_use "$port"; then
                 summary_add Preconditions Check "port $port already in use"
             fi
@@ -532,6 +567,8 @@ step_prometheus() {
 
 # Grafana gets the data source and the dashboard provider from monitoring/grafana/, the same files
 # the Windows install uses; the provider's __DASHBOARD_DIR__ becomes the dashboards in this package.
+# data/ is chowned recursively: extract_component skips it, and one that came out of a tarball
+# would keep the archive's owner (Grafana's data is small, unlike Prometheus's).
 step_grafana() {
     local dir=$ROOT/grafana prov=$ROOT/grafana/conf/provisioning rendered dashboards
     log_step 'Grafana'
@@ -547,7 +584,7 @@ step_grafana() {
         return 1
     fi
     if ! mkdir -p "$prov/datasources" "$prov/dashboards" "$dir/data/log" ||
-        ! chown "$USER_NAME:" "$dir/data" "$dir/data/log" ||
+        ! chown -R "$USER_NAME:" "$dir/data" ||
         ! sed "s|__DASHBOARD_DIR__|$dashboards|g" "$ROOT/monitoring/grafana/storsafe-dashboards.yaml" > "$rendered" ||
         ! place_file "$ROOT/monitoring/grafana/storsafe-datasource.yaml" "$prov/datasources/storsafe-datasource.yaml" storsafe-grafana.service ||
         ! place_file "$rendered" "$prov/dashboards/storsafe-dashboards.yaml" storsafe-grafana.service; then
@@ -568,9 +605,9 @@ step_grafana() {
 # package, not in the installation, and stops the installer. Nothing is enabled or started here.
 render_units() {
     local name rendered changed=0
-    local -a names=(storsafe-collector.service storsafe-collector.timer storsafe-node-exporter.service)
+    local -a names=("${CORE_UNITS[@]}")
     if [[ $COLLECTOR_ONLY -eq 0 ]]; then
-        names+=(storsafe-prometheus.service storsafe-grafana.service)
+        names+=("${STACK_UNITS[@]}")
     fi
     log_step 'Systemd units'
     if ! mkdir -p "$UNIT_DIR"; then
@@ -588,7 +625,7 @@ render_units() {
             rm -f "$rendered"
             die "cannot render the unit $name from $ROOT/linux/systemd: see the message above"
         fi
-        if cmp -s "$rendered" "$UNIT_DIR/$name"; then
+        if same_file "$rendered" "$UNIT_DIR/$name"; then
             rm -f "$rendered"
             continue
         fi
@@ -600,8 +637,157 @@ render_units() {
         mark_changed "$name"
         changed=$((changed + 1))
     done
+    RENDERED_UNITS=("${names[@]}")
     summary_add Units OK "${#names[@]} unit file(s) in $UNIT_DIR, $changed new or changed"
     return 0
+}
+
+# ---------------------------------------------------------------------------
+# 9. Services
+# ---------------------------------------------------------------------------
+# systemctl_run <args...>: runs systemctl with the arguments. With --no-services it only prints
+# "would run: systemctl <args>" and succeeds, so that the operator sees what a full run would do.
+systemctl_run() {
+    if [[ $NO_SERVICES -eq 1 ]]; then
+        echo "would run: systemctl $*"
+        return 0
+    fi
+    systemctl "$@"
+}
+
+# wait_for_http <label> <url> <port> <seconds>: waits up to <seconds> for the url to answer and adds
+# the summary row, "answering on <port>" or "not answering on <port> after <seconds> s" (Check).
+wait_for_http() {
+    if http_ok "$2" "$4"; then
+        summary_add "$1" OK "answering on $3"
+        return 0
+    fi
+    summary_add "$1" Check "not answering on $3 after $4 s"
+    return 1
+}
+
+# Reloads systemd, enables and starts every rendered unit (the collector's timer, not the oneshot
+# service it triggers: the timer's Wants= makes it run once at once), restarts a service whose
+# unit file, config or program changed while it was running, and waits until the metrics endpoint
+# (and, with the full stack, Prometheus and Grafana) answers. The collector units are never
+# restarted: the daemon-reload is all a changed service or timer needs. Which changed units run is
+# asked before enable --now, which would start the others. With --no-services the commands are only
+# printed and nothing is waited for.
+step_services() {
+    local unit host port=${LISTEN##*:} timeout=${STORSAFE_HTTP_TIMEOUT:-60} failed=0
+    local -a restart=()
+    log_step 'Systemd services'
+    if [[ ${#RENDERED_UNITS[@]} -eq 0 ]]; then
+        summary_add Services Check 'the unit files were not written; nothing enabled'
+        return 1
+    fi
+    if [[ ${#CHANGED_UNITS[@]} -gt 0 ]]; then
+        for unit in "${CHANGED_UNITS[@]}"; do
+            if [[ $unit == storsafe-collector.* ]]; then
+                continue
+            fi
+            if [[ $NO_SERVICES -eq 1 ]] || systemctl is-active --quiet "$unit" > /dev/null 2>&1; then
+                restart+=("$unit")
+            fi
+        done
+    fi
+    if ! systemctl_run daemon-reload; then
+        failed=$((failed + 1))
+    fi
+    for unit in "${RENDERED_UNITS[@]}"; do
+        if [[ $unit == storsafe-collector.service ]]; then
+            continue
+        fi
+        if ! systemctl_run enable --now "$unit"; then
+            failed=$((failed + 1))
+        fi
+    done
+    if [[ ${#restart[@]} -gt 0 ]]; then
+        for unit in "${restart[@]}"; do
+            if [[ $NO_SERVICES -eq 1 ]]; then
+                echo "would run: systemctl restart $unit (only if it is running)"
+            elif ! systemctl_run restart "$unit"; then
+                failed=$((failed + 1))
+            fi
+        done
+    fi
+    if [[ $NO_SERVICES -eq 1 ]]; then
+        summary_add Services Skipped '--no-services; commands printed above'
+        return 0
+    fi
+    if [[ $failed -gt 0 ]]; then
+        summary_add Services Check "$failed systemctl command(s) failed; see the output above"
+    fi
+    # node_exporter is probed where it listens; 0.0.0.0 is reached through the loopback address.
+    host=${LISTEN%:*}
+    if [[ $host == 0.0.0.0 ]]; then
+        host=127.0.0.1
+    fi
+    log_step 'Waiting for the services'
+    wait_for_http node_exporter "http://$host:$port/metrics" "$port" "$timeout" || true
+    if [[ $COLLECTOR_ONLY -eq 0 ]]; then
+        wait_for_http Prometheus http://127.0.0.1:9090/-/ready 9090 "$timeout" || true
+        wait_for_http Grafana http://127.0.0.1:3000/api/health 3000 "$timeout" || true
+    fi
+    return 0
+}
+
+# ---------------------------------------------------------------------------
+# Uninstall and the exit status
+# ---------------------------------------------------------------------------
+# do_uninstall: disables and removes the units that are installed in $UNIT_DIR, then reloads systemd
+# and prints what was left. Only root is required. The install folder, the service account and
+# PowerShell stay: they may hold the operator's config, credentials and data, and other things may
+# use them, so the commands that remove them are printed instead.
+do_uninstall() {
+    local unit file
+    require_root
+    log_step 'Uninstall'
+    for unit in "${CORE_UNITS[@]}" "${STACK_UNITS[@]}"; do
+        file=$UNIT_DIR/$unit
+        if [[ ! -e $file ]]; then
+            summary_add "$unit" Skipped 'not installed'
+        elif ! systemctl_run disable --now "$unit"; then
+            summary_add "$unit" Check "cannot disable $unit, its file is kept; see the output above"
+        elif ! rm -f "$file"; then
+            summary_add "$unit" Check "cannot remove $file; see the output above"
+        else
+            summary_add "$unit" OK 'disabled and removed'
+        fi
+    done
+    if ! systemctl_run daemon-reload; then
+        summary_add systemd Check 'daemon-reload failed; see the output above'
+    fi
+    log_step 'Uninstall summary'
+    summary_print
+    log_step 'Left in place'
+    cat << EOF
+The install folder (config, credentials, metrics and the Prometheus and Grafana data), the service
+account and PowerShell are not removed. To remove them too, run:
+
+  rm -rf $ROOT
+  userdel $USER_NAME
+  rm -rf $PWSH_HOME $PWSH_LINK
+
+The last line only applies when this installer put PowerShell there; a PowerShell from your
+package manager is removed with the package manager.
+EOF
+    return 0
+}
+
+# summary_has_problem: returns 0 when a row of the summary is Check or Missing installer, 1 when
+# none is.
+summary_has_problem() {
+    local i row rest result
+    for ((i = 0; i < ${#SUMMARY_ROWS[@]}; i++)); do
+        row=${SUMMARY_ROWS[i]}
+        rest=${row#*$'\t'}
+        result=${rest%%$'\t'*}
+        case $result in
+            Check | 'Missing installer') return 0 ;;
+        esac
+    done
+    return 1
 }
 
 # What the operator does next, after the summary. The scrape job repeats the one in
@@ -645,7 +831,11 @@ main() {
     parse_args "$@"
     echo "Install folder: $ROOT"
     if [[ $UNINSTALL -eq 1 ]]; then
-        die '--uninstall is not available yet'
+        do_uninstall
+        if summary_has_problem; then
+            exit 1
+        fi
+        return 0
     fi
     step_preconditions
     step_powershell
@@ -657,9 +847,14 @@ main() {
     run_step Prometheus step_prometheus
     run_step Grafana step_grafana
     run_step Units render_units
+    run_step Services step_services
     log_step 'Install summary'
     summary_print
     print_next_steps
+    if summary_has_problem; then
+        exit 1
+    fi
+    return 0
 }
 
 main "$@"
