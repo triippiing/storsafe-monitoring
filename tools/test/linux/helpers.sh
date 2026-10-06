@@ -120,21 +120,52 @@ fake_stub() {
 }
 
 # make_systemctl_shim <dir>: writes an executable <dir>/systemctl, a stand-in for the real one. It
-# appends its arguments as one space-joined line to $SYSTEMCTL_LOG and exits 0. "is-active [--quiet]
-# <unit>" exits 0 when the unit is named in $SYSTEMCTL_ACTIVE (space-separated), else 3 like the
-# real systemctl. Put <dir> first on the PATH of the installer run.
+# appends its arguments as one space-joined line to $SYSTEMCTL_LOG and exits 0, except for these
+# (the unit is the last argument, and the lists are space-separated unit names):
+#   is-active [--quiet] <unit>  exits 0 when the unit is in $SYSTEMCTL_ACTIVE, else 3 like the real
+#                               systemctl; without --quiet it prints active or inactive
+#   is-failed [--quiet] <unit>  exits 0 only when the unit is in $SYSTEMCTL_FAILED (default empty),
+#                               else 1
+#   cat <unit>                  exits 0 when the unit is in $SYSTEMCTL_PRESENT, else 1
+#   is-enabled <unit>           exits 0 and prints enabled when the unit is in $SYSTEMCTL_PRESENT,
+#                               else exits 1
+#   show <unit> -p <key>        ignores its arguments and prints fixed NextElapseUSecRealtime, ExecMainExitTimestamp and
+#                               ExecMainStatus lines whatever the key is; the status is
+#                               $SYSTEMCTL_EXEC_STATUS (default 0)
+# Put <dir> first on the PATH of the run under test.
 make_systemctl_shim() {
     mkdir -p "$1"
     cat > "$1/systemctl" << 'EOF'
 #!/bin/sh
 printf '%s\n' "$*" >> "${SYSTEMCTL_LOG:-/dev/null}"
+for unit in "$@"; do :; done
+quiet=
+[ "${2:-}" = --quiet ] && quiet=1
 case $1 in
     is-active)
-        for unit in "$@"; do :; done
         case " ${SYSTEMCTL_ACTIVE:-} " in
+            *" $unit "*) [ -n "$quiet" ] || echo active; exit 0 ;;
+        esac
+        [ -n "$quiet" ] || echo inactive
+        exit 3
+        ;;
+    is-failed)
+        case " ${SYSTEMCTL_FAILED:-} " in
             *" $unit "*) exit 0 ;;
         esac
-        exit 3
+        exit 1
+        ;;
+    cat | is-enabled)
+        case " ${SYSTEMCTL_PRESENT:-} " in
+            *" $unit "*) [ "$1" = cat ] || echo enabled; exit 0 ;;
+        esac
+        exit 1
+        ;;
+    show)
+        echo 'NextElapseUSecRealtime=Tue 2026-10-06 22:10:00 UTC'
+        echo 'ExecMainExitTimestamp=Tue 2026-10-06 22:05:00 UTC'
+        echo "ExecMainStatus=${SYSTEMCTL_EXEC_STATUS:-0}"
+        exit 0
         ;;
 esac
 exit 0
