@@ -4,14 +4,14 @@ here=$(cd "$(dirname "$0")" && pwd); source "$here/helpers.sh"; source "$here/..
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 cat > "$tmp/fakecurl" <<'EOF'
 #!/usr/bin/env bash
-out=""; while [ $# -gt 0 ]; do [ "$1" = -o ] && out=$2; url=$1; shift; done
-echo "$url" >> "${FAKE_LOG:?}"; [[ "$url" == *fail* ]] && exit 22; echo data > "$out"
+ARGV="$*"; out=""; while [ $# -gt 0 ]; do [ "$1" = -o ] && out=$2; url=$1; shift; done
+echo "$url" >> "${FAKE_LOG:?}"; echo "$ARGV" >> "${FAKE_ARGV:?}"
+echo partial > "$out"; [[ "$url" == *fail* ]] && exit 22; echo data > "$out"
 EOF
-chmod +x "$tmp/fakecurl"; export STORSAFE_CURL=$tmp/fakecurl FAKE_LOG=$tmp/log
+chmod +x "$tmp/fakecurl"; export STORSAFE_CURL=$tmp/fakecurl FAKE_LOG=$tmp/log FAKE_ARGV=$tmp/argv
 gi=$here/../../../linux/get-installers.sh
 # capture <stdout file> <stderr file> cmd...: runs the command with its output kept for the asserts.
 capture() { local o=$1 e=$2; shift 2; "$@" > "$o" 2> "$e"; }
-log_lines() { wc -l < "$FAKE_LOG"; }
 vers=(--prometheus-version 3.15.0 --grafana-version 12.0.2 --node-exporter-version 1.9.1 --powershell-version 7.4.6)
 
 [[ -x $gi ]] || assert_fail "get-installers.sh is executable"
@@ -25,6 +25,10 @@ assert_grep "$tmp/log" '^https://dl.grafana.com/oss/release/grafana-12.0.2.linux
 assert_grep "$tmp/log" '^https://github.com/prometheus/node_exporter/releases/download/v1.9.1/node_exporter-1.9.1.linux-amd64.tar.gz$'
 assert_grep "$tmp/log" '^https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/powershell-7.4.6-linux-x64.tar.gz$'
 assert_eq 4 "$(wc -l < "$tmp/log")" "four downloads"
+# The fetch command: curl -fL --retry 3 into <name>.part with the URL last; the file is moved into place afterwards.
+assert_eq 4 "$(grep -c '^-fL --retry 3 -o [^ ]*\.part https://[^ ]*$' "$tmp/argv" || true)" "every fetch is curl -fL --retry 3 -o <part> <url>"
+assert_grep "$tmp/argv" '^-fL --retry 3 -o [^ ]*/inst/grafana-12\.0\.2\.linux-amd64\.tar\.gz\.part https://dl\.grafana\.com/oss/release/grafana-12\.0\.2\.linux-amd64\.tar\.gz$'
+assert_eq data "$(<"$tmp/inst/grafana-12.0.2.linux-amd64.tar.gz")" "the finished file is the moved .part"
 assert_grep "$tmp/out1" '^get     https://dl.grafana.com/oss/release/grafana-12.0.2.linux-amd64.tar.gz$'
 assert_grep "$tmp/out1" '^ok      grafana-12.0.2.linux-amd64.tar.gz (0.0 MB)$'
 assert_grep "$tmp/out1" '^File  *Size$'
@@ -52,6 +56,7 @@ assert_eq 4 "$(wc -l < "$tmp/log")" "a failed download does not stop the others"
 assert_grep "$tmp/err4" '^warning: download failed: https://dl.grafana.com/oss/release/grafana-fail.linux-amd64.tar.gz$'
 assert_file "$tmp/inst2/node_exporter-1.12.1.linux-amd64.tar.gz"; assert_file "$tmp/inst2/powershell-7.6.6-linux-x64.tar.gz"
 assert_eq 0 "$(find "$tmp/inst2" -name '*grafana*' | wc -l)" "no grafana file or .part after the failure"
+assert_eq 0 "$(find "$tmp/inst2" -name '*.part' | wc -l)" "the partial file of the failed fetch is removed"
 assert_grep "$tmp/out4" '^File  *Size$'
 
 # --print-urls prints the four default URLs, touches no file and starts no download.
@@ -82,5 +87,7 @@ assert_eq "" "$(<"$tmp/out8")" "usage error writes nothing to stdout"
 assert_exit 2 capture "$tmp/out9" "$tmp/err9" "$gi" --dest "$tmp/bad" --grafana-version
 assert_grep "$tmp/err9" '^error: --grafana-version needs a value$'
 assert_exit 2 capture "$tmp/out10" "$tmp/err10" "$gi" --dest
+assert_exit 2 capture "$tmp/out11" "$tmp/err11" "$gi" --dest "$tmp/bad" --grafana-version --force
+assert_grep "$tmp/err11" '^error: --grafana-version needs a value$'
 [[ ! -e $tmp/bad ]] || assert_fail "a usage error creates nothing"
 exit "${FAILED:-0}"

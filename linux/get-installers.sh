@@ -2,7 +2,7 @@
 # Downloads the four third-party tarballs into installers/ (node_exporter, Prometheus, Grafana,
 # PowerShell). This is the Linux counterpart of Get-StorSafeInstallers.ps1.
 #
-# Versions default to the ones this package was tested with; override them with the --*-version
+# Versions default to the ones this package targets; override them with the --*-version
 # options. Check https://github.com/prometheus/node_exporter/releases, https://prometheus.io/download/,
 # https://grafana.com/grafana/download?platform=linux and
 # https://github.com/PowerShell/PowerShell/releases (the 7.6 LTS line) for newer ones.
@@ -12,8 +12,8 @@
 # If the host has no internet access, run --print-urls on a machine that has, download the four URLs
 # there and copy the files into installers/.
 #
-# Exit status: 0 when every file is in place, 2 when a download failed (the others are still tried)
-# or the command line is wrong.
+# Exit status: 0 when every file is in place, 1 when the destination folder cannot be created, 2 when a
+# download failed (the others are still tried) or the command line is wrong.
 #
 # Examples:
 #   linux/get-installers.sh
@@ -53,9 +53,10 @@ usage_error() {
     exit 2
 }
 
-# need_value "$@": the option in $1 must be followed by a non-empty value.
+# need_value "$@": the option in $1 must be followed by a value that is not empty and does not start
+# with a dash (that would be the next option; give a folder such as -x as ./-x).
 need_value() {
-    if [[ $# -lt 2 || -z $2 ]]; then
+    if [[ $# -lt 2 || -z $2 || $2 == -* ]]; then
         usage_error "$1 needs a value"
     fi
 }
