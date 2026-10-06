@@ -21,3 +21,6 @@ __pycache__/
 
 # Site configuration (appliance names and addresses); start from StorSafe.config.example.json
 StorSafe.config.json
+
+# Superpowers plan workspaces (ledgers, briefs, review packages)
+.superpowers/
