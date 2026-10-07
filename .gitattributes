@@ -7,3 +7,7 @@
 *.txt text eol=crlf
 *.yml text
 *.yaml text
+# The Linux scripts and workflows must stay LF even on a Windows checkout.
+linux/** text eol=lf
+*.sh text eol=lf
+.github/** text eol=lf

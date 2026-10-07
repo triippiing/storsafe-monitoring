@@ -1,0 +1,14 @@
+[Unit]
+Description=StorSafe monitoring: collector timer
+# Wants= starts the service when the timer is activated at boot, and OnBootSec=1min runs it again a
+# minute later; a run still in progress absorbs the second start.
+Wants=storsafe-collector.service
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=__INTERVAL__min
+AccuracySec=15s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

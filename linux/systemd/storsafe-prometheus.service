@@ -1,0 +1,17 @@
+[Unit]
+Description=StorSafe monitoring: Prometheus
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__ROOT__/prometheus
+ExecStart=__ROOT__/prometheus/prometheus --config.file=__ROOT__/prometheus/prometheus.yml --storage.tsdb.path=__ROOT__/prometheus/data --storage.tsdb.retention.time=__RETENTION__d --web.listen-address=127.0.0.1:9090
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

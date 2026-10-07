@@ -1,5 +1,8 @@
 # Test-only Prometheus config: scrapes the collector output served by "python3 -m http.server" (see README.md).
+# http.server sends the extensionless metrics file as application/octet-stream, which Prometheus 3 rejects
+# without a fallback (the field exists from Prometheus 3.0).
 global: {scrape_interval: 5s}
 scrape_configs:
   - job_name: test
+    fallback_scrape_protocol: PrometheusText0.0.4
     static_configs: [{targets: ['127.0.0.1:19100']}]

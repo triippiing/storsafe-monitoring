@@ -12,7 +12,7 @@ Everything here runs on Linux or Windows with PowerShell 7 (`pwsh`) and Python 3
    promtool check metrics < tools/test/out/storsafe.prom
    ```
    Expect "Wrote ... samples for 2 server(s)" and every `storsafe_check_success` at 1 (the second run also records a reclamation run finishing, because the mock reports reclaim running for its first two status calls).
-3. Validate the dashboards: serve the output file as `/metrics`, point a Prometheus at it, then run the validator.
+3. Validate the dashboards: serve the output file as `/metrics`, point a Prometheus at it, then run the validator. The test config needs Prometheus 3.0 or later: `python3 -m http.server` sends the extensionless file as `application/octet-stream`, which Prometheus 3 only accepts with the `fallback_scrape_protocol` line in `tools/test/prometheus-test.yml`, and 2.x rejects that field.
    ```
    ln -sf storsafe.prom tools/test/out/metrics
    (cd tools/test/out && python3 -m http.server 19100 --bind 127.0.0.1 &)
