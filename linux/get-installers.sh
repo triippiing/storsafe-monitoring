@@ -77,7 +77,7 @@ done
 
 # installers/ sits next to linux/, found from this script and not from the current directory.
 if [[ -z $dest ]]; then
-    script_dir=$(cd "$(dirname "$0")" && pwd)
+    script_dir=$(cd "$(dirname "$(realpath "$0")")" && pwd)
     dest=$(dirname "$script_dir")/installers
 fi
 

@@ -14,7 +14,8 @@ SKIP_DIRS = {".git", ".github", ".superpowers", "tools", "docs", "dist", "promet
 # Components the Linux installer unpacks next to the scripts; only at the top level, because
 # monitoring/grafana holds the provisioning files that ship.
 SKIP_TOP_DIRS = {"grafana", "node_exporter"}
-SKIP_FILES = {".gitignore", ".gitattributes", ".git"}
+# StorSafe.config.json is a site's own config (a clone that runs as an install has one).
+SKIP_FILES = {".gitignore", ".gitattributes", ".git", "StorSafe.config.json"}
 # Runtime folders ship with only their README.txt, whatever a dev checkout has in them.
 RUNTIME_DIRS = {"creds", "state", "events", "metrics", "reports", "installers"}
 
@@ -36,16 +37,30 @@ with zipfile.ZipFile(OUT, "w", zipfile.ZIP_DEFLATED) as z:
     for f in files:
         z.write(os.path.join(ROOT, f), TOP + f.replace(os.sep, "/"))
 
-# The tar carries the same entries in the same order, files only. Ownership is normalised and the mode is
-# 0755 for the scripts directly under linux/, 0644 for everything else.
+# The tar carries the same files in the same order, preceded by an entry for every folder on the way to
+# them (parents first), so that the umask of the root who extracts it cannot change the layout: a 027
+# umask would make folders the service account cannot enter. Ownership is normalised and the mode is
+# 0755 for the folders and the scripts directly under linux/, 0644 for everything else.
 def tar_filter(ti):
-    ti.mode = 0o755 if os.path.dirname(ti.name) == TOP + "linux" and ti.name.endswith(".sh") else 0o644
+    if ti.isdir() or (os.path.dirname(ti.name) == TOP + "linux" and ti.name.endswith(".sh")):
+        ti.mode = 0o755
+    else:
+        ti.mode = 0o644
     ti.uid = ti.gid = 0
     ti.uname = ti.gname = "root"
     ti.mtime = int(ti.mtime)  # whole seconds: the same header layout on every Python version
     return ti
 
+folders = {""}  # "" is the top folder
+for f in files:
+    parent = os.path.dirname(f)
+    while parent:
+        folders.add(parent)
+        parent = os.path.dirname(parent)
+
 with tarfile.open(OUT_TGZ, "w:gz") as t:
+    for folder in sorted(folders):
+        t.add(os.path.join(ROOT, folder), arcname=(TOP + folder.replace(os.sep, "/")).rstrip("/"), recursive=False, filter=tar_filter)
     for f in files:
         t.add(os.path.join(ROOT, f), arcname=TOP + f.replace(os.sep, "/"), recursive=False, filter=tar_filter)
 print(OUT)

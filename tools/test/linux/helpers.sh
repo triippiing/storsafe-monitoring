@@ -86,28 +86,30 @@ assert_exit() {
 # make_fake_tarballs <dir>: writes stand-ins for the four release tarballs the installer extracts
 # into <dir>: node_exporter, Prometheus, Grafana (each in its top folder, with executable stubs
 # that do nothing) and PowerShell (a pwsh stub at the archive root). The names follow the real
-# releases.
+# releases, and so does the owner: uid 1001, like the upstream tarballs, which carry the owner of the
+# machine that built them (a test sees whether the installer keeps it).
 make_fake_tarballs() {
     local dir=$1 work top
+    local -a own=(--owner=1001 --group=1001)
     mkdir -p "$dir"
     work=$(mktemp -d)
     top=node_exporter-1.9.1.linux-amd64
     mkdir -p "$work/$top"
     fake_stub "$work/$top/node_exporter"
-    tar -czf "$dir/$top.tar.gz" -C "$work" "$top"
+    tar -czf "$dir/$top.tar.gz" "${own[@]}" -C "$work" "$top"
     top=prometheus-3.15.0.linux-amd64
     mkdir -p "$work/$top"
     fake_stub "$work/$top/prometheus"
     fake_stub "$work/$top/promtool"
     printf 'global:\n  scrape_interval: 15s\n' > "$work/$top/prometheus.yml"
-    tar -czf "$dir/$top.tar.gz" -C "$work" "$top"
+    tar -czf "$dir/$top.tar.gz" "${own[@]}" -C "$work" "$top"
     top=grafana-v12.0.2
     mkdir -p "$work/$top/bin" "$work/$top/conf/provisioning/datasources" "$work/$top/conf/provisioning/dashboards"
     fake_stub "$work/$top/bin/grafana"
-    tar -czf "$dir/grafana-12.0.2.linux-amd64.tar.gz" -C "$work" "$top"
+    tar -czf "$dir/grafana-12.0.2.linux-amd64.tar.gz" "${own[@]}" -C "$work" "$top"
     mkdir -p "$work/ps"
     fake_stub "$work/ps/pwsh"
-    tar -czf "$dir/powershell-7.4.6-linux-x64.tar.gz" -C "$work/ps" pwsh
+    tar -czf "$dir/powershell-7.4.6-linux-x64.tar.gz" "${own[@]}" -C "$work/ps" pwsh
     rm -rf "$work"
     return 0
 }
@@ -116,6 +118,21 @@ make_fake_tarballs() {
 fake_stub() {
     printf '#!/bin/sh\nexit 0\n' > "$1"
     chmod 755 "$1"
+    return 0
+}
+
+# make_runuser_shim <dir>: writes an executable <dir>/runuser that runs "runuser -u <user> -- cmd..."
+# as the current user, for a test that installs for an account that cannot run the command. Put <dir>
+# first on the PATH of the run under test.
+make_runuser_shim() {
+    mkdir -p "$1"
+    cat > "$1/runuser" << 'EOF'
+#!/bin/sh
+[ "$1" = -u ] && shift 2
+[ "${1:-}" = -- ] && shift
+exec "$@"
+EOF
+    chmod 755 "$1/runuser"
     return 0
 }
 
@@ -132,11 +149,13 @@ fake_stub() {
 #   list-timers ... <timer>     prints one fixed line for storsafe-collector.timer: next run
 #                               "Tue 2026-10-06 22:10:00 UTC" when the timer is in
 #                               $SYSTEMCTL_ACTIVE, else n/a in the first four fields
-#   show <unit> -p <key>        ignores its arguments and prints fixed ExecMainExitTimestamp and
-#                               ExecMainStatus lines whatever the key is; the timestamp is
-#                               $SYSTEMCTL_EXIT_TIMESTAMP (default "Tue 2026-10-06 22:05:00 UTC";
-#                               set it empty for a service that never ran) and the status is
-#                               $SYSTEMCTL_EXEC_STATUS (default 0)
+#   show <unit> -p <key>        ignores its arguments and prints fixed ExecMainExitTimestamp,
+#                               ExecMainStatus and ExecMainCode lines whatever the key is; the
+#                               timestamp is $SYSTEMCTL_EXIT_TIMESTAMP (default "Tue 2026-10-06
+#                               22:05:00 UTC"; set it empty for a service that never ran), the status
+#                               is $SYSTEMCTL_EXEC_STATUS (default 0) and the code is
+#                               $SYSTEMCTL_EXEC_CODE (default 1, exited; 2 is killed, and the status
+#                               is then the signal number), as systemctl show prints them
 # Put <dir> first on the PATH of the run under test.
 make_systemctl_shim() {
     mkdir -p "$1"
@@ -182,6 +201,7 @@ case $1 in
     show)
         echo "ExecMainExitTimestamp=${SYSTEMCTL_EXIT_TIMESTAMP-Tue 2026-10-06 22:05:00 UTC}"
         echo "ExecMainStatus=${SYSTEMCTL_EXEC_STATUS:-0}"
+        echo "ExecMainCode=${SYSTEMCTL_EXEC_CODE:-1}"
         exit 0
         ;;
 esac

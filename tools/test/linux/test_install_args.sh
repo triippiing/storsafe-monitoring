@@ -14,8 +14,9 @@ assert_exit 1 quiet "$inst" --no-services --root "$tmp/with space"
 out=$("$inst" --no-services --root "$tmp/with space" 2>&1 || true)
 echo "$out" | grep -q 'contains a space' || { echo "FAIL space message"; FAILED=1; }
 mkdir -p "$tmp/noconfig"; cp "$here/../../../StorSafe.config.example.json" "$tmp/noconfig/"
-out=$("$inst" --no-services --root "$tmp/noconfig/" --user "$(id -un)" 2>&1 || true)
+out=$(umask 077; "$inst" --no-services --root "$tmp/noconfig/" --user "$(id -un)" 2>&1 || true)
 assert_file "$tmp/noconfig/StorSafe.config.json"
+assert_eq 644 "$(stat -c %a "$tmp/noconfig/StorSafe.config.json")" "the new config is readable by the service account, whatever umask root has"
 echo "$out" | grep -q 'edit the Servers list' || { echo "FAIL config hint"; FAILED=1; }
 echo "$out" | grep -q "$tmp/noconfig//" && { echo "FAIL double slash in root"; FAILED=1; }
 out=$(cd "$tmp" && "$inst" --no-services --root noconfig --user "$(id -un)" 2>&1 || true)
@@ -25,6 +26,11 @@ mkdir -p "$tmp/bin"; printf '#!/bin/sh\nexit 1\n' > "$tmp/bin/pwsh"; chmod +x "$
 printf 'ID=rocky\nID_LIKE=rhel\n' > "$tmp/os"
 out=$(PATH="$tmp/bin:$PATH" OS_RELEASE_FILE=$tmp/os "$inst" --no-services --root "$tmp/noconfig" --user "$(id -un)" 2>&1 || true)
 echo "$out" | grep -q 'dnf install libicu' || { echo "FAIL icu hint"; FAILED=1; }
+# the Debian family names the package after the release: the hint gives two names and the command that finds the right one
+printf 'ID=ubuntu\nID_LIKE=debian\n' > "$tmp/os2"
+out=$(PATH="$tmp/bin:$PATH" OS_RELEASE_FILE=$tmp/os2 "$inst" --no-services --root "$tmp/noconfig" --user "$(id -un)" 2>&1 || true)
+echo "$out" | grep -q 'apt-get install libicu72 (Debian 12) or libicu74 (Ubuntu 24.04)' || { echo "FAIL debian icu names"; FAILED=1; }
+echo "$out" | grep -qF "apt-cache search --names-only '^libicu[0-9]+\$'" || { echo "FAIL debian icu search command"; FAILED=1; }
 # every option is in the usage text, with its default where it has one
 usage=$("$inst" --help)
 for opt in --root --user --interval-minutes --retention-days --collector-only --listen --skip-credentials --no-services --unit-dir --uninstall; do

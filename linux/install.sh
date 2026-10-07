@@ -24,8 +24,8 @@
 # Each step is idempotent and can be re-run after adding installers or editing the config. The
 # summary at the end lists every step as OK, Skipped, Missing installer or Check. A step that
 # nothing after it can work without stops the installer: the preconditions with an error message,
-# PowerShell, the user, the config and the collector test run (a config or credential error) after
-# printing the summary of what was done so far.
+# PowerShell, the user, the config, the package permissions and the collector test run (a config or
+# credential error) after printing the summary of what was done so far.
 #
 # Exit status: 0 when the installer ran through and no row of the summary is Check or Missing
 # installer, 1 when a step stopped it or such a row is there, 2 when the command line is wrong.
@@ -57,6 +57,11 @@ STACK_UNITS=(storsafe-prometheus.service storsafe-grafana.service)
 # The unit files render_units wrote or found up to date. Filled by render_units, read by the
 # services step; empty when the unit files could not be written.
 RENDERED_UNITS=()
+
+# Units whose program is not installed (the component's step ended in Missing installer or Check),
+# each with the reason for the Services row. Filled by run_step, read by the services step, which
+# neither enables nor waits for them: a unit without its program would only fail every 5 s.
+declare -A NOT_ENABLED=()
 
 usage() {
     cat << 'EOF'
@@ -176,15 +181,27 @@ stop_here() {
     exit 1
 }
 
-# run_step <label> <function>: runs one installer step so that a failure is a Check row and the
-# steps after it still run. A step that returns non-zero without adding a row of its own gets
+# run_step <label> <function> [unit]: runs one installer step so that a failure is a Check row and
+# the steps after it still run. A step that returns non-zero without adding a row of its own gets
 # "<label>  Check  failed; see the output above". Inside "if !" set -e is off for the whole step,
-# so a step must test the commands it cares about and return 1 itself.
+# so a step must test the commands it cares about and return 1 itself. The step of a component
+# names the unit that runs it: when the step fails the unit goes in NOT_ENABLED, with the reason
+# "installer missing" if the row the failure added (the last) is Missing installer, else "its step
+# failed".
 run_step() {
-    local label=$1 fn=$2 before=${#SUMMARY_ROWS[@]}
+    local label=$1 fn=$2 unit=${3:-} before=${#SUMMARY_ROWS[@]} row result reason='its step failed'
     if ! "$fn"; then
         if [[ ${#SUMMARY_ROWS[@]} -le $before ]]; then
             summary_add "$label" Check 'failed; see the output above'
+        fi
+        if [[ -n $unit ]]; then
+            row=${SUMMARY_ROWS[${#SUMMARY_ROWS[@]} - 1]}
+            result=${row#*$'\t'}
+            result=${result%%$'\t'*}
+            if [[ $result == 'Missing installer' ]]; then
+                reason='installer missing'
+            fi
+            NOT_ENABLED[$unit]=$reason
         fi
     fi
     return 0
@@ -198,11 +215,15 @@ find_installer() {
 }
 
 # icu_package_line: prints the command that installs the ICU library PowerShell needs, for the
-# distribution family. The package names live here and nowhere else.
+# distribution family. The package names live here and nowhere else. The Debian family names it
+# after the release, so the hint also gives the command that finds the name on any of them.
 icu_package_line() {
     case $(detect_family) in
         rhel) echo 'dnf install libicu' ;;
-        debian) echo 'apt-get install libicu72 (Debian 12) or libicu74 (Ubuntu 24.04)' ;;
+        debian)
+            echo 'apt-get install libicu72 (Debian 12) or libicu74 (Ubuntu 24.04);' \
+                "other releases: apt-cache search --names-only '^libicu[0-9]+\$'"
+            ;;
         *) echo "install your distribution's ICU package" ;;
     esac
     return 0
@@ -322,7 +343,7 @@ step_powershell() {
         fi
         echo "Extracting $tarball to $PWSH_HOME"
         if ! mkdir -p "$PWSH_HOME" ||
-            ! tar -xzf "$tarball" -C "$PWSH_HOME" ||
+            ! tar -xzf "$tarball" -C "$PWSH_HOME" --no-same-owner ||
             ! chmod 755 "$PWSH_HOME/pwsh" ||
             ! ln -sf "$PWSH_HOME/pwsh" "$PWSH_LINK"; then
             summary_add PowerShell Check "cannot install $tarball; see the output above"
@@ -377,13 +398,14 @@ step_user() {
 # ---------------------------------------------------------------------------
 # 4. Config
 # ---------------------------------------------------------------------------
-# A missing StorSafe.config.json is created from the example and the installer stops, so the
-# operator can edit the Servers list, exactly like the Windows installer.
+# A missing StorSafe.config.json is created from the example (mode 0644, whatever root's umask, for
+# the service account to read) and the installer stops, so the operator can edit the Servers list,
+# exactly like the Windows installer.
 step_config() {
     local config=$ROOT/StorSafe.config.json
     log_step 'Config'
     if [[ ! -f $config ]]; then
-        if ! cp "$ROOT/StorSafe.config.example.json" "$config"; then
+        if ! install -m 644 "$ROOT/StorSafe.config.example.json" "$config"; then
             summary_add Config Check "cannot create $config; see the output above"
             stop_here
         fi
@@ -396,7 +418,40 @@ step_config() {
 }
 
 # ---------------------------------------------------------------------------
-# 5. Credential files
+# 5. Package permissions
+# ---------------------------------------------------------------------------
+# The service account must be able to read the package, and root's umask (027 on a hardened host),
+# a 0750 folder from sudo mkdir or git clone, or a 0640 config from sudo cp would hide it. Adds
+# go+rX over the install folder and the package tree and never takes a permission away; creds/ and
+# the two data/ folders are left as they are, and -type leaves symlinks alone (a component folder
+# may be one). Then checks as the service account, unless that is root itself (--user root, as the
+# tests do): the one way left to fail is a folder above the install folder, which is the
+# operator's to open.
+step_readable() {
+    local item op path
+    local -a skip=(-path "$ROOT/creds" -o -path "$ROOT/prometheus/data" -o -path "$ROOT/grafana/data")
+    log_step 'Package permissions'
+    if ! find "$ROOT" \( "${skip[@]}" \) -prune -o \
+        \( -type d -exec chmod go+rx {} + \) -o \( -type f -exec chmod go+r {} + \); then
+        summary_add 'Package permissions' Check "cannot set the permissions under $ROOT; see the output above"
+        stop_here
+    fi
+    if [[ $(id -un) != "$USER_NAME" ]]; then
+        for item in r:StorSafe.psm1 r:StorSafe.config.json x:monitoring/dashboards; do
+            op=-${item%%:*}
+            path=$ROOT/${item#*:}
+            if ! run_as_user test "$op" "$path"; then
+                summary_add 'Package permissions' Check "$path is not readable by $USER_NAME; check the folders above $ROOT"
+                stop_here
+            fi
+        done
+    fi
+    summary_add 'Package permissions' OK "readable by $USER_NAME"
+    return 0
+}
+
+# ---------------------------------------------------------------------------
+# 6. Credential files
 # ---------------------------------------------------------------------------
 # Every appliance in the config needs its credential file (CredentialFile, relative paths resolve
 # against the install folder). A missing one is prompted for and saved as the service account, which
@@ -471,7 +526,7 @@ step_credentials() {
 }
 
 # ---------------------------------------------------------------------------
-# 6. Collector test run
+# 7. Collector test run
 # ---------------------------------------------------------------------------
 # One real run, as the service account and from the install folder like the service, with the output
 # on the screen. Exit 2 (a check failed) is a Check row; exit 3 (config or credential error) or no
@@ -500,16 +555,17 @@ step_collector_test() {
 }
 
 # ---------------------------------------------------------------------------
-# 7. node_exporter, Prometheus and Grafana
+# 8. node_exporter, Prometheus and Grafana
 # ---------------------------------------------------------------------------
 # extract_component <name> <glob> <strip> [label]: unpacks the newest $INSTALLERS/<glob> into
 # $ROOT/<name> unless the folder already holds it (the tarball's file name is kept in
 # <name>/.version), so a newer tarball in installers/ is an upgrade. An upgrade replaces everything
-# in the folder except data/, and the folder belongs to the service account afterwards (the
-# service writes below it; data/ is not walked, a Prometheus TSDB can be large and the service owns
-# it already). The trailing slash on $dir lets find look inside a folder that is a symlink. Adds
-# the summary row (named <label>, default <name>) and returns 1 when there is no tarball or it
-# cannot be unpacked.
+# in the folder except data/. What is unpacked belongs to root, neither to the archive's owner
+# (--no-same-owner: the upstream tarballs carry the uid of the machine that built them) nor to the
+# service account: no program writes below its folder except in data/, which the Prometheus and
+# Grafana steps hand to the service, so a compromised service cannot rewrite its own program. The
+# trailing slash on $dir lets find look inside a folder that is a symlink. Adds the summary row
+# (named <label>, default <name>) and returns 1 when there is no tarball or it cannot be unpacked.
 extract_component() {
     local name=$1 glob=$2 strip=$3 label=${4:-$1} dir=$ROOT/$1 tarball base have=""
     tarball=$(find_installer "$glob")
@@ -528,10 +584,8 @@ extract_component() {
     echo "Extracting $base to $dir"
     if ! mkdir -p "$dir" ||
         ! find "$dir/" -mindepth 1 -maxdepth 1 ! -name data -exec rm -rf {} + ||
-        ! tar -xzf "$tarball" -C "$dir" --strip-components="$strip" ||
-        ! printf '%s\n' "$base" > "$dir/.version" ||
-        ! chown "$USER_NAME:" "$dir" ||
-        ! find "$dir/" -mindepth 1 -maxdepth 1 ! -name data -exec chown -R "$USER_NAME:" {} +; then
+        ! tar -xzf "$tarball" -C "$dir" --strip-components="$strip" --no-same-owner ||
+        ! printf '%s\n' "$base" > "$dir/.version"; then
         summary_add "$label" Check "cannot extract $base; see the output above"
         return 1
     fi
@@ -568,7 +622,7 @@ step_prometheus() {
 # Grafana gets the data source and the dashboard provider from monitoring/grafana/, the same files
 # the Windows install uses; the provider's __DASHBOARD_DIR__ becomes the dashboards in this package.
 # data/ is chowned recursively: extract_component skips it, and one that came out of a tarball
-# would keep the archive's owner (Grafana's data is small, unlike Prometheus's).
+# would belong to root (Grafana's data is small, unlike Prometheus's, which is not walked).
 step_grafana() {
     local dir=$ROOT/grafana prov=$ROOT/grafana/conf/provisioning rendered dashboards
     log_step 'Grafana'
@@ -597,7 +651,7 @@ step_grafana() {
 }
 
 # ---------------------------------------------------------------------------
-# 8. Systemd units
+# 9. Systemd units
 # ---------------------------------------------------------------------------
 # Renders the unit files from linux/systemd/ into $UNIT_DIR. Each is rendered to a temporary file
 # first, so that a unit is only replaced, and only recorded in CHANGED_UNITS, when its content
@@ -643,7 +697,7 @@ render_units() {
 }
 
 # ---------------------------------------------------------------------------
-# 9. Services
+# 10. Services
 # ---------------------------------------------------------------------------
 # systemctl_run <args...>: runs systemctl with the arguments. With --no-services it only prints
 # "would run: systemctl <args>" and succeeds, so that the operator sees what a full run would do.
@@ -666,6 +720,11 @@ wait_for_http() {
     return 1
 }
 
+# unit_skipped <unit>: returns 0 when the unit is in NOT_ENABLED, 1 otherwise.
+unit_skipped() {
+    [[ -n ${NOT_ENABLED[$1]:-} ]]
+}
+
 # Reloads systemd, enables and starts every rendered unit (the collector's timer, not the oneshot
 # service it triggers: the timer's Wants= makes it run once at once), restarts a service whose
 # unit file, config or program changed while it was running, and waits until the metrics endpoint
@@ -673,18 +732,25 @@ wait_for_http() {
 # restarted: it is a oneshot that its timer starts. A changed timer that runs is restarted, because
 # a running timer keeps its old schedule until then (the restart also runs the collector once, through
 # the timer's Wants=). Which changed units run is asked before enable --now, which would start the
-# others. With --no-services the commands are only printed and nothing is waited for.
+# others. A unit in NOT_ENABLED (its program is not installed) is not enabled, restarted or waited
+# for, and the Services row names it. With --no-services the commands are only printed and nothing
+# is waited for.
 step_services() {
-    local unit host port=${LISTEN##*:} timeout=${STORSAFE_HTTP_TIMEOUT:-60} failed=0
+    local unit host port=${LISTEN##*:} timeout=${STORSAFE_HTTP_TIMEOUT:-60} failed=0 skipped=""
     local -a restart=()
     log_step 'Systemd services'
     if [[ ${#RENDERED_UNITS[@]} -eq 0 ]]; then
         summary_add Services Check 'the unit files were not written; nothing enabled'
         return 1
     fi
+    for unit in "${RENDERED_UNITS[@]}"; do
+        if unit_skipped "$unit"; then
+            skipped+="${skipped:+; }$unit not enabled: ${NOT_ENABLED[$unit]}"
+        fi
+    done
     if [[ ${#CHANGED_UNITS[@]} -gt 0 ]]; then
         for unit in "${CHANGED_UNITS[@]}"; do
-            if [[ $unit == storsafe-collector.service ]]; then
+            if [[ $unit == storsafe-collector.service ]] || unit_skipped "$unit"; then
                 continue
             fi
             if [[ $NO_SERVICES -eq 1 ]] || systemctl is-active --quiet "$unit" > /dev/null 2>&1; then
@@ -696,7 +762,7 @@ step_services() {
         failed=$((failed + 1))
     fi
     for unit in "${RENDERED_UNITS[@]}"; do
-        if [[ $unit == storsafe-collector.service ]]; then
+        if [[ $unit == storsafe-collector.service ]] || unit_skipped "$unit"; then
             continue
         fi
         if ! systemctl_run enable --now "$unit"; then
@@ -713,11 +779,14 @@ step_services() {
         done
     fi
     if [[ $NO_SERVICES -eq 1 ]]; then
-        summary_add Services Skipped '--no-services; commands printed above'
+        summary_add Services Skipped "--no-services; commands printed above${skipped:+; $skipped}"
         return 0
     fi
     if [[ $failed -gt 0 ]]; then
         summary_add Services Check "$failed systemctl command(s) failed; see the output above"
+    fi
+    if [[ -n $skipped ]]; then
+        summary_add Services Check "$skipped"
     fi
     # node_exporter is probed where it listens; 0.0.0.0 is reached through the loopback address.
     host=${LISTEN%:*}
@@ -725,10 +794,16 @@ step_services() {
         host=127.0.0.1
     fi
     log_step 'Waiting for the services'
-    wait_for_http node_exporter "http://$host:$port/metrics" "$port" "$timeout" || true
+    if ! unit_skipped storsafe-node-exporter.service; then
+        wait_for_http node_exporter "http://$host:$port/metrics" "$port" "$timeout" || true
+    fi
     if [[ $COLLECTOR_ONLY -eq 0 ]]; then
-        wait_for_http Prometheus http://127.0.0.1:9090/-/ready 9090 "$timeout" || true
-        wait_for_http Grafana http://127.0.0.1:3000/api/health 3000 "$timeout" || true
+        if ! unit_skipped storsafe-prometheus.service; then
+            wait_for_http Prometheus http://127.0.0.1:9090/-/ready 9090 "$timeout" || true
+        fi
+        if ! unit_skipped storsafe-grafana.service; then
+            wait_for_http Grafana http://127.0.0.1:3000/api/health 3000 "$timeout" || true
+        fi
     fi
     return 0
 }
@@ -737,13 +812,21 @@ step_services() {
 # Uninstall and the exit status
 # ---------------------------------------------------------------------------
 # do_uninstall: disables and removes the units that are installed in $UNIT_DIR, then reloads systemd
-# and prints what was left. Only root is required. The install folder, the service account and
-# PowerShell stay: they may hold the operator's config, credentials and data, and other things may
-# use them, so the commands that remove them are printed instead.
+# and prints what was left. Only root is required. The install folder, the service account (named
+# from the User= of the collector unit, read before the unit is removed) and PowerShell stay: they
+# may hold the operator's config, credentials and data, and other things may use them, so the
+# commands that remove them are printed instead.
 do_uninstall() {
-    local unit file note
+    local unit file note line user=$USER_NAME
     require_root
     log_step 'Uninstall'
+    # The account is the one the units run as, whatever --user says now.
+    if [[ -r $UNIT_DIR/storsafe-collector.service ]]; then
+        line=$(grep -m 1 '^User=.' "$UNIT_DIR/storsafe-collector.service" || true)
+        if [[ -n $line ]]; then
+            user=${line#User=}
+        fi
+    fi
     for unit in "${CORE_UNITS[@]}" "${STACK_UNITS[@]}"; do
         file=$UNIT_DIR/$unit
         if [[ ! -e $file ]]; then
@@ -771,7 +854,7 @@ The install folder (config, credentials, metrics and the Prometheus and Grafana 
 account and PowerShell are not removed. To remove them too, run:
 
   rm -rf $ROOT
-  userdel $USER_NAME
+  userdel $user
   rm -rf $PWSH_HOME $PWSH_LINK
 
 The last line only applies when this installer put PowerShell there; a PowerShell from your
@@ -842,15 +925,19 @@ main() {
         fi
         return 0
     fi
+    # What the installer creates is readable by the service account whatever root's umask is (027
+    # on a hardened host); the credential prompt narrows it again for its own files.
+    umask 022
     step_preconditions
     step_powershell
     step_user
     step_config
+    step_readable
     run_step Credentials step_credentials
     run_step 'Collector test' step_collector_test
-    run_step node_exporter step_node_exporter
-    run_step Prometheus step_prometheus
-    run_step Grafana step_grafana
+    run_step node_exporter step_node_exporter storsafe-node-exporter.service
+    run_step Prometheus step_prometheus storsafe-prometheus.service
+    run_step Grafana step_grafana storsafe-grafana.service
     run_step Units render_units
     run_step Services step_services
     log_step 'Install summary'

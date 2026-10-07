@@ -108,6 +108,11 @@ timer_next_run() {
     fi
 }
 
+# collector_result: prints the collector's last result in words, from ExecMainStatus and ExecMainCode.
+collector_result() {
+    exec_result "$(unit_prop "$COLLECTOR" ExecMainStatus)" "$(unit_prop "$COLLECTOR" ExecMainCode)"
+}
+
 # collector_detail: prints "last run <time>, result <...>", or "not run yet" when the service has
 # no exit time.
 collector_detail() {
@@ -116,12 +121,21 @@ collector_detail() {
     if [[ $when == n/a ]]; then
         echo 'not run yet'
     else
-        echo "last run $when, result $(exec_result "$(unit_prop "$COLLECTOR" ExecMainStatus)")"
+        echo "last run $when, result $(collector_result)"
     fi
 }
 
-# exec_result <ExecMainStatus>: the collector's exit code in words.
+# exec_result <ExecMainStatus> [ExecMainCode]: the collector's exit code in words. A run that
+# systemd killed (the TimeoutStartSec, say) has the signal number in ExecMainStatus, and its
+# ExecMainCode is 2 (killed) or 3 (dumped core), which systemctl show prints as a number; the words
+# are accepted too.
 exec_result() {
+    case ${2:-} in
+        2 | 3 | killed | dumped)
+            echo "killed (signal $1)"
+            return 0
+            ;;
+    esac
     case $1 in
         0) echo OK ;;
         2) echo 'a check failed' ;;
@@ -208,7 +222,7 @@ change_units() {
 # a good run; "not failed" is what counts.
 collector_line() {
     local result
-    result=$(exec_result "$(unit_prop "$COLLECTOR" ExecMainStatus)")
+    result=$(collector_result)
     if systemctl is-failed --quiet "$COLLECTOR" 2> /dev/null; then
         echo "failed, result $result"
         return 1

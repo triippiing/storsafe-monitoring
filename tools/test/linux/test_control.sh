@@ -34,6 +34,11 @@ for pair in '2:a check failed' '3:config error' '1:exit 1'; do
     SYSTEMCTL_PRESENT=storsafe-collector.service SYSTEMCTL_EXEC_STATUS=${pair%%:*} "$ctl" status > "$tmp/st2"
     assert_grep "$tmp/st2" ", result ${pair#*:}\$"
 done
+# A run systemd killed (the TimeoutStartSec) shows the signal, not "exit 15"; a code that exited stays exit N.
+SYSTEMCTL_PRESENT=storsafe-collector.service SYSTEMCTL_EXEC_CODE=2 SYSTEMCTL_EXEC_STATUS=15 "$ctl" status > "$tmp/st2"
+assert_grep "$tmp/st2" ', result killed (signal 15)$'
+SYSTEMCTL_PRESENT=storsafe-collector.service SYSTEMCTL_EXEC_CODE=1 SYSTEMCTL_EXEC_STATUS=15 "$ctl" status > "$tmp/st2"
+assert_grep "$tmp/st2" ', result exit 15$'
 # A service that never ran has no exit time; a timer that is not active has no next run.
 SYSTEMCTL_PRESENT=storsafe-collector.service SYSTEMCTL_EXIT_TIMESTAMP="" "$ctl" status > "$tmp/st2"
 assert_grep "$tmp/st2" '^storsafe-collector.service  *inactive  *enabled  *not run yet$'
@@ -81,6 +86,9 @@ assert_eq "$(printf 'start storsafe-collector.timer\nstart storsafe-collector.se
 rc=0; SYSTEMCTL_FAILED="storsafe-collector.service" SYSTEMCTL_EXEC_STATUS=2 "$ctl" resume > "$tmp/out" 2>&1 || rc=$?
 assert_eq 1 "$rc" "resume with a failed collector run exits 1"
 assert_grep "$tmp/out" '^storsafe-collector.service  failed, result a check failed$'
+rc=0; SYSTEMCTL_FAILED="storsafe-collector.service" SYSTEMCTL_EXEC_CODE=2 SYSTEMCTL_EXEC_STATUS=15 "$ctl" resume > "$tmp/out" 2>&1 || rc=$?
+assert_eq 1 "$rc" "resume with a timed-out collector run exits 1"
+assert_grep "$tmp/out" '^storsafe-collector.service  failed, result killed (signal 15)$'
 export SYSTEMCTL_ACTIVE=""                                          # the timer did not start
 assert_exit 1 quiet "$ctl" resume
 # stop on a host with nothing installed: every unit absent, exit 0

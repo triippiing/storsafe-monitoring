@@ -77,6 +77,13 @@ from_elsewhere() { cd "$tmp/elsewhere" && ../repo/linux/get-installers.sh "$@" >
 assert_exit 0 from_elsewhere "${vers[@]}"
 assert_file "$tmp/repo/installers/prometheus-3.15.0.linux-amd64.tar.gz"
 assert_eq 0 "$(find "$tmp/elsewhere" -mindepth 1 | wc -l)" "nothing is written to the current directory"
+# Run through a symlink, the files go next to the real script, not next to the link.
+ln -s "$tmp/repo/linux/get-installers.sh" "$tmp/elsewhere/gi"
+from_link() { cd "$tmp/elsewhere" && ./gi "$@" > /dev/null; }
+assert_exit 0 from_link "${vers[@]}" --prometheus-version 3.15.1
+assert_file "$tmp/repo/installers/prometheus-3.15.1.linux-amd64.tar.gz"
+[[ ! -e $tmp/installers ]] || assert_fail "a symlinked script writes next to the link's folder"
+assert_eq 1 "$(find "$tmp/elsewhere" -mindepth 1 | wc -l)" "only the symlink is in the current directory"
 
 # Usage: --help prints to stdout and exits 0; bad options print to stderr and exit 2 without creating anything.
 assert_exit 0 capture "$tmp/out7" "$tmp/err7" "$gi" --help

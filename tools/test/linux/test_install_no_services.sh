@@ -6,9 +6,12 @@ inst=$here/../../../linux/install.sh; repo=$here/../../..; tmp=$(mktemp -d); tra
 root=$tmp/root; mkdir -p "$root"; (cd "$repo" && git archive HEAD | tar -x -C "$root")
 cp "$repo/tools/test/mock.config.json" "$root/StorSafe.config.json"; cp "$repo/tools/test/mock-credential.xml" "$root/"
 make_fake_tarballs "$root/installers"
+# A hardened host: root's umask is 027, and the package folder, a folder, the config and two files are not
+# readable by others. The installer makes them so (go+rX, never less) and creates its own folders 0755.
+chmod 750 "$root" "$root/monitoring/dashboards"; chmod 640 "$root/StorSafe.psm1" "$root/monitoring/prometheus.yml" "$root/StorSafe.config.json"
 # first_run: the first installer run with its output kept, so that the summary rows can be checked
 # shellcheck disable=SC2329 # called through assert_exit
-first_run() { "$inst" --no-services --root "$root" --user "$(id -un)" --unit-dir "$tmp/units" --skip-credentials > "$tmp/run1.out" 2>&1; }
+first_run() { ( umask 027; "$inst" --no-services --root "$root" --user "$(id -un)" --unit-dir "$tmp/units" --skip-credentials ) > "$tmp/run1.out" 2>&1; }
 assert_exit 0 first_run
 assert_file "$root/metrics/storsafe.prom"
 assert_file "$root/node_exporter/node_exporter"; assert_eq node_exporter-1.9.1.linux-amd64.tar.gz "$(cat "$root/node_exporter/.version")"
@@ -26,6 +29,16 @@ assert_grep "$tmp/run1.out" '^Prometheus  *OK  *extracted prometheus-3.15.0.linu
 assert_grep "$tmp/run1.out" '^Grafana  *OK  *extracted grafana-12.0.2.linux-amd64.tar.gz$'
 assert_grep "$tmp/run1.out" '^Units  *OK  *5 unit file(s) in '
 assert_grep "$tmp/run1.out" 'Open Grafana at http://.*:3000'
+assert_grep "$tmp/run1.out" "^Package permissions  *OK  *readable by $(id -un)\$"
+for p in "" monitoring/dashboards node_exporter prometheus grafana grafana/conf/provisioning/dashboards; do
+  assert_eq 755 "$(stat -c %a "$root/$p")" "mode of folder $root/$p"
+done
+for p in StorSafe.psm1 StorSafe.config.json monitoring/prometheus.yml; do assert_eq 644 "$(stat -c %a "$root/$p")" "mode of $p"; done
+assert_eq 700 "$(stat -c %a "$root/creds")" "creds stays 0700"
+# the unpacked programs belong to root, not to the owner the tarball carries (uid 1001, like the upstream ones),
+# and the data folders to the service account
+for p in node_exporter/node_exporter prometheus/prometheus prometheus/prometheus.yml grafana/bin/grafana; do assert_eq 0 "$(stat -c %u "$root/$p")" "owner of $p"; done
+for p in prometheus/data grafana/data; do assert_eq "$(id -un)" "$(stat -c %U "$root/$p")" "owner of $p"; done
 # the shared prometheus.yml is what Prometheus gets, and the data folders exist
 assert_eq "" "$(diff "$root/monitoring/prometheus.yml" "$root/prometheus/prometheus.yml")" "prometheus.yml is the shared file"
 for d in prometheus/data grafana/data/log; do [ -d "$root/$d" ] || { echo "FAIL folder $d"; FAILED=1; }; done
@@ -52,4 +65,27 @@ out=$("$inst" --no-services --collector-only --root "$root" --user "$(id -un)" -
 [ -e "$tmp/units2/storsafe-prometheus.service" ] && { echo "FAIL prometheus unit in collector-only"; FAILED=1; }
 assert_grep "$tmp/units2/storsafe-node-exporter.service" -- '--web.listen-address=0.0.0.0:9182'
 echo "$out" | grep -q 'job_name: storsafe' || { echo "FAIL scrape job"; FAILED=1; }
+# With a service account of its own (nobody stands in for it; a runuser shim lets the collector test run as root)
+# it owns what the service writes, and the programs stay root's.
+if id -u nobody > /dev/null 2>&1; then
+  root2=$tmp/root2; mkdir -p "$root2"; (cd "$repo" && git archive HEAD | tar -x -C "$root2")
+  cp "$repo/tools/test/mock.config.json" "$root2/StorSafe.config.json"; cp "$repo/tools/test/mock-credential.xml" "$root2/"
+  make_fake_tarballs "$root2/installers"; make_runuser_shim "$tmp/shimbin"
+  PATH="$tmp/shimbin:$PATH" "$inst" --no-services --root "$root2" --user nobody --unit-dir "$tmp/units4" --skip-credentials > "$tmp/run2.out" 2>&1 || { cat "$tmp/run2.out"; FAILED=1; }
+  for p in node_exporter node_exporter/node_exporter prometheus prometheus/prometheus prometheus/prometheus.yml grafana/bin/grafana grafana/conf/provisioning/datasources/storsafe-datasource.yaml; do
+    assert_eq root "$(stat -c %U "$root2/$p")" "owner of $p"
+  done
+  for p in creds state metrics prometheus/data grafana/data grafana/data/log; do assert_eq nobody "$(stat -c %U "$root2/$p")" "owner of $p"; done
+  # With the real runuser the account must be able to read the package. $tmp is 0700, so it cannot: the installer says so and
+  # stops. Once the folder above is open, the check passes.
+  if runuser -u nobody -- true > /dev/null 2>&1; then
+    rc=0; out=$("$inst" --no-services --root "$root2" --user nobody --unit-dir "$tmp/units4" --skip-credentials 2>&1) || rc=$?
+    assert_eq 1 "$rc" "a package the account cannot read stops the installer"
+    echo "$out" | grep -Eq "^Package permissions +Check +$root2/StorSafe.psm1 is not readable by nobody; check the folders above $root2\$" || { echo "FAIL unreadable package row"; FAILED=1; }
+    echo "$out" | grep -q '^Collector test' && { echo "FAIL the installer went on after the unreadable package"; FAILED=1; }
+    chmod 755 "$tmp"
+    out=$("$inst" --no-services --root "$root2" --user nobody --unit-dir "$tmp/units4" --skip-credentials 2>&1 || true)
+    echo "$out" | grep -Eq '^Package permissions +OK +readable by nobody$' || { echo "FAIL readable package row"; FAILED=1; }
+  fi
+fi
 exit "${FAILED:-0}"
