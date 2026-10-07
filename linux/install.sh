@@ -158,9 +158,13 @@ parse_args() {
     if [[ $COLLECTOR_ONLY -eq 1 && $listen_given -eq 0 ]]; then
         LISTEN=0.0.0.0:9182
     fi
-    # The units and the Prometheus config take the path unquoted, so a space would break them.
+    # The units and the Prometheus config take the path unquoted, so a space would break them, and
+    # the permissions step uses the path in find patterns, where * ? [ ] and \ are wildcards.
     if [[ $ROOT == *[[:space:]]* ]]; then
         die "the install folder '$ROOT' contains a space; move the package to a path without spaces (e.g. /opt/storsafe-monitoring) and pass --root"
+    fi
+    if [[ $ROOT == *[\*\?\[\]\\]* ]]; then
+        die "the install folder '$ROOT' contains one of * ? [ ] \\; move the package to a plain path (e.g. /opt/storsafe-monitoring) and pass --root"
     fi
     INSTALLERS=$ROOT/installers
 }

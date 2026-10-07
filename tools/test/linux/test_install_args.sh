@@ -13,6 +13,9 @@ assert_exit 1 quiet "$inst" --no-services --root "$tmp/with space"
 # the refusal is for the space: a root that does not exist would also exit 1, with another message
 out=$("$inst" --no-services --root "$tmp/with space" 2>&1 || true)
 echo "$out" | grep -q 'contains a space' || { echo "FAIL space message"; FAILED=1; }
+assert_exit 1 quiet "$inst" --no-services --root "$tmp/r[1]"
+out=$("$inst" --no-services --root "$tmp/r[1]" 2>&1 || true)
+echo "$out" | grep -q 'contains one of' || { echo "FAIL wildcard message"; FAILED=1; }
 mkdir -p "$tmp/noconfig"; cp "$here/../../../StorSafe.config.example.json" "$tmp/noconfig/"
 out=$(umask 077; "$inst" --no-services --root "$tmp/noconfig/" --user "$(id -un)" 2>&1 || true)
 assert_file "$tmp/noconfig/StorSafe.config.json"

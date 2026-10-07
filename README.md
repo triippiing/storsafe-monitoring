@@ -154,7 +154,7 @@ Steps, from a shell on the host. Commands that need root start with `sudo`; the 
    ```
    sudo linux/install.sh
    ```
-   It installs PowerShell if `pwsh` is missing, creates the `storsafe` service account, prompts for each appliance's API account that has no credential file yet, runs the collector once as a test, then installs node_exporter, Prometheus and Grafana (with the data source and dashboards provisioned), the systemd units and the collector timer, and prints a summary table (OK, Skipped, Missing installer or Check per step) and what to do next. Every step is idempotent: if a step reports a missing installer or a check, fix it and re-run. The exit status is 0 when no row is Check or Missing installer.
+   It installs PowerShell if `pwsh` is missing, creates the `storsafe` service account, makes the package readable by it, prompts for each appliance's API account that has no credential file yet, runs the collector once as a test, then installs node_exporter, Prometheus and Grafana (with the data source and dashboards provisioned), the systemd units and the collector timer, and prints a summary table (OK, Skipped, Missing installer or Check per step) and what to do next. Every step is idempotent: if a step reports a missing installer or a check, fix it and re-run. The exit status is 0 when no row is Check or Missing installer.
 5. Check it:
    ```
    linux/storsafe-control.sh status
@@ -172,10 +172,11 @@ The installer's steps:
 | 2 | PowerShell | Uses the `pwsh` on the PATH, else unpacks the PowerShell tarball to `/opt/microsoft/powershell/7` and links `/usr/bin/pwsh`; stops with the ICU hint if `pwsh` does not start |
 | 3 | Service user | Creates the `storsafe` system account (no login shell, the install folder as its home) and the folders it writes to: `creds/`, `state/`, `events/`, `metrics/`, `reports/` |
 | 4 | Config | Creates `StorSafe.config.json` from the example if it is missing, then stops so you can edit it |
-| 5 | Credentials | Prompts for each missing credential file and saves it as `storsafe` (see below) |
-| 6 | Collector test | Runs the collector once as `storsafe` and reports the result |
-| 7 | node_exporter, Prometheus, Grafana | Unpacks the newest tarball of each from `installers/` into `node_exporter/`, `prometheus/` and `grafana/` (a newer tarball there is an upgrade; `data/` is kept), puts `monitoring/prometheus.yml` and the Grafana data source and dashboard provisioning in place |
-| 8 | Units and services | Renders the unit files from `linux/systemd/` into `/etc/systemd/system`, enables and starts them (starting the collector's timer runs the collector straight away, then every 5 minutes or your `--interval-minutes`), restarts what changed, and waits for the three ports to answer |
+| 5 | Package permissions | Adds read permission for everyone over the install folder (`creds/` and the data folders excepted, nothing is ever taken away), so `storsafe` can read the package whatever root's umask was when it was unpacked; stops if a folder above the install folder still blocks it |
+| 6 | Credentials | Prompts for each missing credential file and saves it as `storsafe` (see below) |
+| 7 | Collector test | Runs the collector once as `storsafe` and reports the result |
+| 8 | node_exporter, Prometheus, Grafana | Unpacks the newest tarball of each from `installers/` into `node_exporter/`, `prometheus/` and `grafana/` (a newer tarball there is an upgrade; `data/` is kept; the files stay root-owned, only `data/` belongs to `storsafe`), puts `monitoring/prometheus.yml` and the Grafana data source and dashboard provisioning in place |
+| 9 | Units and services | Renders the unit files from `linux/systemd/` into `/etc/systemd/system`, enables and starts them (starting the collector's timer runs the collector straight away, then every 5 minutes or your `--interval-minutes`), restarts what changed, and waits for the three ports to answer; a unit whose component reported Missing installer or Check is left disabled and named in the Services row |
 
 Switches (`linux/install.sh --help` lists them). Give the same ones again when you re-run the installer, because the unit files are rendered from them:
 - `--root DIR`: the install folder, the folder that holds this package (default `/opt/storsafe-monitoring`, no spaces).
@@ -237,10 +238,10 @@ del C:\StorSafeMonitoring\monitoring\dashboards\storsafe-estate.json C:\StorSafe
 
 Nothing needs restarting. The next collector run picks up the new checks (run it by hand to see the output straight away), and Grafana loads the new dashboard within a minute.
 
-**On Linux**, read `CHANGELOG.md` the same way, then unpack the new tarball over the install folder, keeping your config and credentials (the two `--exclude` options leave `StorSafe.config.json` and `creds/` alone):
+**On Linux**, read `CHANGELOG.md` the same way, then unpack the new tarball over the install folder, keeping your config and credentials (the two `--exclude` options leave `StorSafe.config.json` and `creds/` alone, and `--no-overwrite-dir` keeps the owner and mode of the folders that already exist, such as `creds/` and `state/`, which belong to `storsafe`):
 
 ```
-sudo tar -xzf StorSafe-monitoring-v<ver>.tar.gz --strip-components=1 -C /opt/storsafe-monitoring --exclude=StorSafe.config.json --exclude='creds/*'
+sudo tar -xzf StorSafe-monitoring-v<ver>.tar.gz --strip-components=1 --no-overwrite-dir -C /opt/storsafe-monitoring --exclude=StorSafe.config.json --exclude='creds/*'
 ```
 
 or, for a git clone, `sudo git -C /opt/storsafe-monitoring pull`. Then re-run the installer with the same switches you installed with:
