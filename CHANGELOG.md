@@ -9,7 +9,7 @@ The package version is in `VERSION`, printed by the installer, and published by 
 - Package: `tools/build-package.py` also builds `dist/StorSafe-monitoring-v<VERSION>.tar.gz`, the same files as the zip with the `linux/` scripts executable.
 - `monitoring/prometheus.yml` is shared by both installs; its keep regex is now `storsafe_.*|windows_textfile_.*|node_textfile_.*`, so the textfile collector's own health metrics are kept from either exporter.
 - CI (`.github/workflows/ci.yml`): shellcheck and parse checks, the test kit against the mock API, the Linux install in Rocky Linux 9 and Debian 12 containers, and a full systemd install on a runner.
-- Test kit: `tools/test/linux/` (nine tests run by `run.sh`, and `smoke.sh`); `tools/test/prometheus-test.yml` now needs Prometheus 3 (`fallback_scrape_protocol`).
+- Test kit: `tools/test/linux/` (the `test_*.sh` tests run by `run.sh`, and `smoke.sh`); `tools/test/prometheus-test.yml` now needs Prometheus 3 (`fallback_scrape_protocol`).
 - README: Install on a Linux machine, Linux paragraphs for upgrade, maintenance and uninstall; the architecture block names node_exporter. `CLAUDE.md` describes the Linux layout, the shell-script rules and the Linux tests.
 
 ## 5.0.1 (2026-10-05)

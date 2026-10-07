@@ -8,6 +8,7 @@ Type=oneshot
 User=__USER__
 WorkingDirectory=__ROOT__
 ExecStart=__PWSH__ -NoProfile -NonInteractive -File __ROOT__/Export-StorSafeMetrics.ps1 -All -NonInteractive
+# systemd does not apply RuntimeMaxSec to a Type=oneshot service; TimeoutStartSec is the bound that does.
 RuntimeMaxSec=__RUNTIME__
 TimeoutStartSec=__RUNTIME__
 SuccessExitStatus=2

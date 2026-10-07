@@ -2,7 +2,10 @@
 # Linux installer in clean containers, and a full systemd install on a runner.
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
 
 permissions:
   contents: read
@@ -16,7 +19,7 @@ jobs:
   # Shell scripts, PowerShell scripts and Python tools must at least parse. Shellcheck runs at
   # warning level (the package rule is "no warnings"); its info notes differ between versions.
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
@@ -51,15 +54,17 @@ jobs:
   # The three steps of tools/test/README.md (mock API, collector, dashboard queries against a real
   # Prometheus), then the Linux installer tests, which need root and the mock on port 18080.
   kit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - name: Get Prometheus and promtool
         run: |
-          linux/get-installers.sh --dest /tmp/inst
-          mkdir /tmp/prometheus
-          tar -xzf /tmp/inst/prometheus-*.linux-amd64.tar.gz -C /tmp/prometheus --strip-components=1
+          # Prometheus only: the other tarballs are for the smoke jobs. The node_exporter URL also
+          # contains /prometheus/, so the pattern names the repository twice.
+          mkdir /tmp/inst /tmp/prometheus
+          curl -fL --retry 3 -o /tmp/inst/prometheus.tar.gz "$(bash linux/get-installers.sh --print-urls | grep '/prometheus/prometheus/')"
+          tar -xzf /tmp/inst/prometheus.tar.gz -C /tmp/prometheus --strip-components=1
           echo /tmp/prometheus >> "$GITHUB_PATH"
       - name: Start the mock StorSafe API
         run: |
@@ -131,7 +136,7 @@ jobs:
   # The Linux collector-only install, in clean containers of the two supported families. No pwsh
   # here: the installer extracts PowerShell from the downloaded tarball, which the job proves.
   smoke:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -154,7 +159,7 @@ jobs:
   # dashboard queries against the real Prometheus, the control script, and the uninstall.
   full:
     needs: lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5

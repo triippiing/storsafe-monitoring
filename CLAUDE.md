@@ -32,12 +32,13 @@ service account.
   goes through `Invoke-StorSafeCurlGet` (curl.exe). Test on `pwsh` here, but keep 5.1 in mind.
 - **Install path without spaces**, `127.0.0.1` rather than `localhost` in URLs, and operators run
   things from cmd.exe: give `powershell.exe -NoProfile -ExecutionPolicy Bypass -File ...` forms in docs.
-- **Shell scripts** (`linux\`, `tools\test\linux\`) start with `#!/usr/bin/env bash` and
-  `set -euo pipefail`, pass shellcheck with no warnings and keep LF endings (`.gitattributes` enforces
-  that). Unit templates in `linux\systemd\` use only the placeholders `__ROOT__`, `__USER__`, `__PWSH__`,
-  `__LISTEN__`, `__RETENTION__`, `__INTERVAL__` and `__RUNTIME__`; a placeholder left in a rendered unit
-  is an installer error. Distro package names appear only in the installer's preconditions step (the
-  ICU hint).
+- **Shell scripts** (`linux\`, `tools\test\linux\`): every script that is executed starts with
+  `#!/usr/bin/env bash` and `set -euo pipefail`; the sourced libraries (`linux/lib.sh`,
+  `tools/test/linux/helpers.sh`) carry the shebang only and set no options. All pass shellcheck with no
+  warnings and keep LF endings (`.gitattributes` enforces that). Unit templates in `linux\systemd\` use
+  only the placeholders `__ROOT__`, `__USER__`, `__PWSH__`, `__LISTEN__`, `__RETENTION__`, `__INTERVAL__`
+  and `__RUNTIME__`; a placeholder left in a rendered unit is an installer error. Distro package names
+  appear only in `icu_package_line` in `linux/install.sh` (the hint the PowerShell step prints).
 
 ## Layout
 

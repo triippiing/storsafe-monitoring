@@ -123,7 +123,7 @@ What you need:
 
 - 64-bit (x86_64) Linux with systemd: RHEL family 8 or 9 (RHEL, Rocky Linux, AlmaLinux), Debian 12, or an Ubuntu LTS release. About 2 GB of disk for the stack plus Prometheus data (roughly 50 MB per appliance per month at the default 180-day retention).
 - Root through sudo. The installer creates a system account, `storsafe`, and the collector and every service run as it, so unlike the Windows install you do not log on as the collector account.
-- `curl`, `tar` and `gzip` (the installer checks for them), and the ICU library that PowerShell needs if the host does not have it yet: `dnf install libicu` on the RHEL family, `apt-get install libicu72` on Debian 12, `apt-get install libicu74` on Ubuntu 24.04. The installer stops with this hint when `pwsh` does not start.
+- `curl`, `tar` and `gzip` (the installer checks for them), and the ICU library that PowerShell needs if the host does not have it yet: `dnf install libicu` on the RHEL family, `apt-get install libicu72` on Debian 12, `apt-get install libicu74` on Ubuntu 24.04 (other Debian-family releases: `apt-cache search --names-only '^libicu[0-9]+$'` finds the package name). The installer stops with this hint when `pwsh` does not start.
 - PowerShell 7: the installer uses a `pwsh` that is already on the PATH, otherwise it unpacks the PowerShell tarball (7.6.6, the LTS line; PowerShell 7.4 reaches end of support on 2026-11-10).
 - Network access from this machine to every appliance on the API port (https 443 by default) and, for the download step only, to github.com and dl.grafana.com (or the four tarballs copied in by hand).
 - For each appliance, an API account. A read-only (type R) account is recommended.
@@ -149,12 +149,12 @@ Steps, from a shell on the host. Commands that need root start with `sudo`; the 
    ```
    sudo cp StorSafe.config.example.json StorSafe.config.json
    ```
-   Then edit the new file as root.
+   Then edit the new file as root: `sudoedit StorSafe.config.json` (or `sudo nano StorSafe.config.json`).
 4. Run the installer:
    ```
    sudo linux/install.sh
    ```
-   It prompts for each appliance's API account that has no credential file yet, then installs PowerShell, node_exporter, Prometheus and Grafana (with the data source and dashboards provisioned), the systemd units and the collector timer, runs the collector once, and prints a summary table (OK, Skipped, Missing installer or Check per step) and what to do next. Every step is idempotent: if a step reports a missing installer or a check, fix it and re-run. The exit status is 0 when no row is Check or Missing installer.
+   It installs PowerShell if `pwsh` is missing, creates the `storsafe` service account, prompts for each appliance's API account that has no credential file yet, runs the collector once as a test, then installs node_exporter, Prometheus and Grafana (with the data source and dashboards provisioned), the systemd units and the collector timer, and prints a summary table (OK, Skipped, Missing installer or Check per step) and what to do next. Every step is idempotent: if a step reports a missing installer or a check, fix it and re-run. The exit status is 0 when no row is Check or Missing installer.
 5. Check it:
    ```
    linux/storsafe-control.sh status
@@ -216,6 +216,8 @@ The `keep` rule is the one in `monitoring/prometheus.yml`: it keeps the StorSafe
 **Credentials on Linux.** There is no DPAPI on Linux: `New-StorSafeCredentialFile` saves the credential with Export-Clixml and the file is **not encrypted**. What protects it is file permissions: `creds/` is mode 0700 and each credential file 0600, owned by the service account `storsafe`, so only that account and root can read them. The installer prompts for each missing file (as `storsafe`; a file that several appliances share is asked for once) unless you pass `--skip-credentials`. Unlike a DPAPI file, one of these works on any machine it is copied to, so keep `creds/` out of backups that others can read.
 
 Ports: Grafana 3000 (all interfaces; to reach it from other machines open the port in the host firewall, `sudo firewall-cmd --permanent --add-port=3000/tcp && sudo firewall-cmd --reload` or `sudo ufw allow 3000/tcp`), Prometheus 9090 and node_exporter 9182 (127.0.0.1 only, nothing to open; with `--collector-only` node_exporter is on all interfaces, as above). Everything restarts by itself after a reboot: the units are enabled, and the collector runs again shortly after boot.
+
+**SELinux.** On a RHEL family host in enforcing mode this package needs no policy module: the binaries under `/opt` carry the `usr_t` file context and systemd runs them in the `unconfined_service_t` domain. A site with a stricter policy sees denials in `sudo ausearch -m AVC -ts recent` (add `-c pwsh`, `-c grafana`, `-c prometheus` or `-c node_exporter` to look at one program) and in the units' `journalctl`. That check is part of the maintainer's acceptance test on a RHEL host, not of CI.
 
 Adding an appliance later: add it to `Servers` in the config, then re-run `sudo linux/install.sh` with your usual switches. It asks only for the credential files that are missing, and the next collector run picks the appliance up; the dashboards show it automatically.
 
@@ -345,6 +347,14 @@ Notes:
 - The collector's output is in the journal: `journalctl -u storsafe-collector` (the other units are `storsafe-node-exporter`, `storsafe-prometheus` and `storsafe-grafana`). To run it once by hand: `sudo systemctl start storsafe-collector`.
 - A plain reboot without `stop` is fine: the units start by themselves and the collector runs again shortly after boot, then on its schedule. The "Collector stopped" alert from the table below fires on Linux too while the collector is paused or stopped.
 - Full backup of the monitoring host's state is the install folder: the config, `creds/`, and the Prometheus and Grafana data in `prometheus/data` and `grafana/data`. `creds/` holds the API passwords unencrypted, so protect the backup like a secret.
+
+A re-run of `install.sh` re-renders the unit files, so a hand edit to one of them is lost. Site settings go in a drop-in instead (`sudo systemctl edit storsafe-collector.service`); the usual one is a corporate proxy, which the collector honours on Linux. The appliances are normally on-site, hence `no_proxy`:
+
+```
+[Service]
+Environment=https_proxy=http://proxy.example.com:3128
+Environment=no_proxy=127.0.0.1,localhost,.example.com
+```
 
 ## Versioning
 
