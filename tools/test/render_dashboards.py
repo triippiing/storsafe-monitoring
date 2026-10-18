@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Opens every StorSafe dashboard in a Grafana that serves them (anonymous viewer access), saves a screenshot of
 each and fails when a panel shows an error, a panel plugin is missing, or (with --cards) the Fleet dashboard does
-not show its Business Text estate cards. With --full the screenshots show the whole page as a viewer sees it (Grafana's
+not show its Business Text estate cards or a dashboard has no card section. With --full the screenshots show the whole page as a viewer sees it (Grafana's
 menu and toolbar, every panel down to the last), like docs/images. Needs Python Playwright and its Chromium. Usage:
   python3 tools/test/render_dashboards.py [--grafana http://127.0.0.1:3000] [--out tools/test/out/screens] [--cards] [--full] [--from now-15m]"""
 import argparse, os
@@ -12,7 +12,7 @@ UIDS = ["storsafe-fleet", "storsafe-activity", "storsafe-instance", "storsafe-pa
 ap = argparse.ArgumentParser()
 ap.add_argument("--grafana", default="http://127.0.0.1:3000")
 ap.add_argument("--out", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "screens"))
-ap.add_argument("--cards", action="store_true", help="require Fleet's Business Text cards (the plugin is installed)")
+ap.add_argument("--cards", action="store_true", help="require the Business Text card sections and Fleet's eight estate cards (the plugin is installed)")
 ap.add_argument("--full", action="store_true", help="whole page with Grafana's menu, not kiosk mode")
 ap.add_argument("--from", dest="time_from", help="time range start instead of the dashboard's own, e.g. now-15m for a fresh mock")
 args = ap.parse_args()
@@ -45,7 +45,10 @@ with sync_playwright() as pw:
         errors = page.locator('[data-testid="data-testid Panel status error"]').count()
         if errors:
             problems.append("%s: %d panel(s) show an error" % (uid, errors))
-        line = "%-20s %s" % (uid, path)
+        sections = page.locator(".ss-section").count()
+        if args.cards and not sections:
+            problems.append("%s: no card section (Business Text)" % uid)
+        line = "%-20s %s  sections %d" % (uid, path, sections)
         if uid == "storsafe-fleet":
             cards = page.locator(".ss-card").count()
             values = page.locator(".ss-card .ss-value").all_inner_texts()

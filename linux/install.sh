@@ -45,7 +45,7 @@ PWSH_HOME=/opt/microsoft/powershell/7
 PWSH_LINK=/usr/bin/pwsh
 PWSH_BIN=""
 
-# Grafana's Business Text panel plugin (Fleet's estate cards): its id, the folder and zip name prefix.
+# Grafana's Business Text panel plugin (the card sections): its id, the folder and zip name prefix.
 BUSINESS_TEXT=marcusolsson-dynamictext-panel
 
 # Unit names whose service must be restarted if it runs: a rendered unit file or a config or
@@ -671,8 +671,8 @@ step_grafana() {
 # install_business_text <plugins dir>: unpacks the newest Business Text panel plugin zip from
 # installers/ into Grafana's plugin folder, replacing the copy there when the zip differs from the one
 # it came from (data/.business-text-zip, outside the plugin folder: Grafana refuses a signed plugin with
-# files the signature does not list); a new copy needs a Grafana restart. No zip is fine: Fleet then
-# keeps its stat row. PowerShell unzips, because unzip is not on every host.
+# files the signature does not list); a new copy needs a Grafana restart. No zip is fine: the dashboards then
+# keep their stat panels. PowerShell unzips, because unzip is not on every host.
 install_business_text() {
     local plugins=$1 zip base have="" marker
     marker=$(dirname "$plugins")/.business-text-zip

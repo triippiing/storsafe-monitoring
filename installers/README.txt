@@ -6,7 +6,7 @@ Or download by hand (any recent version; the installer picks the newest file mat
   windows_exporter-<ver>-amd64.msi        https://github.com/prometheus-community/windows_exporter/releases
   prometheus-<ver>.windows-amd64.zip      https://prometheus.io/download/#prometheus
   grafana-<ver>.windows-amd64.msi         https://grafana.com/grafana/download?platform=windows  (OSS or Enterprise)
-  marcusolsson-dynamictext-panel-<ver>.zip  https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/  (Business Text plugin, optional: Fleet's estate cards; also on Linux)
+  marcusolsson-dynamictext-panel-<ver>.zip  https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/  (Business Text plugin, optional: the card sections; also on Linux)
 
 On Linux (x86_64), the same way:
 

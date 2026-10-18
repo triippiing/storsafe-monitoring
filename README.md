@@ -84,7 +84,7 @@ Steps, from an elevated cmd prompt (right-click Command Prompt > Run as administ
    ```
    powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\StorSafeMonitoring\Get-StorSafeInstallers.ps1
    ```
-   (add `-Proxy http://proxy:port` if the machine needs one; with no internet access, download the four URLs it prints on another machine and copy the files in). The fourth file is Grafana's Business Text panel plugin, which draws the Fleet dashboard's estate cards; without it Fleet shows a row of stat panels instead.
+   (add `-Proxy http://proxy:port` if the machine needs one; with no internet access, download the four URLs it prints on another machine and copy the files in). The fourth file is Grafana's Business Text panel plugin, which draws the card sections (rounded value blocks on a navy panel); without it each section shows a row of Grafana stat panels instead.
 3. Copy `StorSafe.config.example.json` to `StorSafe.config.json` (the installer does this for you if the file is missing, then stops so you can edit it) and fill in the `Servers` list: a name, IP or hostname, and credential file name per appliance. Under `Defaults`, check `Scheme` and `SkipCertificateCheck` (true for self-signed appliance certificates). The example shows every setting; the real file is ignored by git.
 4. Run the installer:
    ```
@@ -107,7 +107,7 @@ The dashboards are file-provisioned from `monitoring\dashboards-live\`, which `P
 
 ### Theme and branding
 
-Every dashboard opens with a banner (brand line, title, description), each section is headed by a rounded pill, and with the Business Text plugin installed the Fleet dashboard's estate row is a set of cards: a health summary and one tile per indicator, coloured by the same thresholds as the stat row it replaces. The colours, the brand line and a logo come from a theme file that stays on the monitoring host:
+Every dashboard opens with a banner (brand line, title, description), each section is headed by a full-width rounded pill, and with the Business Text plugin installed every row of value blocks (Fleet's Estate, Instance's Health, Capacity, Replication and Collector, Activity's Now, the Events counts and the Patch Management versions) is a card section: the header pill with a navy panel under it holding one rounded card per value, coloured by the same thresholds and value mappings as the stat panels it replaces. Fleet's Estate also has a health summary. Tables and charts are Grafana's own panels and keep Grafana's look; Grafana gives a dashboard no way to restyle them. The colours, the brand line and a logo come from a theme file that stays on the monitoring host:
 
 1. Copy `monitoring\theme.example.json` to `monitoring\theme.json` (ignored by git and left out of the release packages) and set `brand`, the colours (`#RRGGBB`) and optionally `logo`, an SVG or PNG for a dark background (up to 512 KB), with a path relative to the theme file, e.g. `theme\logo.svg` in `monitoring\theme\`.
 2. Publish:
@@ -157,7 +157,7 @@ Steps, from a shell on the host. Commands that need root start with `sudo`; the 
    ```
    sudo linux/get-installers.sh
    ```
-   It downloads node_exporter 1.12.1, Prometheus 3.15.0, Grafana 12.0.2, PowerShell 7.6.6 and the Business Text panel plugin 6.2.0 (Fleet's estate cards; optional), and keeps files that are already there (`--force` downloads again, `--dest DIR` picks another folder, `--node-exporter-version`, `--prometheus-version`, `--grafana-version`, `--powershell-version` and `--business-text-version` pick other versions). curl takes its proxy from the environment, and sudo drops that, so with a proxy run `sudo env https_proxy=http://proxy:port linux/get-installers.sh`. With no internet access, `linux/get-installers.sh --print-urls` prints the five URLs: download them on another machine and copy the files into `installers/`.
+   It downloads node_exporter 1.12.1, Prometheus 3.15.0, Grafana 12.0.2, PowerShell 7.6.6 and the Business Text panel plugin 6.2.0 (the card sections; optional), and keeps files that are already there (`--force` downloads again, `--dest DIR` picks another folder, `--node-exporter-version`, `--prometheus-version`, `--grafana-version`, `--powershell-version` and `--business-text-version` pick other versions). curl takes its proxy from the environment, and sudo drops that, so with a proxy run `sudo env https_proxy=http://proxy:port linux/get-installers.sh`. With no internet access, `linux/get-installers.sh --print-urls` prints the five URLs: download them on another machine and copy the files into `installers/`.
 3. Create `StorSafe.config.json` from `StorSafe.config.example.json` (the installer does this for you if the file is missing, then stops so you can edit it) and fill in the `Servers` list as in step 3 of the Windows install: a name, IP or hostname, and credential file name per appliance, and under `Defaults` the `Scheme` and `SkipCertificateCheck` settings. The example's `creds\storsafe-01.xml` paths work on Linux as written (`creds/storsafe-01.xml` is the same file).
    ```
    sudo cp StorSafe.config.example.json StorSafe.config.json
@@ -460,7 +460,7 @@ The package is the repository root, so a clone is an install folder. Not part of
 
 | Path | Contents |
 |---|---|
-| `tools\build-dashboards.py` | Generates the five dashboards in `monitoring\dashboards\` and the Business Text variant of Fleet in `monitoring\dashboards-html\` (edit this, not the JSON) |
+| `tools\build-dashboards.py` | Generates the five dashboards in `monitoring\dashboards\` and their Business Text variants (card sections) in `monitoring\dashboards-html\` (edit this, not the JSON) |
 | `tools\build-package.py` | Builds `dist\StorSafe-monitoring-v<VERSION>.zip` and `.tar.gz` (the same files; the scripts under `linux\` are executable in the tarball) |
 | `tools\test\` | Mock StorSafe API, test config, dashboard query validator, test theme and dashboard renderer; see `tools\test\README.md` |
 | `tools\test\linux\` | Tests of the Linux scripts (`bash tools/test/linux/run.sh`) and the install smoke test (`smoke.sh`) |

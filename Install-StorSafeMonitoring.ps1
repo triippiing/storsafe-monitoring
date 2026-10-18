@@ -231,8 +231,8 @@ if ($SkipGrafana) {
     } else {
         $prov = Join-Path $GrafanaHome 'conf\provisioning'
         Copy-Item (Join-Path $Root 'monitoring\grafana\storsafe-datasource.yaml') (Join-Path $prov 'datasources\storsafe-datasource.yaml') -Force
-        # The Business Text plugin draws Fleet's estate cards. A zip in installers\ replaces the
-        # installed copy (that is the upgrade); without the plugin Fleet keeps its stat row.
+        # The Business Text plugin draws the card sections. A zip in installers\ replaces the
+        # installed copy (that is the upgrade); without the plugin the dashboards keep their stat panels.
         $plugins = Join-Path $GrafanaHome 'data\plugins'
         $pluginDir = Join-Path $plugins 'marcusolsson-dynamictext-panel'
         $pluginZip = Find-Installer 'marcusolsson-dynamictext-panel-*.zip'
@@ -248,7 +248,7 @@ if ($SkipGrafana) {
             Set-Content -LiteralPath (Join-Path $prov 'dashboards\storsafe-dashboards.yaml') -Encoding ASCII
         Restart-Service -Name Grafana
         $note = 'Data source and dashboards provisioned (folder "StorSafe")'
-        if ($htmlPanels) { $note += ', Business Text cards on Fleet' } else { $note += '; no Business Text plugin, Fleet shows its stat row' }
+        if ($htmlPanels) { $note += ', Business Text card sections' } else { $note += '; no Business Text plugin, stat panels instead of card sections' }
         if ($installedNow) { $note += '; first login admin/admin at http://localhost:3000' }
         if (Wait-HttpOk 'http://127.0.0.1:3000/api/health' 90) { Add-Summary 'Grafana' 'OK' $note } else { Add-Summary 'Grafana' 'Check' "$note, but http://localhost:3000 not responding yet" }
     }

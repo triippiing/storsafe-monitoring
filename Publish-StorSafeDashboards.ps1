@@ -16,7 +16,7 @@ monitoring\theme.json exists, swaps in that file's colours, brand line and logo:
     background, relative to theme.json) is embedded in front of it.
 
 With -HtmlPanels a dashboard that has a variant in monitoring\dashboards-html (the Business Text
-plugin's cards) is published from there instead; the installers pass it when the plugin is
+plugin's card sections) is published from there instead; the installers pass it when the plugin is
 installed in Grafana. Dashboards in the output folder that are no longer in monitoring\dashboards
 are removed. Re-run after editing theme.json; Grafana picks the files up within a minute.
 

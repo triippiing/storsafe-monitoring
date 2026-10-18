@@ -51,7 +51,7 @@ service account.
   provisioning are shared with Windows. `node_exporter\`, `prometheus\` and `grafana\` are unpacked
   into it at install and are git-ignored.
 - `tools\build-dashboards.py` generates `monitoring\dashboards\*.json` and, in `monitoring\dashboards-html\`, the
-  variants that use the Business Text panel plugin (Fleet's estate cards). **Edit the generator, never the
+  variants that use the Business Text panel plugin (card sections: a row of stats drawn as one panel). **Edit the generator, never the
   JSON.** Colours come from `monitoring\theme.example.json`; `Publish-StorSafeDashboards.ps1` (run by both
   installers) writes `monitoring\dashboards-live\`, the folder Grafana loads, in a site's git-ignored
   `monitoring\theme.json`. A site's brand, colours and logo never go in git. `tools\build-package.py` builds `dist\StorSafe-monitoring-v<VERSION>.zip` and `.tar.gz`.
