@@ -10,6 +10,7 @@ import json, os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(ROOT, 'monitoring', 'dashboards')
 HTML_DIR = os.path.join(ROOT, 'monitoring', 'dashboards-html')
+LEVEL = {"green": "ok", "orange": "warning", "red": "critical", "blue": "info"}
 THEME = json.load(open(os.path.join(ROOT, 'monitoring', 'theme.example.json')))
 C = THEME["colors"]
 assert len({v.upper() for v in C.values()}) == len(C), "theme.example.json colours must be unique"
@@ -34,10 +35,13 @@ def esc(text):
 
 
 class Dashboard:
-    def __init__(self, title, uid, server_filter, server_var, time_from="now-24h", refresh="1m", description=""):
+    def __init__(self, title, uid, server_filter, server_var, time_from="now-24h", refresh="1m", description="", html=False):
+        """html: the Business Text variant, where a section whose stat panels follow its header is drawn as one panel
+        (section(): header, navy ground, rounded tiles) instead of a header and a row of stat panels."""
         self.title, self.uid, self.S, self.server_var = title, uid, server_filter, server_var
-        self.time_from, self.refresh, self.description = time_from, refresh, description
+        self.time_from, self.refresh, self.description, self.html = time_from, refresh, description, html
         self.panels, self._id, self._y, self._x, self._h = [], 0, 0, 0, 0
+        self._section = None
         self.banner()
 
     def nid(self):
@@ -45,6 +49,7 @@ class Dashboard:
         return self._id
 
     def place(self, w, h):
+        self.flush()
         if self._x + w > 24:
             self._y += self._h
             self._x, self._h = 0, 0
@@ -55,7 +60,23 @@ class Dashboard:
 
     def row(self, title):
         """Section header: a rounded pill in a core text panel, in place of a Grafana row (whose header cannot be
-        styled), so every section heading matches the banner and the cards. Sections are always open."""
+        styled), so every section heading matches the banner and the cards. Sections are always open. In the html
+        variant the header waits: stat panels that follow it become the tiles of one section() panel."""
+        self.flush()
+        if self.html:
+            self._section = {"title": title, "tiles": []}
+            return
+        self.header(title)
+
+    def flush(self):
+        """Writes a waiting html section: section() when stat panels followed its header, else the plain header."""
+        sec, self._section = self._section, None
+        if sec and sec["tiles"]:
+            self.section(sec["title"], sec["tiles"])
+        elif sec:
+            self.header(sec["title"])
+
+    def header(self, title):
         self._y += self._h
         self._x, self._h = 0, 0
         # Two grid units (one leaves the text panel too little room inside its padding); the pill spans the dashboard
@@ -116,6 +137,10 @@ class Dashboard:
         self.panels.append(p)
 
     def stat(self, title, exprs, unit=None, w=4, h=4, mappings=None, thresholds=None, desc=None, decimals=None, links=None, sparkline=False, text_mode=None):
+        if self._section is not None:
+            self._section["tiles"].append({"title": title, "exprs": exprs, "unit": unit, "mappings": mappings,
+                                           "thresholds": thresholds or BLUE, "decimals": decimals, "desc": desc})
+            return
         defaults = {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": thresholds or BLUE}}
         if unit:
             defaults["unit"] = unit
@@ -140,6 +165,7 @@ class Dashboard:
         summary and one rounded tile per card (in place of row() and a row of stat panels). cards: list of
         (key, label, expr, unit, warn, crit); warn/crit are the lowest values that colour a tile (None for never;
         both None makes an informational tile). One instant query returns every value, labelled k=<key>."""
+        self.flush()
         self._y += self._h
         self._x, self._h = 0, 0
         expr = " or ".join('label_replace(%s, "k", "%s", "", "")' % (e, k) for k, _, e, _, _, _ in cards)
@@ -153,6 +179,36 @@ class Dashboard:
         if desc:
             p["description"] = desc
         self.panels.append(p)
+
+    def section(self, title, tiles, h=6):
+        """One Business Text panel for a section of stat tiles: the header pill and, on a navy ground under it, one
+        rounded tile per stat with the stat's thresholds, value mappings, unit and legend. One instant query returns
+        every tile's series, labelled k=<tile number>."""
+        self._y += self._h
+        self._x, self._h = 0, 0
+        expr = " or ".join('label_replace(%s, "k", "%d", "", "")' % (e, i) for i, t in enumerate(tiles) for e, _ in t["exprs"])
+        spec = []
+        for i, t in enumerate(tiles):
+            maps = {}
+            for m in t["mappings"] or []:
+                for value, r in m["options"].items():
+                    maps[value] = {"text": r["text"], "level": LEVEL[r["color"]]}
+            spec.append({"k": str(i), "label": t["title"], "unit": t["unit"], "decimals": t["decimals"], "legend": t["exprs"][0][1],
+                         "list": t["exprs"][0][0].startswith("count by"),
+                         "maps": maps, "steps": [[st["value"], LEVEL[st["color"]]] for st in t["thresholds"]]})
+        desc = " ".join("%s: %s" % (t["title"], t["desc"]) for t in tiles if t["desc"])
+        p = {"type": BT_PANEL, "title": "", "id": self.nid(), "datasource": DS, "gridPos": self.place(24, h), "transparent": True,
+             "targets": [self.target(expr, "A", table=True)],
+             "options": {"renderMode": "allRows", "content": "{{{storsafeSection data}}}", "defaultContent": SECTION_EMPTY % esc(title),
+                         "helpers": SECTION_JS.replace("__SECTION__", json.dumps({"title": title, "tiles": spec})),
+                         "styles": (CARDS_CSS + SECTION_CSS) % C, "wrap": False,
+                         "editors": ["helpers", "styles"], "editor": {"format": "auto", "language": "html"},
+                         "contentPartials": [], "externalStyles": [], "afterRender": "", "status": ""}}
+        if desc:
+            p["description"] = desc
+        self.panels.append(p)
+        self._y += self._h
+        self._x, self._h = 0, 0
 
     def table(self, title, exprs, rename=None, units=None, hide=None, w=24, h=8, sort=None, desc=None, merge=True,
               order=None, color_cols=None, links=None, bool_cols=None, bar_cols=None, filterable=False, hide_time=True):
@@ -206,6 +262,7 @@ class Dashboard:
         self.panels.append(p)
 
     def build(self):
+        self.flush()
         variables = [{"name": "datasource", "type": "datasource", "query": "prometheus", "label": "Data source",
                       "current": {"text": "StorSafe Prometheus", "value": "storsafe-prometheus"}}]
         if self.server_var == "multi":
@@ -301,6 +358,89 @@ CARDS_CSS = """.ss-section { display: flex; flex-direction: column; height: 100%
 .ss-card.unknown { border-top-color: %(muted)s; } .ss-card.unknown .ss-pill { background: %(muted)s; color: %(background)s; }
 """
 
+# Business Text helper code for Dashboard.section. Runs in the browser; the template is {{{storsafeSection data}}}
+# (the rows of the panel's one query, each with the k label, the series' other labels and the value). Mirrors what
+# the stat panels show: value mappings first, else the legend (label text) or the value in the stat's unit, coloured
+# by the stat's thresholds. Everything printed is escaped.
+SECTION_JS = r"""const SECTION = __SECTION__;
+const num = (row) => {
+  for (const key of Object.keys(row)) {
+    if (key.indexOf('Value') === 0) { return Number(row[key]); }
+  }
+  return NaN;
+};
+const esc = (s) => String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
+const round = (v, d, auto) => v.toFixed(d !== null ? d : (Math.abs(v) >= auto || Number.isInteger(v) ? 0 : 1));
+const pad = (n) => String(n).padStart(2, '0');
+const fmt = (v, t) => {
+  if (!isFinite(v)) { return 'No data'; }
+  switch (t.unit) {
+    case 'percent': return round(v, t.decimals, 100) + '%';
+    case 'bytes': {
+      const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB'];
+      let i = 0;
+      while (Math.abs(v) >= 1024 && i < units.length - 1) { v /= 1024; i += 1; }
+      return round(v, t.decimals, 100) + ' ' + units[i];
+    }
+    case 's': {
+      const a = Math.abs(v);
+      if (a < 90) { return round(v, t.decimals, 10) + ' s'; }
+      if (a < 5400) { return (v / 60).toFixed(1) + ' min'; }
+      if (a < 172800) { return (v / 3600).toFixed(1) + ' h'; }
+      return (v / 86400).toFixed(1) + ' days';
+    }
+    case 'd': return round(v, t.decimals, 10) + ' days';
+    case 'dateTimeAsIso': {
+      const d = new Date(v);
+      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+    }
+    default: return round(v, t.decimals, 100);
+  }
+};
+const level = (v, t) => {
+  if (!isFinite(v)) { return 'unknown'; }
+  let lv = 'info';
+  t.steps.forEach((st) => { if (st[0] === null || v >= st[0]) { lv = st[1]; } });
+  return lv;
+};
+const show = (row, t) => {
+  const v = num(row);
+  const m = t.maps[String(v)];
+  if (m) { return { text: m.text, level: m.level }; }
+  const text = t.legend ? t.legend.replace(/\{\{\s*(\w+)\s*\}\}/g, (all, name) => (row[name] === undefined ? '' : row[name])).trim() : fmt(v, t);
+  return { text: text, level: level(v, t) };
+};
+const WORD = { ok: 'OK', warning: 'Check', critical: 'Action', info: 'Info', unknown: 'No data' };
+context.handlebars.registerHelper('storsafeSection', (rows) => {
+  const tiles = SECTION.tiles.map((t) => {
+    const mine = (rows || []).filter((row) => row.k === t.k);
+    let body;
+    let lv = 'unknown';
+    if (mine.length > 1 || (t.list && mine.length)) {
+      // A count per version and the like: one line per series with its count, the tile coloured by the first.
+      lv = show(mine[0], t).level;
+      body = '<div class="ss-list">' + mine.map((row) => '<div><span>' + esc(show(row, t).text) + '</span><b>' + esc(fmt(num(row), Object.assign({}, t, { unit: null }))) + '</b></div>').join('') + '</div>';
+    } else {
+      const r = mine.length ? show(mine[0], t) : { text: 'No data', level: 'unknown' };
+      lv = r.level;
+      body = '<div class="ss-value' + (r.text.length > 10 ? ' ss-long' : '') + '" title="' + esc(r.text) + '">' + esc(r.text) + '</div>';
+    }
+    return '<div class="ss-card ' + lv + '"><div class="ss-label" title="' + esc(t.label) + '">' + esc(t.label) + '</div>' + body +
+      '<div class="ss-pill">' + WORD[lv] + '</div></div>';
+  }).join('');
+  return new context.handlebars.SafeString('<div class="ss-section"><div class="ss-head"><span class="ss-dot"></span>' + esc(SECTION.title) + '</div>' +
+    '<div class="ss ss-tiles" style="grid-template-columns: repeat(' + SECTION.tiles.length + ', minmax(0, 1fr))">' + tiles + '</div></div>');
+});
+"""
+SECTION_EMPTY = '<div class="ss-section"><div class="ss-head"><span class="ss-dot"></span>%s</div><div class="ss ss-tiles"><div class="ss-hero unknown"><div class="ss-hero-title">No data</div><div class="ss-hero-sub">Prometheus returned nothing for this section.</div></div></div></div>'
+SECTION_CSS = """.ss.ss-tiles { grid-auto-rows: auto; grid-template-rows: 1fr; }
+.ss-tiles .ss-hero { grid-row: auto; grid-column: 1 / -1; }
+.ss-value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ss-value.ss-long { font-size: 20px; line-height: 1.2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.ss-list { display: flex; flex-direction: column; gap: 2px; font-size: 16px; font-weight: 600; color: #FFFFFF; overflow: hidden; }
+.ss-list div { display: flex; justify-content: space-between; gap: 8px; } .ss-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+"""
+
 
 def write(d, out_dir=OUT_DIR):
     path = os.path.join(out_dir, d.uid + ".json")
@@ -312,7 +452,7 @@ def write(d, out_dir=OUT_DIR):
 # ============================================================================ Fleet
 def fleet(html=False):
     S = 'server=~"$server"'
-    d = Dashboard("StorSafe Fleet", "storsafe-fleet", S, "multi", description="One row per appliance; red rows need attention. Click a server name to open its Instance page.")
+    d = Dashboard("StorSafe Fleet", "storsafe-fleet", S, "multi", description="One row per appliance; red rows need attention. Click a server name to open its Instance page.", html=html)
     # (key, title, expr, unit, warn from, crit from): the stat row, or with html the Business Text section.
     estate = [
         ("appliances", "Appliances", f'count(storsafe_up{{{S}}})', None, None, None),
@@ -369,9 +509,9 @@ def fleet(html=False):
 
 
 # ============================================================================ Activity
-def activity():
+def activity(html=False):
     S = 'server=~"$server"'
-    d = Dashboard("StorSafe Activity", "storsafe-activity", S, "multi", refresh="30s", description="Live jobs across the estate: deduplication, replication and repository maintenance.")
+    d = Dashboard("StorSafe Activity", "storsafe-activity", S, "multi", refresh="30s", description="Live jobs across the estate: deduplication, replication and repository maintenance.", html=html)
     d.row("Now")
     d.stat("Dedupe jobs active", [(f'count(storsafe_dedupe_job_info{{{S},state=~"deduplicating|indexrepli|uniquereplicating|preparing.*|pending"}}) or vector(0)', None)], w=4)
     d.stat("Dedupe jobs queued", [(f'count(storsafe_dedupe_job_info{{{S},state=~"queued|tapeindrive|uniquerepliqueued"}}) or vector(0)', None)], w=4)
@@ -447,13 +587,13 @@ def activity():
         order=["server", "policy", "status", "trigger", "Last run", "Ratio (completed)", "Scanned", "Unique", "Duration", "Failed runs 24h"],
         sort=("Last run", True), w=14, h=10, filterable=True, desc="Ratio, scanned, unique and duration are from the most recent completed run; status and trigger are from the most recent run of any status.")
     d.table("Import/export jobs", [f'storsafe_iejob_jobs_by_type{{{S}}} > 0'], rename={"A": "Jobs"}, color_cols=["status"], w=10, h=10, sort=("Jobs", True))
-    write(d)
+    write(d, HTML_DIR if html else OUT_DIR)
 
 
 # ============================================================================ Instance
-def instance():
+def instance(html=False):
     S = 'server="$server"'
-    d = Dashboard("StorSafe Instance", "storsafe-instance", S, "single", description="Everything about one appliance. Pick the server at the top.")
+    d = Dashboard("StorSafe Instance", "storsafe-instance", S, "single", description="Everything about one appliance. Pick the server at the top.", html=html)
     d.row("Health")
     d.stat("API", [(f'storsafe_up{{{S}}}', None)], w=3, mappings=OKFAIL, thresholds=RED_GREEN)
     d.stat("Failover", [(f'storsafe_failover_status{{{S}}} == 1', "{{status}}")], w=3, thresholds=BLUE)
@@ -565,13 +705,13 @@ def instance():
     d.table("Checks", [f'storsafe_check_success{{{S}}}', f'storsafe_check_last_success_timestamp_seconds{{{S}}} * 1000'],
             rename={"A": "OK", "B": "Last success"}, units={"Last success": "dateTimeAsIso"}, bool_cols=["OK"], hide=["server"], sort=("OK", False), w=12, h=12)
     d.ts("Collection time", [(f'storsafe_collect_duration_seconds{{{S}}}', "seconds")], "s", w=12, h=12)
-    write(d)
+    write(d, HTML_DIR if html else OUT_DIR)
 
 
 # ============================================================================ Patch management
-def patches():
+def patches(html=False):
     S = 'server=~"$server"'
-    d = Dashboard("StorSafe Patch Management", "storsafe-patches", S, "multi", time_from="now-7d", refresh="5m", description="Versions, builds, patches and platform details across the estate.")
+    d = Dashboard("StorSafe Patch Management", "storsafe-patches", S, "multi", time_from="now-7d", refresh="5m", description="Versions, builds, patches and platform details across the estate.", html=html)
     d.row("Versions")
     d.stat("Appliances per version", [(f'count by (version) (storsafe_info{{{S}}})', "{{version}}")], w=8, thresholds=BLUE)
     d.stat("Appliances per build", [(f'count by (build) (storsafe_info{{{S}}})', "{{build}}")], w=8, thresholds=BLUE)
@@ -595,13 +735,13 @@ def patches():
     d.table("Installed patches", [f'storsafe_patch_info{{{S}}}'], rename={"A": None}, sort=("server", False), h=12, filterable=True, w=16)
     d.table("Patch coverage", [f'count by (patch) (storsafe_patch_info{{{S}}})', f'count(storsafe_up{{{S}}})'], rename={"A": "Appliances with patch", "B": None}, merge=False, w=8, h=12,
             sort=("Appliances with patch", False), desc="How many appliances have each patch. Compare with the appliance count in the Versions row to spot gaps.")
-    write(d)
+    write(d, HTML_DIR if html else OUT_DIR)
 
 
 # ============================================================================ Events
-def events():
+def events(html=False):
     S = 'server=~"$server"'
-    d = Dashboard("StorSafe Events", "storsafe-events", S, "multi", description="Appliance event logs across the estate. Informational events are counted but not listed.")
+    d = Dashboard("StorSafe Events", "storsafe-events", S, "multi", description="Appliance event logs across the estate. Informational events are counted but not listed.", html=html)
     d.row("Last 24 hours")
     d.stat("Critical", [(f'sum(increase(storsafe_events_total{{{S},severity="critical"}}[24h])) or vector(0)', None)], w=6, decimals=0, thresholds=GREEN_RED)
     d.stat("Error", [(f'sum(increase(storsafe_events_total{{{S},severity="error"}}[24h])) or vector(0)', None)], w=6, decimals=0, thresholds=GREEN_RED)
@@ -615,9 +755,11 @@ def events():
             desc="Filter any column with the funnel icon. The complete log, informational events included, is archived daily under events\\ on the monitoring host.")
     d.table("Event log collection", [f'storsafe_eventlog_columns_detected{{{S}}}', f'storsafe_check_success{{{S},check="eventlog"}}'],
             rename={"A": "Columns recognised", "B": "Collecting"}, bool_cols=["Columns recognised", "Collecting"], hide=["check"], h=6)
-    write(d)
+    write(d, HTML_DIR if html else OUT_DIR)
 
 
 if __name__ == '__main__':
     os.makedirs(HTML_DIR, exist_ok=True)
-    fleet(); fleet(html=True); activity(); instance(); patches(); events()
+    for build in (fleet, activity, instance, patches, events):
+        build()
+        build(html=True)

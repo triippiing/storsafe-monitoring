@@ -131,7 +131,7 @@
     {
       "type": "text",
       "title": "",
-      "id": 3,
+      "id": 4,
       "gridPos": {
         "h": 2,
         "w": 24,
@@ -147,7 +147,7 @@
     {
       "type": "table",
       "title": "Fleet status",
-      "id": 4,
+      "id": 3,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -539,7 +539,7 @@
     {
       "type": "text",
       "title": "",
-      "id": 5,
+      "id": 6,
       "gridPos": {
         "h": 2,
         "w": 24,
@@ -555,7 +555,7 @@
     {
       "type": "timeseries",
       "title": "Pool used %",
-      "id": 6,
+      "id": 5,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
