@@ -2,6 +2,12 @@
 
 The package version is in `VERSION`, printed by the installer, and published by the collector as `storsafe_collector_info{version="..."}` (visible on the Instance dashboard, Collector row).
 
+## 5.2.1 (2026-10-18)
+
+- Dashboard banner: one line, the logo and brand line followed by the package version (`Publish-StorSafeDashboards.ps1` fills in the install folder's `VERSION`); the dashboard title and description lines are gone (the title is in Grafana's breadcrumb).
+- Section headers and card sections: no dot before the section name.
+- README screenshots re-rendered.
+
 ## 5.2.0 (2026-10-18)
 
 - Dashboard theme: every dashboard opens with a banner (brand line, title, description), and each section (Health, Capacity and so on) is headed by a full-width rounded pill in the theme's colours instead of a Grafana row; sections no longer collapse. `monitoring/theme.example.json` lists the colours, brand line and logo; a site copies it to `monitoring/theme.json` (git-ignored, not shipped) and `Publish-StorSafeDashboards.ps1` writes the dashboards in that theme to `monitoring/dashboards-live/`, which is now the folder Grafana's provider loads. Without a theme the dashboards keep Grafana's colours.

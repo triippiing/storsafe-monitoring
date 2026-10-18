@@ -68,7 +68,7 @@
       "title": "",
       "id": 1,
       "gridPos": {
-        "h": 3,
+        "h": 2,
         "w": 24,
         "x": 0,
         "y": 0
@@ -76,7 +76,7 @@
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:center;gap:18px;height:100%;padding:8px 18px;border-radius:6px;background:linear-gradient(90deg,#141A26 0%,#1E2738 100%);border-left:4px solid #3D71D9\"><!--logo--><div style=\"min-width:0\"><div style=\"color:#8AB8FF;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase\"><!--brand-->StorSafe monitoring<!--/brand--></div><div style=\"color:#FFFFFF;font-size:20px;font-weight:700;line-height:1.25\">StorSafe Activity</div><div style=\"color:#A3ACB9;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Live jobs across the estate: deduplication, replication and repository maintenance.</div></div></div>"
+        "content": "<div style=\"display:flex;align-items:center;gap:18px;height:48px;box-sizing:border-box;padding:0 18px;border-radius:6px;background:linear-gradient(90deg,#141A26 0%,#1E2738 100%);border-left:4px solid #3D71D9\"><!--logo--><div style=\"min-width:0;color:#8AB8FF;font-size:15px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\"><!--brand-->StorSafe monitoring<!--/brand--> &middot; <!--version-->v5.2.1<!--/version--></div></div>"
       }
     },
     {
@@ -91,7 +91,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 3
+        "y": 2
       },
       "transparent": true,
       "targets": [
@@ -109,9 +109,9 @@
       "options": {
         "renderMode": "allRows",
         "content": "{{{storsafeSection data}}}",
-        "defaultContent": "<div class=\"ss-section\"><div class=\"ss-head\"><span class=\"ss-dot\"></span>Now</div><div class=\"ss ss-tiles\"><div class=\"ss-hero unknown\"><div class=\"ss-hero-title\">No data</div><div class=\"ss-hero-sub\">Prometheus returned nothing for this section.</div></div></div></div>",
-        "helpers": "const SECTION = {\"title\": \"Now\", \"tiles\": [{\"k\": \"0\", \"label\": \"Dedupe jobs active\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"info\"]]}, {\"k\": \"1\", \"label\": \"Dedupe jobs queued\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"info\"]]}, {\"k\": \"2\", \"label\": \"Dedupe jobs paused / suspended\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"ok\"], [1, \"warning\"]]}, {\"k\": \"3\", \"label\": \"Replication jobs running\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"info\"]]}, {\"k\": \"4\", \"label\": \"Replication jobs waiting\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"ok\"], [1, \"warning\"]]}, {\"k\": \"5\", \"label\": \"Reclamation / prune running\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"info\"]]}]};\nconst num = (row) => {\n  for (const key of Object.keys(row)) {\n    if (key.indexOf('Value') === 0) { return Number(row[key]); }\n  }\n  return NaN;\n};\nconst esc = (s) => String(s).replace(/[&<>\"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' })[ch]);\nconst round = (v, d, auto) => v.toFixed(d !== null ? d : (Math.abs(v) >= auto || Number.isInteger(v) ? 0 : 1));\nconst pad = (n) => String(n).padStart(2, '0');\nconst fmt = (v, t) => {\n  if (!isFinite(v)) { return 'No data'; }\n  switch (t.unit) {\n    case 'percent': return round(v, t.decimals, 100) + '%';\n    case 'bytes': {\n      const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB'];\n      let i = 0;\n      while (Math.abs(v) >= 1024 && i < units.length - 1) { v /= 1024; i += 1; }\n      return round(v, t.decimals, 100) + ' ' + units[i];\n    }\n    case 's': {\n      const a = Math.abs(v);\n      if (a < 90) { return round(v, t.decimals, 10) + ' s'; }\n      if (a < 5400) { return (v / 60).toFixed(1) + ' min'; }\n      if (a < 172800) { return (v / 3600).toFixed(1) + ' h'; }\n      return (v / 86400).toFixed(1) + ' days';\n    }\n    case 'd': return round(v, t.decimals, 10) + ' days';\n    case 'dateTimeAsIso': {\n      const d = new Date(v);\n      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());\n    }\n    default: return round(v, t.decimals, 100);\n  }\n};\nconst level = (v, t) => {\n  if (!isFinite(v)) { return 'unknown'; }\n  let lv = 'info';\n  t.steps.forEach((st) => { if (st[0] === null || v >= st[0]) { lv = st[1]; } });\n  return lv;\n};\nconst show = (row, t) => {\n  const v = num(row);\n  const m = t.maps[String(v)];\n  if (m) { return { text: m.text, level: m.level }; }\n  const text = t.legend ? t.legend.replace(/\\{\\{\\s*(\\w+)\\s*\\}\\}/g, (all, name) => (row[name] === undefined ? '' : row[name])).trim() : fmt(v, t);\n  return { text: text, level: level(v, t) };\n};\nconst WORD = { ok: 'OK', warning: 'Check', critical: 'Action', info: 'Info', unknown: 'No data' };\ncontext.handlebars.registerHelper('storsafeSection', (rows) => {\n  const tiles = SECTION.tiles.map((t) => {\n    const mine = (rows || []).filter((row) => row.k === t.k);\n    let body;\n    let lv = 'unknown';\n    if (mine.length > 1 || (t.list && mine.length)) {\n      // A count per version and the like: one line per series with its count, the tile coloured by the first.\n      lv = show(mine[0], t).level;\n      body = '<div class=\"ss-list\">' + mine.map((row) => '<div><span>' + esc(show(row, t).text) + '</span><b>' + esc(fmt(num(row), Object.assign({}, t, { unit: null }))) + '</b></div>').join('') + '</div>';\n    } else {\n      const r = mine.length ? show(mine[0], t) : { text: 'No data', level: 'unknown' };\n      lv = r.level;\n      body = '<div class=\"ss-value' + (r.text.length > 10 ? ' ss-long' : '') + '\" title=\"' + esc(r.text) + '\">' + esc(r.text) + '</div>';\n    }\n    return '<div class=\"ss-card ' + lv + '\"><div class=\"ss-label\" title=\"' + esc(t.label) + '\">' + esc(t.label) + '</div>' + body +\n      '<div class=\"ss-pill\">' + WORD[lv] + '</div></div>';\n  }).join('');\n  return new context.handlebars.SafeString('<div class=\"ss-section\"><div class=\"ss-head\"><span class=\"ss-dot\"></span>' + esc(SECTION.title) + '</div>' +\n    '<div class=\"ss ss-tiles\" style=\"grid-template-columns: repeat(' + SECTION.tiles.length + ', minmax(0, 1fr))\">' + tiles + '</div></div>');\n});\n",
-        "styles": ".ss-section { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border-radius: 18px; overflow: hidden;\n  background: #141A26; border: 1px solid #1E2738; }\n.ss-head { flex: none; display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 18px; border-radius: 18px;\n  background: linear-gradient(90deg, #1E2738 0%, #141A26 100%); color: #8AB8FF; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }\n.ss-dot { width: 8px; height: 8px; border-radius: 50%; background: #3D71D9; flex: none; }\n.ss { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(240px, 1.4fr) repeat(4, minmax(140px, 1fr)); grid-auto-rows: 1fr; gap: 10px; padding: 10px 12px 12px; }\n.ss-hero { grid-row: span 2; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 16px 20px; border-radius: 14px;\n  background: linear-gradient(135deg, #141A26 0%, #1E2738 100%); border-left: 4px solid #3D71D9; }\n.ss-mark { width: 44px; height: 44px; border-radius: 50%; border: 3px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; }\n.ss-hero-title { font-size: 22px; font-weight: 700; line-height: 1.2; }\n.ss-hero-sub { color: #A3ACB9; font-size: 13px; }\n.ss-card { display: flex; flex-direction: column; justify-content: space-between; gap: 4px; min-width: 0; padding: 10px 14px; border-radius: 14px;\n  background: #1E2738; border-top: 3px solid #5794F2; }\n.ss-label { color: #8AB8FF; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.ss-value { color: #FFFFFF; font-size: 32px; font-weight: 700; line-height: 1.1; }\n.ss-pill { align-self: flex-start; padding: 2px 9px; border-radius: 10px; color: #FFFFFF; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }\n.ss-hero.ok { color: #73BF69; } .ss-hero.warning { color: #FF9830; } .ss-hero.critical { color: #F2495C; } .ss-hero.unknown { color: #A3ACB9; }\n.ss-hero .ss-hero-title { color: #FFFFFF; }\n.ss-card.ok { border-top-color: #73BF69; } .ss-card.ok .ss-pill { background: #73BF69; }\n.ss-card.info .ss-pill { background: #5794F2; }\n.ss-card.warning { border-top-color: #FF9830; background: linear-gradient(180deg, #FF983040 0%, #1E2738 70%); } .ss-card.warning .ss-pill { background: #FF9830; }\n.ss-card.critical { border-top-color: #F2495C; background: linear-gradient(180deg, #F2495C40 0%, #1E2738 70%); } .ss-card.critical .ss-pill { background: #F2495C; }\n.ss-card.unknown { border-top-color: #A3ACB9; } .ss-card.unknown .ss-pill { background: #A3ACB9; color: #141A26; }\n.ss.ss-tiles { grid-auto-rows: auto; grid-template-rows: 1fr; }\n.ss-tiles .ss-hero { grid-row: auto; grid-column: 1 / -1; }\n.ss-value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.ss-value.ss-long { font-size: 20px; line-height: 1.2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }\n.ss-list { display: flex; flex-direction: column; gap: 2px; font-size: 16px; font-weight: 600; color: #FFFFFF; overflow: hidden; }\n.ss-list div { display: flex; justify-content: space-between; gap: 8px; } .ss-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n",
+        "defaultContent": "<div class=\"ss-section\"><div class=\"ss-head\">Now</div><div class=\"ss ss-tiles\"><div class=\"ss-hero unknown\"><div class=\"ss-hero-title\">No data</div><div class=\"ss-hero-sub\">Prometheus returned nothing for this section.</div></div></div></div>",
+        "helpers": "const SECTION = {\"title\": \"Now\", \"tiles\": [{\"k\": \"0\", \"label\": \"Dedupe jobs active\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"info\"]]}, {\"k\": \"1\", \"label\": \"Dedupe jobs queued\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"info\"]]}, {\"k\": \"2\", \"label\": \"Dedupe jobs paused / suspended\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"ok\"], [1, \"warning\"]]}, {\"k\": \"3\", \"label\": \"Replication jobs running\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"info\"]]}, {\"k\": \"4\", \"label\": \"Replication jobs waiting\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"ok\"], [1, \"warning\"]]}, {\"k\": \"5\", \"label\": \"Reclamation / prune running\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"info\"]]}]};\nconst num = (row) => {\n  for (const key of Object.keys(row)) {\n    if (key.indexOf('Value') === 0) { return Number(row[key]); }\n  }\n  return NaN;\n};\nconst esc = (s) => String(s).replace(/[&<>\"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' })[ch]);\nconst round = (v, d, auto) => v.toFixed(d !== null ? d : (Math.abs(v) >= auto || Number.isInteger(v) ? 0 : 1));\nconst pad = (n) => String(n).padStart(2, '0');\nconst fmt = (v, t) => {\n  if (!isFinite(v)) { return 'No data'; }\n  switch (t.unit) {\n    case 'percent': return round(v, t.decimals, 100) + '%';\n    case 'bytes': {\n      const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB'];\n      let i = 0;\n      while (Math.abs(v) >= 1024 && i < units.length - 1) { v /= 1024; i += 1; }\n      return round(v, t.decimals, 100) + ' ' + units[i];\n    }\n    case 's': {\n      const a = Math.abs(v);\n      if (a < 90) { return round(v, t.decimals, 10) + ' s'; }\n      if (a < 5400) { return (v / 60).toFixed(1) + ' min'; }\n      if (a < 172800) { return (v / 3600).toFixed(1) + ' h'; }\n      return (v / 86400).toFixed(1) + ' days';\n    }\n    case 'd': return round(v, t.decimals, 10) + ' days';\n    case 'dateTimeAsIso': {\n      const d = new Date(v);\n      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());\n    }\n    default: return round(v, t.decimals, 100);\n  }\n};\nconst level = (v, t) => {\n  if (!isFinite(v)) { return 'unknown'; }\n  let lv = 'info';\n  t.steps.forEach((st) => { if (st[0] === null || v >= st[0]) { lv = st[1]; } });\n  return lv;\n};\nconst show = (row, t) => {\n  const v = num(row);\n  const m = t.maps[String(v)];\n  if (m) { return { text: m.text, level: m.level }; }\n  const text = t.legend ? t.legend.replace(/\\{\\{\\s*(\\w+)\\s*\\}\\}/g, (all, name) => (row[name] === undefined ? '' : row[name])).trim() : fmt(v, t);\n  return { text: text, level: level(v, t) };\n};\nconst WORD = { ok: 'OK', warning: 'Check', critical: 'Action', info: 'Info', unknown: 'No data' };\ncontext.handlebars.registerHelper('storsafeSection', (rows) => {\n  const tiles = SECTION.tiles.map((t) => {\n    const mine = (rows || []).filter((row) => row.k === t.k);\n    let body;\n    let lv = 'unknown';\n    if (mine.length > 1 || (t.list && mine.length)) {\n      // A count per version and the like: one line per series with its count, the tile coloured by the first.\n      lv = show(mine[0], t).level;\n      body = '<div class=\"ss-list\">' + mine.map((row) => '<div><span>' + esc(show(row, t).text) + '</span><b>' + esc(fmt(num(row), Object.assign({}, t, { unit: null }))) + '</b></div>').join('') + '</div>';\n    } else {\n      const r = mine.length ? show(mine[0], t) : { text: 'No data', level: 'unknown' };\n      lv = r.level;\n      body = '<div class=\"ss-value' + (r.text.length > 10 ? ' ss-long' : '') + '\" title=\"' + esc(r.text) + '\">' + esc(r.text) + '</div>';\n    }\n    return '<div class=\"ss-card ' + lv + '\"><div class=\"ss-label\" title=\"' + esc(t.label) + '\">' + esc(t.label) + '</div>' + body +\n      '<div class=\"ss-pill\">' + WORD[lv] + '</div></div>';\n  }).join('');\n  return new context.handlebars.SafeString('<div class=\"ss-section\"><div class=\"ss-head\">' + esc(SECTION.title) + '</div>' +\n    '<div class=\"ss ss-tiles\" style=\"grid-template-columns: repeat(' + SECTION.tiles.length + ', minmax(0, 1fr))\">' + tiles + '</div></div>');\n});\n",
+        "styles": ".ss-section { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border-radius: 18px; overflow: hidden;\n  background: #141A26; border: 1px solid #1E2738; }\n.ss-head { flex: none; display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 18px; border-radius: 18px;\n  background: linear-gradient(90deg, #1E2738 0%, #141A26 100%); color: #8AB8FF; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }\n.ss { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(240px, 1.4fr) repeat(4, minmax(140px, 1fr)); grid-auto-rows: 1fr; gap: 10px; padding: 10px 12px 12px; }\n.ss-hero { grid-row: span 2; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 16px 20px; border-radius: 14px;\n  background: linear-gradient(135deg, #141A26 0%, #1E2738 100%); border-left: 4px solid #3D71D9; }\n.ss-mark { width: 44px; height: 44px; border-radius: 50%; border: 3px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; }\n.ss-hero-title { font-size: 22px; font-weight: 700; line-height: 1.2; }\n.ss-hero-sub { color: #A3ACB9; font-size: 13px; }\n.ss-card { display: flex; flex-direction: column; justify-content: space-between; gap: 4px; min-width: 0; padding: 10px 14px; border-radius: 14px;\n  background: #1E2738; border-top: 3px solid #5794F2; }\n.ss-label { color: #8AB8FF; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.ss-value { color: #FFFFFF; font-size: 32px; font-weight: 700; line-height: 1.1; }\n.ss-pill { align-self: flex-start; padding: 2px 9px; border-radius: 10px; color: #FFFFFF; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }\n.ss-hero.ok { color: #73BF69; } .ss-hero.warning { color: #FF9830; } .ss-hero.critical { color: #F2495C; } .ss-hero.unknown { color: #A3ACB9; }\n.ss-hero .ss-hero-title { color: #FFFFFF; }\n.ss-card.ok { border-top-color: #73BF69; } .ss-card.ok .ss-pill { background: #73BF69; }\n.ss-card.info .ss-pill { background: #5794F2; }\n.ss-card.warning { border-top-color: #FF9830; background: linear-gradient(180deg, #FF983040 0%, #1E2738 70%); } .ss-card.warning .ss-pill { background: #FF9830; }\n.ss-card.critical { border-top-color: #F2495C; background: linear-gradient(180deg, #F2495C40 0%, #1E2738 70%); } .ss-card.critical .ss-pill { background: #F2495C; }\n.ss-card.unknown { border-top-color: #A3ACB9; } .ss-card.unknown .ss-pill { background: #A3ACB9; color: #141A26; }\n.ss.ss-tiles { grid-auto-rows: auto; grid-template-rows: 1fr; }\n.ss-tiles .ss-hero { grid-row: auto; grid-column: 1 / -1; }\n.ss-value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.ss-value.ss-long { font-size: 20px; line-height: 1.2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }\n.ss-list { display: flex; flex-direction: column; gap: 2px; font-size: 16px; font-weight: 600; color: #FFFFFF; overflow: hidden; }\n.ss-list div { display: flex; justify-content: space-between; gap: 8px; } .ss-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n",
         "wrap": false,
         "editors": [
           "helpers",
@@ -135,12 +135,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 8
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Deduplication jobs</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Deduplication jobs</span></div></div>"
       }
     },
     {
@@ -155,7 +155,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 10
       },
       "targets": [
         {
@@ -488,7 +488,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 23
+        "y": 22
       },
       "targets": [
         {
@@ -539,7 +539,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 23
+        "y": 22
       },
       "targets": [
         {
@@ -589,12 +589,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 30
+        "y": 29
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Replication jobs</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Replication jobs</span></div></div>"
       }
     },
     {
@@ -609,7 +609,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 31
       },
       "targets": [
         {
@@ -1004,7 +1004,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 44
+        "y": 43
       },
       "targets": [
         {
@@ -1055,7 +1055,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 44
+        "y": 43
       },
       "targets": [
         {
@@ -1105,12 +1105,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 51
+        "y": 50
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Repository maintenance (space reclamation and index pruning)</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Repository maintenance (space reclamation and index pruning)</span></div></div>"
       }
     },
     {
@@ -1125,7 +1125,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 53
+        "y": 52
       },
       "targets": [
         {
@@ -1300,7 +1300,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 53
+        "y": 52
       },
       "targets": [
         {
@@ -1489,7 +1489,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 61
+        "y": 60
       },
       "targets": [
         {
@@ -1537,12 +1537,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 68
+        "y": 67
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Policy runs and import/export</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Policy runs and import/export</span></div></div>"
       }
     },
     {
@@ -1557,7 +1557,7 @@
         "h": 10,
         "w": 14,
         "x": 0,
-        "y": 70
+        "y": 69
       },
       "targets": [
         {
@@ -1812,7 +1812,7 @@
         "h": 10,
         "w": 10,
         "x": 14,
-        "y": 70
+        "y": 69
       },
       "targets": [
         {

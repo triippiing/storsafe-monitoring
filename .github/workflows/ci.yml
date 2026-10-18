@@ -147,6 +147,7 @@ jobs:
           pwsh -NoProfile -File ./Publish-StorSafeDashboards.ps1 -ThemePath tools/test/theme-test.json -OutDirectory /tmp/gf/dash -HtmlPanels
           # The brand is HTML-encoded, and no colour of the example theme and no named status colour is left.
           grep -q '<!--brand-->Test brand &amp; &lt;markup&gt;<!--/brand-->' /tmp/gf/dash/storsafe-fleet.json
+          grep -q "<!--version-->v$(cat VERSION)<!--/version-->" /tmp/gf/dash/storsafe-fleet.json
           grep -q 'data:image/svg+xml;base64,' /tmp/gf/dash/storsafe-fleet.json
           grep -q '"type": "marcusolsson-dynamictext-panel"' /tmp/gf/dash/storsafe-fleet.json
           if grep -iqE '#(73BF69|FF9830|F2495C|5794F2|141A26|1E2738|3D71D9|8AB8FF|FADE2A|A3ACB9)|"color": "(green|orange|red|blue)"' /tmp/gf/dash/*.json; then
