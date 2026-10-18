@@ -104,7 +104,7 @@ class Dashboard:
         """Header strip above the first section: logo, brand line and package version. Plain HTML in a core text
         panel; Publish-StorSafeDashboards.ps1 puts the theme's logo and brand at the <!--logo--> and <!--brand-->
         markers and the installed VERSION at <!--version-->."""
-        html = ('<div style="display:flex;align-items:center;gap:18px;height:100%%;padding:0 18px;border-radius:6px;'
+        html = ('<div style="display:flex;align-items:center;gap:18px;height:56px;box-sizing:border-box;padding:0 18px;border-radius:6px;'
                 'background:linear-gradient(90deg,%(background)s 0%%,%(surface)s 100%%);border-left:4px solid %(accent)s">'
                 '<!--logo--><div style="min-width:0;color:%(label)s;font-size:15px;font-weight:700;letter-spacing:1.5px;'
                 'text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'

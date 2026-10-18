@@ -72,7 +72,7 @@
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:center;gap:18px;height:100%;padding:0 18px;border-radius:6px;background:linear-gradient(90deg,#141A26 0%,#1E2738 100%);border-left:4px solid #3D71D9\"><!--logo--><div style=\"min-width:0;color:#8AB8FF;font-size:15px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\"><!--brand-->StorSafe monitoring<!--/brand--> &middot; <!--version-->v5.2.1<!--/version--></div></div>"
+        "content": "<div style=\"display:flex;align-items:center;gap:18px;height:56px;box-sizing:border-box;padding:0 18px;border-radius:6px;background:linear-gradient(90deg,#141A26 0%,#1E2738 100%);border-left:4px solid #3D71D9\"><!--logo--><div style=\"min-width:0;color:#8AB8FF;font-size:15px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\"><!--brand-->StorSafe monitoring<!--/brand--> &middot; <!--version-->v5.2.1<!--/version--></div></div>"
       }
     },
     {
