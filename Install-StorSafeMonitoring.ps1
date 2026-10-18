@@ -1,7 +1,8 @@
 <#
 .SYNOPSIS
 Installs the StorSafe monitoring stack from this folder: credential files, windows_exporter,
-Prometheus, Grafana (with data source and dashboard provisioned) and the collector scheduled task.
+Prometheus, Grafana (with data source and dashboards provisioned, and the Business Text panel plugin
+when its zip is in installers\) and the collector scheduled task.
 
 .DESCRIPTION
 Extract the package where it should live (e.g. C:\StorSafeMonitoring) and run this script from an
@@ -216,7 +217,7 @@ if ($SkipPrometheus) {
 # ---------------------------------------------------------------------------
 Write-Step 'Grafana'
 if ($SkipGrafana) {
-    Add-Summary 'Grafana' 'Skipped' 'Import the JSON files in monitoring\dashboards manually'
+    Add-Summary 'Grafana' 'Skipped' 'Run Publish-StorSafeDashboards.ps1, then import the JSON files in monitoring\dashboards-live manually'
 } else {
     $installedNow = $false
     if (-not (Get-Service -Name Grafana -ErrorAction SilentlyContinue)) {
@@ -230,11 +231,24 @@ if ($SkipGrafana) {
     } else {
         $prov = Join-Path $GrafanaHome 'conf\provisioning'
         Copy-Item (Join-Path $Root 'monitoring\grafana\storsafe-datasource.yaml') (Join-Path $prov 'datasources\storsafe-datasource.yaml') -Force
-        $dashDir = Join-Path $Root 'monitoring\dashboards'
+        # The Business Text plugin draws the card sections. A zip in installers\ replaces the
+        # installed copy (that is the upgrade); without the plugin the dashboards keep their stat panels.
+        $plugins = Join-Path $GrafanaHome 'data\plugins'
+        $pluginDir = Join-Path $plugins 'marcusolsson-dynamictext-panel'
+        $pluginZip = Find-Installer 'marcusolsson-dynamictext-panel-*.zip'
+        if ($pluginZip) {
+            New-Item -ItemType Directory -Path $plugins -Force | Out-Null
+            if (Test-Path -LiteralPath $pluginDir) { Remove-Item -LiteralPath $pluginDir -Recurse -Force }
+            Expand-Archive -LiteralPath $pluginZip -DestinationPath $plugins -Force
+        }
+        $htmlPanels = Test-Path -LiteralPath (Join-Path $pluginDir 'plugin.json')
+        & (Join-Path $Root 'Publish-StorSafeDashboards.ps1') -Root $Root -HtmlPanels:$htmlPanels
+        $dashDir = Join-Path $Root 'monitoring\dashboards-live'
         (Get-Content -LiteralPath (Join-Path $Root 'monitoring\grafana\storsafe-dashboards.yaml') -Raw).Replace('__DASHBOARD_DIR__', $dashDir.Replace("'", "''")) |
             Set-Content -LiteralPath (Join-Path $prov 'dashboards\storsafe-dashboards.yaml') -Encoding ASCII
         Restart-Service -Name Grafana
-        $note = 'Data source and dashboard provisioned (folder "StorSafe")'
+        $note = 'Data source and dashboards provisioned (folder "StorSafe")'
+        if ($htmlPanels) { $note += ', Business Text card sections' } else { $note += '; no Business Text plugin, stat panels instead of card sections' }
         if ($installedNow) { $note += '; first login admin/admin at http://localhost:3000' }
         if (Wait-HttpOk 'http://127.0.0.1:3000/api/health' 90) { Add-Summary 'Grafana' 'OK' $note } else { Add-Summary 'Grafana' 'Check' "$note, but http://localhost:3000 not responding yet" }
     }
@@ -254,4 +268,4 @@ if ($SkipCollectorTask) {
 Write-Host ''
 Write-Host 'Install summary' -ForegroundColor White
 $summary | Format-Table -AutoSize -Wrap | Out-Host
-Write-Host 'Dashboard: http://localhost:3000  (Dashboards > StorSafe > StorSafe Estate)'
+Write-Host 'Dashboard: http://localhost:3000  (Dashboards > StorSafe > StorSafe Fleet)'

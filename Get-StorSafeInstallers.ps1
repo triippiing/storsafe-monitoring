@@ -1,14 +1,17 @@
 <#
 .SYNOPSIS
-Downloads the three third-party installers into installers\ (windows_exporter, Prometheus, Grafana).
+Downloads the third-party installers into installers\ (windows_exporter, Prometheus, Grafana and the
+Business Text panel plugin for Grafana).
 
 .DESCRIPTION
 Versions default to the ones this package was tested with; override them with the -*Version parameters
 (check https://github.com/prometheus-community/windows_exporter/releases, https://prometheus.io/download/
-and https://grafana.com/grafana/download?platform=windows for newer ones). Files that already exist are
+https://grafana.com/grafana/download?platform=windows and
+https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/ for newer ones; the plugin version must
+support the Grafana version, 6.2.0 is the newest for Grafana 12.0). Files that already exist are
 kept unless -Force. Uses the system proxy; pass -Proxy http://host:port if the machine needs one.
 
-If the host has no internet access, download the three URLs printed below on another machine and copy
+If the host has no internet access, download the four URLs printed below on another machine and copy
 the files into installers\.
 
 .EXAMPLE
@@ -21,6 +24,7 @@ param(
     [string]$WindowsExporterVersion = '0.31.8',
     [string]$PrometheusVersion = '3.15.0',
     [string]$GrafanaVersion = '12.0.2',
+    [string]$BusinessTextVersion = '6.2.0',
     [string]$Proxy,
     [switch]$Force
 )
@@ -38,7 +42,9 @@ $files = @(
     @{ Name = "prometheus-$PrometheusVersion.windows-amd64.zip"
        Url  = "https://github.com/prometheus/prometheus/releases/download/v$PrometheusVersion/prometheus-$PrometheusVersion.windows-amd64.zip" },
     @{ Name = "grafana-$GrafanaVersion.windows-amd64.msi"
-       Url  = "https://dl.grafana.com/oss/release/grafana-$GrafanaVersion.windows-amd64.msi" }
+       Url  = "https://dl.grafana.com/oss/release/grafana-$GrafanaVersion.windows-amd64.msi" },
+    @{ Name = "marcusolsson-dynamictext-panel-$BusinessTextVersion.zip"
+       Url  = "https://grafana.com/api/plugins/marcusolsson-dynamictext-panel/versions/$BusinessTextVersion/download" }
 )
 
 $failed = 0

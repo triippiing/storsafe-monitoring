@@ -1,11 +1,12 @@
 Third-party installers go in this folder before Install-StorSafeMonitoring.ps1 (Windows) or linux/install.sh (Linux) is run.
 Easiest: run ..\Get-StorSafeInstallers.ps1 (downloads the versions below; -*Version to pick others, -Proxy if needed).
-On Linux: run ../linux/get-installers.sh (downloads the four tarballs below; --*-version to pick others, --print-urls lists the URLs for a host with no internet access).
+On Linux: run ../linux/get-installers.sh (downloads the four tarballs below and the plugin zip; --*-version to pick others, --print-urls lists the URLs for a host with no internet access).
 Or download by hand (any recent version; the installer picks the newest file matching each pattern):
 
   windows_exporter-<ver>-amd64.msi        https://github.com/prometheus-community/windows_exporter/releases
   prometheus-<ver>.windows-amd64.zip      https://prometheus.io/download/#prometheus
   grafana-<ver>.windows-amd64.msi         https://grafana.com/grafana/download?platform=windows  (OSS or Enterprise)
+  marcusolsson-dynamictext-panel-<ver>.zip  https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/  (Business Text plugin, optional: the card sections; also on Linux)
 
 On Linux (x86_64), the same way:
 
@@ -16,4 +17,5 @@ On Linux (x86_64), the same way:
 
 Tested with: windows_exporter 0.31.8, Prometheus 3.15.0, Grafana 12.0.2.
 Tested with (Linux): node_exporter 1.12.1, Prometheus 3.15.0, Grafana 12.0.2, PowerShell 7.6.6.
+Business Text plugin: 6.2.0, the newest release that supports Grafana 12.0 (6.2.3 and later need Grafana 12.3).
 Skip any component the server already has with -SkipExporter / -SkipPrometheus / -SkipGrafana (Windows) or --collector-only (Linux, no Prometheus or Grafana).

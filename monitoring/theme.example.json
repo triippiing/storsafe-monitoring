@@ -1,0 +1,17 @@
+{
+  "_comment": "Copy to theme.json (git-ignored) and change the values, then run Publish-StorSafeDashboards.ps1 (the installers run it too). Colours are #RRGGBB. logo is an SVG or PNG for a dark background, relative to this file; leave it empty for none.",
+  "brand": "StorSafe monitoring",
+  "logo": "",
+  "colors": {
+    "ok": "#73BF69",
+    "warning": "#FF9830",
+    "critical": "#F2495C",
+    "info": "#5794F2",
+    "background": "#141A26",
+    "surface": "#1E2738",
+    "accent": "#3D71D9",
+    "label": "#8AB8FF",
+    "highlight": "#FADE2A",
+    "muted": "#A3ACB9"
+  }
+}

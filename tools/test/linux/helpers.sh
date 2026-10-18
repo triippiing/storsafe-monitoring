@@ -114,6 +114,20 @@ make_fake_tarballs() {
     return 0
 }
 
+# make_fake_plugin_zip <dir> <version>: writes a stand-in for the Business Text plugin zip into <dir>:
+# marcusolsson-dynamictext-panel/ with a plugin.json, as Grafana's plugin zips have. pwsh zips it.
+make_fake_plugin_zip() {
+    local dir=$1 version=$2 work
+    work=$(mktemp -d)
+    mkdir -p "$work/marcusolsson-dynamictext-panel"
+    printf '{"id": "marcusolsson-dynamictext-panel", "info": {"version": "%s"}}\n' "$version" > "$work/marcusolsson-dynamictext-panel/plugin.json"
+    # shellcheck disable=SC2016
+    STORSAFE_SRC=$work/marcusolsson-dynamictext-panel STORSAFE_ZIP=$dir/marcusolsson-dynamictext-panel-$version.zip \
+        pwsh -NoProfile -NonInteractive -Command 'Compress-Archive -LiteralPath $env:STORSAFE_SRC -DestinationPath $env:STORSAFE_ZIP -Force'
+    rm -rf "$work"
+    return 0
+}
+
 # fake_stub <file>: writes an executable shell script that does nothing and exits 0.
 fake_stub() {
     printf '#!/bin/sh\nexit 0\n' > "$1"

@@ -1,0 +1,3930 @@
+{
+  "title": "StorSafe Instance",
+  "uid": "storsafe-instance",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "1m",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "tags": [
+    "storsafe"
+  ],
+  "description": "Everything about one appliance. Pick the server at the top.",
+  "links": [
+    {
+      "title": "StorSafe dashboards",
+      "type": "dashboards",
+      "tags": [
+        "storsafe"
+      ],
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "label": "Data source",
+        "current": {
+          "text": "StorSafe Prometheus",
+          "value": "storsafe-prometheus"
+        }
+      },
+      {
+        "name": "server",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "query": {
+          "query": "label_values(storsafe_up, server)",
+          "refId": "A"
+        },
+        "definition": "label_values(storsafe_up, server)",
+        "includeAll": false,
+        "multi": false,
+        "sort": 1,
+        "refresh": 2,
+        "label": "Server"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "text",
+      "title": "",
+      "id": 1,
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "transparent": true,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:center;gap:18px;height:100%;padding:8px 18px;border-radius:6px;background:linear-gradient(90deg,#141A26 0%,#1E2738 100%);border-left:4px solid #3D71D9\"><!--logo--><div style=\"min-width:0\"><div style=\"color:#8AB8FF;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase\"><!--brand-->StorSafe monitoring<!--/brand--></div><div style=\"color:#FFFFFF;font-size:20px;font-weight:700;line-height:1.25\">StorSafe Instance</div><div style=\"color:#A3ACB9;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Everything about one appliance. Pick the server at the top.</div></div></div>"
+      }
+    },
+    {
+      "type": "marcusolsson-dynamictext-panel",
+      "title": "",
+      "id": 3,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 3
+      },
+      "transparent": true,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "label_replace(storsafe_up{server=\"$server\"}, \"k\", \"0\", \"\", \"\") or label_replace(storsafe_failover_status{server=\"$server\"} == 1, \"k\", \"1\", \"\", \"\") or label_replace(count(storsafe_check_success{server=\"$server\"} == 0) or vector(0), \"k\", \"2\", \"\", \"\") or label_replace(count(storsafe_physicaldevice_online{server=\"$server\"} == 0) or vector(0), \"k\", \"3\", \"\", \"\") or label_replace(count(storsafe_dedupe_repository_disk_online{server=\"$server\"} == 0) or vector(0), \"k\", \"4\", \"\", \"\") or label_replace(sum(increase(storsafe_events_total{server=\"$server\",severity=~\"error|critical\"}[24h])) or vector(0), \"k\", \"5\", \"\", \"\") or label_replace(storsafe_time_offset_seconds{server=\"$server\"}, \"k\", \"6\", \"\", \"\") or label_replace(time() - storsafe_check_last_success_timestamp_seconds{server=\"$server\",check=\"version\"}, \"k\", \"7\", \"\", \"\")",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "options": {
+        "renderMode": "allRows",
+        "content": "{{{storsafeSection data}}}",
+        "defaultContent": "<div class=\"ss-section\"><div class=\"ss-head\"><span class=\"ss-dot\"></span>Health</div><div class=\"ss ss-tiles\"><div class=\"ss-hero unknown\"><div class=\"ss-hero-title\">No data</div><div class=\"ss-hero-sub\">Prometheus returned nothing for this section.</div></div></div></div>",
+        "helpers": "const SECTION = {\"title\": \"Health\", \"tiles\": [{\"k\": \"0\", \"label\": \"API\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {\"1\": {\"text\": \"OK\", \"level\": \"ok\"}, \"0\": {\"text\": \"FAIL\", \"level\": \"critical\"}}, \"steps\": [[null, \"critical\"], [1, \"ok\"]]}, {\"k\": \"1\", \"label\": \"Failover\", \"unit\": null, \"decimals\": null, \"legend\": \"{{status}}\", \"list\": false, \"maps\": {}, \"steps\": [[null, \"info\"]]}, {\"k\": \"2\", \"label\": \"Failed checks\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"ok\"], [1, \"critical\"]]}, {\"k\": \"3\", \"label\": \"LUNs offline\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"ok\"], [1, \"critical\"]]}, {\"k\": \"4\", \"label\": \"Repo devices offline\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"ok\"], [1, \"critical\"]]}, {\"k\": \"5\", \"label\": \"Errors + criticals, 24h\", \"unit\": null, \"decimals\": 0, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"ok\"], [1, \"critical\"]]}, {\"k\": \"6\", \"label\": \"Clock offset\", \"unit\": \"s\", \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"ok\"], [60, \"warning\"]]}, {\"k\": \"7\", \"label\": \"Collected\", \"unit\": \"s\", \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"ok\"], [600, \"warning\"], [900, \"critical\"]]}]};\nconst num = (row) => {\n  for (const key of Object.keys(row)) {\n    if (key.indexOf('Value') === 0) { return Number(row[key]); }\n  }\n  return NaN;\n};\nconst esc = (s) => String(s).replace(/[&<>\"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' })[ch]);\nconst round = (v, d, auto) => v.toFixed(d !== null ? d : (Math.abs(v) >= auto || Number.isInteger(v) ? 0 : 1));\nconst pad = (n) => String(n).padStart(2, '0');\nconst fmt = (v, t) => {\n  if (!isFinite(v)) { return 'No data'; }\n  switch (t.unit) {\n    case 'percent': return round(v, t.decimals, 100) + '%';\n    case 'bytes': {\n      const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB'];\n      let i = 0;\n      while (Math.abs(v) >= 1024 && i < units.length - 1) { v /= 1024; i += 1; }\n      return round(v, t.decimals, 100) + ' ' + units[i];\n    }\n    case 's': {\n      const a = Math.abs(v);\n      if (a < 90) { return round(v, t.decimals, 10) + ' s'; }\n      if (a < 5400) { return (v / 60).toFixed(1) + ' min'; }\n      if (a < 172800) { return (v / 3600).toFixed(1) + ' h'; }\n      return (v / 86400).toFixed(1) + ' days';\n    }\n    case 'd': return round(v, t.decimals, 10) + ' days';\n    case 'dateTimeAsIso': {\n      const d = new Date(v);\n      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());\n    }\n    default: return round(v, t.decimals, 100);\n  }\n};\nconst level = (v, t) => {\n  if (!isFinite(v)) { return 'unknown'; }\n  let lv = 'info';\n  t.steps.forEach((st) => { if (st[0] === null || v >= st[0]) { lv = st[1]; } });\n  return lv;\n};\nconst show = (row, t) => {\n  const v = num(row);\n  const m = t.maps[String(v)];\n  if (m) { return { text: m.text, level: m.level }; }\n  const text = t.legend ? t.legend.replace(/\\{\\{\\s*(\\w+)\\s*\\}\\}/g, (all, name) => (row[name] === undefined ? '' : row[name])).trim() : fmt(v, t);\n  return { text: text, level: level(v, t) };\n};\nconst WORD = { ok: 'OK', warning: 'Check', critical: 'Action', info: 'Info', unknown: 'No data' };\ncontext.handlebars.registerHelper('storsafeSection', (rows) => {\n  const tiles = SECTION.tiles.map((t) => {\n    const mine = (rows || []).filter((row) => row.k === t.k);\n    let body;\n    let lv = 'unknown';\n    if (mine.length > 1 || (t.list && mine.length)) {\n      // A count per version and the like: one line per series with its count, the tile coloured by the first.\n      lv = show(mine[0], t).level;\n      body = '<div class=\"ss-list\">' + mine.map((row) => '<div><span>' + esc(show(row, t).text) + '</span><b>' + esc(fmt(num(row), Object.assign({}, t, { unit: null }))) + '</b></div>').join('') + '</div>';\n    } else {\n      const r = mine.length ? show(mine[0], t) : { text: 'No data', level: 'unknown' };\n      lv = r.level;\n      body = '<div class=\"ss-value' + (r.text.length > 10 ? ' ss-long' : '') + '\" title=\"' + esc(r.text) + '\">' + esc(r.text) + '</div>';\n    }\n    return '<div class=\"ss-card ' + lv + '\"><div class=\"ss-label\" title=\"' + esc(t.label) + '\">' + esc(t.label) + '</div>' + body +\n      '<div class=\"ss-pill\">' + WORD[lv] + '</div></div>';\n  }).join('');\n  return new context.handlebars.SafeString('<div class=\"ss-section\"><div class=\"ss-head\"><span class=\"ss-dot\"></span>' + esc(SECTION.title) + '</div>' +\n    '<div class=\"ss ss-tiles\" style=\"grid-template-columns: repeat(' + SECTION.tiles.length + ', minmax(0, 1fr))\">' + tiles + '</div></div>');\n});\n",
+        "styles": ".ss-section { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border-radius: 18px; overflow: hidden;\n  background: #141A26; border: 1px solid #1E2738; }\n.ss-head { flex: none; display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 18px; border-radius: 18px;\n  background: linear-gradient(90deg, #1E2738 0%, #141A26 100%); color: #8AB8FF; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }\n.ss-dot { width: 8px; height: 8px; border-radius: 50%; background: #3D71D9; flex: none; }\n.ss { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(240px, 1.4fr) repeat(4, minmax(140px, 1fr)); grid-auto-rows: 1fr; gap: 10px; padding: 10px 12px 12px; }\n.ss-hero { grid-row: span 2; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 16px 20px; border-radius: 14px;\n  background: linear-gradient(135deg, #141A26 0%, #1E2738 100%); border-left: 4px solid #3D71D9; }\n.ss-mark { width: 44px; height: 44px; border-radius: 50%; border: 3px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; }\n.ss-hero-title { font-size: 22px; font-weight: 700; line-height: 1.2; }\n.ss-hero-sub { color: #A3ACB9; font-size: 13px; }\n.ss-card { display: flex; flex-direction: column; justify-content: space-between; gap: 4px; min-width: 0; padding: 10px 14px; border-radius: 14px;\n  background: #1E2738; border-top: 3px solid #5794F2; }\n.ss-label { color: #8AB8FF; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.ss-value { color: #FFFFFF; font-size: 32px; font-weight: 700; line-height: 1.1; }\n.ss-pill { align-self: flex-start; padding: 2px 9px; border-radius: 10px; color: #FFFFFF; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }\n.ss-hero.ok { color: #73BF69; } .ss-hero.warning { color: #FF9830; } .ss-hero.critical { color: #F2495C; } .ss-hero.unknown { color: #A3ACB9; }\n.ss-hero .ss-hero-title { color: #FFFFFF; }\n.ss-card.ok { border-top-color: #73BF69; } .ss-card.ok .ss-pill { background: #73BF69; }\n.ss-card.info .ss-pill { background: #5794F2; }\n.ss-card.warning { border-top-color: #FF9830; background: linear-gradient(180deg, #FF983040 0%, #1E2738 70%); } .ss-card.warning .ss-pill { background: #FF9830; }\n.ss-card.critical { border-top-color: #F2495C; background: linear-gradient(180deg, #F2495C40 0%, #1E2738 70%); } .ss-card.critical .ss-pill { background: #F2495C; }\n.ss-card.unknown { border-top-color: #A3ACB9; } .ss-card.unknown .ss-pill { background: #A3ACB9; color: #141A26; }\n.ss.ss-tiles { grid-auto-rows: auto; grid-template-rows: 1fr; }\n.ss-tiles .ss-hero { grid-row: auto; grid-column: 1 / -1; }\n.ss-value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.ss-value.ss-long { font-size: 20px; line-height: 1.2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }\n.ss-list { display: flex; flex-direction: column; gap: 2px; font-size: 16px; font-weight: 600; color: #FFFFFF; overflow: hidden; }\n.ss-list div { display: flex; justify-content: space-between; gap: 8px; } .ss-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n",
+        "wrap": false,
+        "editors": [
+          "helpers",
+          "styles"
+        ],
+        "editor": {
+          "format": "auto",
+          "language": "html"
+        },
+        "contentPartials": [],
+        "externalStyles": [],
+        "afterRender": "",
+        "status": ""
+      },
+      "description": "Collected: Time since this appliance was last collected."
+    },
+    {
+      "type": "table",
+      "title": "Appliance",
+      "id": 2,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_info{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_server_info{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "C",
+          "expr": "storsafe_server_memory_bytes{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "D",
+          "expr": "storsafe_server_cpus{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Memory"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true,
+              "description": true,
+              "cloud": true,
+              "virtual": true,
+              "kernel": true,
+              "Value #A": true,
+              "Value #B": true
+            },
+            "renameByName": {
+              "Value #C": "Memory",
+              "Value #D": "CPUs"
+            },
+            "indexByName": {
+              "server": 0,
+              "hostname": 1,
+              "product": 2,
+              "version": 3,
+              "build": 4,
+              "role": 5,
+              "make": 6,
+              "model": 7,
+              "osversion": 8,
+              "Memory": 9,
+              "CPUs": 10,
+              "location": 11
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "marcusolsson-dynamictext-panel",
+      "title": "",
+      "id": 5,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "transparent": true,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "label_replace(100 * sum(storsafe_storagepool_used_bytes{server=\"$server\"}) / sum(storsafe_storagepool_size_bytes{server=\"$server\"}), \"k\", \"0\", \"\", \"\") or label_replace(sum(storsafe_storagepool_size_bytes{server=\"$server\"}) - sum(storsafe_storagepool_used_bytes{server=\"$server\"}), \"k\", \"1\", \"\", \"\") or label_replace((sum(storsafe_storagepool_size_bytes{server=\"$server\"}) - sum(storsafe_storagepool_used_bytes{server=\"$server\"})) / clamp_min(deriv(sum(storsafe_storagepool_used_bytes{server=\"$server\"})[30d:1h]), 1) / 86400, \"k\", \"2\", \"\", \"\") or label_replace(storsafe_storage_threshold_percent{server=\"$server\"}, \"k\", \"3\", \"\", \"\") or label_replace(100 * storsafe_virtualized_disk_used_bytes{server=\"$server\"} / storsafe_virtualized_disk_size_bytes{server=\"$server\"}, \"k\", \"4\", \"\", \"\") or label_replace(storsafe_dedupe_repository_info{server=\"$server\"}, \"k\", \"5\", \"\", \"\")",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "options": {
+        "renderMode": "allRows",
+        "content": "{{{storsafeSection data}}}",
+        "defaultContent": "<div class=\"ss-section\"><div class=\"ss-head\"><span class=\"ss-dot\"></span>Capacity</div><div class=\"ss ss-tiles\"><div class=\"ss-hero unknown\"><div class=\"ss-hero-title\">No data</div><div class=\"ss-hero-sub\">Prometheus returned nothing for this section.</div></div></div></div>",
+        "helpers": "const SECTION = {\"title\": \"Capacity\", \"tiles\": [{\"k\": \"0\", \"label\": \"Pool used\", \"unit\": \"percent\", \"decimals\": 1, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"ok\"], [80, \"warning\"], [90, \"critical\"]]}, {\"k\": \"1\", \"label\": \"Pool free\", \"unit\": \"bytes\", \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"info\"]]}, {\"k\": \"2\", \"label\": \"Days until full (30d trend)\", \"unit\": \"d\", \"decimals\": 0, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"critical\"], [30, \"warning\"], [90, \"ok\"]]}, {\"k\": \"3\", \"label\": \"Alert threshold\", \"unit\": \"percent\", \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"info\"]]}, {\"k\": \"4\", \"label\": \"Virtualized disk used\", \"unit\": \"percent\", \"decimals\": 1, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"ok\"], [80, \"warning\"], [90, \"critical\"]]}, {\"k\": \"5\", \"label\": \"Repository\", \"unit\": null, \"decimals\": null, \"legend\": \"{{type}} {{mode}} {{nodetype}}\", \"list\": false, \"maps\": {}, \"steps\": [[null, \"info\"]]}]};\nconst num = (row) => {\n  for (const key of Object.keys(row)) {\n    if (key.indexOf('Value') === 0) { return Number(row[key]); }\n  }\n  return NaN;\n};\nconst esc = (s) => String(s).replace(/[&<>\"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' })[ch]);\nconst round = (v, d, auto) => v.toFixed(d !== null ? d : (Math.abs(v) >= auto || Number.isInteger(v) ? 0 : 1));\nconst pad = (n) => String(n).padStart(2, '0');\nconst fmt = (v, t) => {\n  if (!isFinite(v)) { return 'No data'; }\n  switch (t.unit) {\n    case 'percent': return round(v, t.decimals, 100) + '%';\n    case 'bytes': {\n      const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB'];\n      let i = 0;\n      while (Math.abs(v) >= 1024 && i < units.length - 1) { v /= 1024; i += 1; }\n      return round(v, t.decimals, 100) + ' ' + units[i];\n    }\n    case 's': {\n      const a = Math.abs(v);\n      if (a < 90) { return round(v, t.decimals, 10) + ' s'; }\n      if (a < 5400) { return (v / 60).toFixed(1) + ' min'; }\n      if (a < 172800) { return (v / 3600).toFixed(1) + ' h'; }\n      return (v / 86400).toFixed(1) + ' days';\n    }\n    case 'd': return round(v, t.decimals, 10) + ' days';\n    case 'dateTimeAsIso': {\n      const d = new Date(v);\n      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());\n    }\n    default: return round(v, t.decimals, 100);\n  }\n};\nconst level = (v, t) => {\n  if (!isFinite(v)) { return 'unknown'; }\n  let lv = 'info';\n  t.steps.forEach((st) => { if (st[0] === null || v >= st[0]) { lv = st[1]; } });\n  return lv;\n};\nconst show = (row, t) => {\n  const v = num(row);\n  const m = t.maps[String(v)];\n  if (m) { return { text: m.text, level: m.level }; }\n  const text = t.legend ? t.legend.replace(/\\{\\{\\s*(\\w+)\\s*\\}\\}/g, (all, name) => (row[name] === undefined ? '' : row[name])).trim() : fmt(v, t);\n  return { text: text, level: level(v, t) };\n};\nconst WORD = { ok: 'OK', warning: 'Check', critical: 'Action', info: 'Info', unknown: 'No data' };\ncontext.handlebars.registerHelper('storsafeSection', (rows) => {\n  const tiles = SECTION.tiles.map((t) => {\n    const mine = (rows || []).filter((row) => row.k === t.k);\n    let body;\n    let lv = 'unknown';\n    if (mine.length > 1 || (t.list && mine.length)) {\n      // A count per version and the like: one line per series with its count, the tile coloured by the first.\n      lv = show(mine[0], t).level;\n      body = '<div class=\"ss-list\">' + mine.map((row) => '<div><span>' + esc(show(row, t).text) + '</span><b>' + esc(fmt(num(row), Object.assign({}, t, { unit: null }))) + '</b></div>').join('') + '</div>';\n    } else {\n      const r = mine.length ? show(mine[0], t) : { text: 'No data', level: 'unknown' };\n      lv = r.level;\n      body = '<div class=\"ss-value' + (r.text.length > 10 ? ' ss-long' : '') + '\" title=\"' + esc(r.text) + '\">' + esc(r.text) + '</div>';\n    }\n    return '<div class=\"ss-card ' + lv + '\"><div class=\"ss-label\" title=\"' + esc(t.label) + '\">' + esc(t.label) + '</div>' + body +\n      '<div class=\"ss-pill\">' + WORD[lv] + '</div></div>';\n  }).join('');\n  return new context.handlebars.SafeString('<div class=\"ss-section\"><div class=\"ss-head\"><span class=\"ss-dot\"></span>' + esc(SECTION.title) + '</div>' +\n    '<div class=\"ss ss-tiles\" style=\"grid-template-columns: repeat(' + SECTION.tiles.length + ', minmax(0, 1fr))\">' + tiles + '</div></div>');\n});\n",
+        "styles": ".ss-section { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border-radius: 18px; overflow: hidden;\n  background: #141A26; border: 1px solid #1E2738; }\n.ss-head { flex: none; display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 18px; border-radius: 18px;\n  background: linear-gradient(90deg, #1E2738 0%, #141A26 100%); color: #8AB8FF; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }\n.ss-dot { width: 8px; height: 8px; border-radius: 50%; background: #3D71D9; flex: none; }\n.ss { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(240px, 1.4fr) repeat(4, minmax(140px, 1fr)); grid-auto-rows: 1fr; gap: 10px; padding: 10px 12px 12px; }\n.ss-hero { grid-row: span 2; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 16px 20px; border-radius: 14px;\n  background: linear-gradient(135deg, #141A26 0%, #1E2738 100%); border-left: 4px solid #3D71D9; }\n.ss-mark { width: 44px; height: 44px; border-radius: 50%; border: 3px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; }\n.ss-hero-title { font-size: 22px; font-weight: 700; line-height: 1.2; }\n.ss-hero-sub { color: #A3ACB9; font-size: 13px; }\n.ss-card { display: flex; flex-direction: column; justify-content: space-between; gap: 4px; min-width: 0; padding: 10px 14px; border-radius: 14px;\n  background: #1E2738; border-top: 3px solid #5794F2; }\n.ss-label { color: #8AB8FF; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.ss-value { color: #FFFFFF; font-size: 32px; font-weight: 700; line-height: 1.1; }\n.ss-pill { align-self: flex-start; padding: 2px 9px; border-radius: 10px; color: #FFFFFF; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }\n.ss-hero.ok { color: #73BF69; } .ss-hero.warning { color: #FF9830; } .ss-hero.critical { color: #F2495C; } .ss-hero.unknown { color: #A3ACB9; }\n.ss-hero .ss-hero-title { color: #FFFFFF; }\n.ss-card.ok { border-top-color: #73BF69; } .ss-card.ok .ss-pill { background: #73BF69; }\n.ss-card.info .ss-pill { background: #5794F2; }\n.ss-card.warning { border-top-color: #FF9830; background: linear-gradient(180deg, #FF983040 0%, #1E2738 70%); } .ss-card.warning .ss-pill { background: #FF9830; }\n.ss-card.critical { border-top-color: #F2495C; background: linear-gradient(180deg, #F2495C40 0%, #1E2738 70%); } .ss-card.critical .ss-pill { background: #F2495C; }\n.ss-card.unknown { border-top-color: #A3ACB9; } .ss-card.unknown .ss-pill { background: #A3ACB9; color: #141A26; }\n.ss.ss-tiles { grid-auto-rows: auto; grid-template-rows: 1fr; }\n.ss-tiles .ss-hero { grid-row: auto; grid-column: 1 / -1; }\n.ss-value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.ss-value.ss-long { font-size: 20px; line-height: 1.2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }\n.ss-list { display: flex; flex-direction: column; gap: 2px; font-size: 16px; font-weight: 600; color: #FFFFFF; overflow: hidden; }\n.ss-list div { display: flex; justify-content: space-between; gap: 8px; } .ss-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n",
+        "wrap": false,
+        "editors": [
+          "helpers",
+          "styles"
+        ],
+        "editor": {
+          "format": "auto",
+          "language": "html"
+        },
+        "contentPartials": [],
+        "externalStyles": [],
+        "afterRender": "",
+        "status": ""
+      },
+      "description": "Days until full (30d trend): Free space divided by the 30-day growth rate. Shows a very large number while usage is flat or falling; needs several days of data to settle."
+    },
+    {
+      "type": "timeseries",
+      "title": "Storage pool used",
+      "id": 4,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 19
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_storagepool_used_bytes{server=\"$server\"}",
+          "legendFormat": "{{pool}} used"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_storagepool_size_bytes{server=\"$server\"}",
+          "legendFormat": "{{pool}} size"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
+          "unit": "bytes",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Virtualized disk",
+      "id": 6,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 19
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_virtualized_disk_used_bytes{server=\"$server\"}",
+          "legendFormat": "used"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_virtualized_disk_size_bytes{server=\"$server\"}",
+          "legendFormat": "size"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
+          "unit": "bytes",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "table",
+      "title": "LUNs",
+      "id": 7,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 27
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_physicaldevice_online{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_physicaldevice_size_bytes{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "C",
+          "expr": "storsafe_physicaldevice_used_bytes{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Size"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Used"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Online"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "1": {
+                        "text": "OK",
+                        "color": "green"
+                      },
+                      "0": {
+                        "text": "FAIL",
+                        "color": "red"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true
+            },
+            "renameByName": {
+              "Value #A": "Online",
+              "Value #B": "Size",
+              "Value #C": "Used"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Online",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Repository devices",
+      "id": 8,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_dedupe_repository_disk_online{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_dedupe_repository_disk_size_bytes{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Size"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Online"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "1": {
+                        "text": "OK",
+                        "color": "green"
+                      },
+                      "0": {
+                        "text": "FAIL",
+                        "color": "red"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true
+            },
+            "renameByName": {
+              "Value #A": "Online",
+              "Value #B": "Size"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Online",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "title": "",
+      "id": 10,
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "transparent": true,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Deduplication</span></div></div>"
+      }
+    },
+    {
+      "type": "table",
+      "title": "Policies",
+      "id": 9,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 14,
+        "x": 0,
+        "y": 37
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_dedupe_policy_status{server=\"$server\"} == 1",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_dedupe_policy_tapes{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "C",
+          "expr": "storsafe_dedupe_policy_suspended{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "D",
+          "expr": "storsafe_dedupe_policy_last_run_timestamp_seconds{server=\"$server\"} * 1000 > 0",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "E",
+          "expr": "storsafe_dedupe_policy_next_run_timestamp_seconds{server=\"$server\"} * 1000 > 0",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "F",
+          "expr": "storsafe_dedupe_completed_run_ratio{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "G",
+          "expr": "max by (server, policy) (storsafe_dedupe_runs_24h{server=\"$server\",status=\"failed\"})",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last run"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Next run"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": ".*(error|fail|stopped|suspended|offline|incomplete|cancel).*",
+                      "result": {
+                        "color": "red"
+                      }
+                    }
+                  },
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": ".*(running|deduplicating|repli|preparing|queued|pending|waiting|scanning).*",
+                      "result": {
+                        "color": "orange"
+                      }
+                    }
+                  },
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": "^(idle|completed|online|normal|notconfigured|empty|loaded|ready)$",
+                      "result": {
+                        "color": "green"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true,
+              "Value #A": true
+            },
+            "renameByName": {
+              "Value #B": "Tapes",
+              "Value #C": "Suspended",
+              "Value #D": "Last run",
+              "Value #E": "Next run",
+              "Value #F": "Ratio (last completed)",
+              "Value #G": "Failed runs 24h"
+            },
+            "indexByName": {
+              "server": 0,
+              "policy": 1,
+              "status": 2,
+              "trigger": 3,
+              "Tapes": 4,
+              "Suspended": 5,
+              "Last run": 6,
+              "Next run": 7,
+              "Ratio (last completed)": 8,
+              "Failed runs 24h": 9
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Reclamation / prune",
+      "id": 11,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 10,
+        "x": 14,
+        "y": 37
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_dedupe_maintenance_status{server=\"$server\"} == 1",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_dedupe_maintenance_running_since_timestamp_seconds{server=\"$server\"} * 1000 > 0",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "C",
+          "expr": "storsafe_dedupe_maintenance_last_run_end_timestamp_seconds{server=\"$server\"} * 1000",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "D",
+          "expr": "storsafe_dedupe_maintenance_last_run_duration_seconds{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Running since"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last run ended"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last duration"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": ".*(error|fail|stopped|suspended|offline|incomplete|cancel).*",
+                      "result": {
+                        "color": "red"
+                      }
+                    }
+                  },
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": ".*(running|deduplicating|repli|preparing|queued|pending|waiting|scanning).*",
+                      "result": {
+                        "color": "orange"
+                      }
+                    }
+                  },
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": "^(idle|completed|online|normal|notconfigured|empty|loaded|ready)$",
+                      "result": {
+                        "color": "green"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true,
+              "Value #A": true
+            },
+            "renameByName": {
+              "Value #B": "Running since",
+              "Value #C": "Last run ended",
+              "Value #D": "Last duration"
+            },
+            "indexByName": {
+              "server": 0,
+              "process": 1,
+              "status": 2,
+              "Running since": 3,
+              "Last run ended": 4,
+              "Last duration": 5
+            }
+          }
+        }
+      ],
+      "description": "Status from the API (idle/running/failed). Times are tracked by the collector, to one collector interval."
+    },
+    {
+      "type": "timeseries",
+      "title": "Dedupe ratio (N:1)",
+      "id": 12,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 45
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_dedupe_completed_run_ratio{server=\"$server\"}",
+          "legendFormat": "{{policy}} last run"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_dedupe_24h_ratio{server=\"$server\"}",
+          "legendFormat": "{{policy}} 24h"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
+          "unit": "none",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Scanned vs unique, last 24h",
+      "id": 13,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 45
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_dedupe_24h_scanned_bytes{server=\"$server\"}",
+          "legendFormat": "{{policy}} scanned"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_dedupe_24h_unique_bytes{server=\"$server\"}",
+          "legendFormat": "{{policy}} unique"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
+          "unit": "bytes",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Dedupe queue",
+      "id": 14,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 53
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_dedupe_queue_jobs{server=\"$server\"}",
+          "legendFormat": "{{state}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal"
+            }
+          },
+          "unit": "none",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Data waiting for dedupe",
+      "id": 15,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 53
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_dedupe_queue_undeduped_bytes{server=\"$server\"}",
+          "legendFormat": "waiting"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
+          "unit": "bytes",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Dedupe throughput",
+      "id": 16,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 53
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_dedupe_queue_throughput_bytes_per_second{server=\"$server\"}",
+          "legendFormat": "dedupe"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "sum(storsafe_dedupe_active_replication_throughput_bytes_per_second{server=\"$server\"})",
+          "legendFormat": "replication"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
+          "unit": "Bps",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "table",
+      "title": "Dedupe jobs on this appliance",
+      "id": 17,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 61
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_dedupe_job_info{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_dedupe_job_progress_percent{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "C",
+          "expr": "storsafe_dedupe_job_throughput_bytes_per_second{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "D",
+          "expr": "storsafe_dedupe_job_undeduped_bytes{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "E",
+          "expr": "storsafe_dedupe_job_first_seen_timestamp_seconds{server=\"$server\"} * 1000",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Throughput"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "Bps"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Un-deduped"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "First seen"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "state"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": ".*(error|fail|stopped|suspended|offline|incomplete|cancel).*",
+                      "result": {
+                        "color": "red"
+                      }
+                    }
+                  },
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": ".*(running|deduplicating|repli|preparing|queued|pending|waiting|scanning).*",
+                      "result": {
+                        "color": "orange"
+                      }
+                    }
+                  },
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": "^(idle|completed|online|normal|notconfigured|empty|loaded|ready)$",
+                      "result": {
+                        "color": "green"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Progress %"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 80
+                    },
+                    {
+                      "color": "red",
+                      "value": 90
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true,
+              "destination_drive": true,
+              "parser": true,
+              "replicationmode": true,
+              "trigger": true,
+              "Value #A": true
+            },
+            "renameByName": {
+              "Value #B": "Progress %",
+              "Value #C": "Throughput",
+              "Value #D": "Un-deduped",
+              "Value #E": "First seen"
+            },
+            "indexByName": {
+              "policy": 0,
+              "barcode": 1,
+              "tape": 2,
+              "state": 3,
+              "drive": 4,
+              "Progress %": 5,
+              "Throughput": 6,
+              "Un-deduped": 7,
+              "First seen": 8
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "marcusolsson-dynamictext-panel",
+      "title": "",
+      "id": 19,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 69
+      },
+      "transparent": true,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "label_replace(storsafe_replication_suspended{server=\"$server\"}, \"k\", \"0\", \"\", \"\") or label_replace(storsafe_replication_queue_jobs_total{server=\"$server\",queue=\"classic\"}, \"k\", \"1\", \"\", \"\") or label_replace(storsafe_replication_queue_jobs_total{server=\"$server\",queue=\"unique\"}, \"k\", \"2\", \"\", \"\") or label_replace(time() - (storsafe_unique_replication_oldest_job_start_timestamp_seconds{server=\"$server\"} > 0), \"k\", \"3\", \"\", \"\") or label_replace(min(time() - storsafe_replica_newest_replicated_timestamp_seconds{server=\"$server\"}), \"k\", \"4\", \"\", \"\") or label_replace(sum(storsafe_replica_tapes_not_replicated_within{server=\"$server\",age=\"24h\"}), \"k\", \"5\", \"\", \"\")",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "options": {
+        "renderMode": "allRows",
+        "content": "{{{storsafeSection data}}}",
+        "defaultContent": "<div class=\"ss-section\"><div class=\"ss-head\"><span class=\"ss-dot\"></span>Replication</div><div class=\"ss ss-tiles\"><div class=\"ss-hero unknown\"><div class=\"ss-hero-title\">No data</div><div class=\"ss-hero-sub\">Prometheus returned nothing for this section.</div></div></div></div>",
+        "helpers": "const SECTION = {\"title\": \"Replication\", \"tiles\": [{\"k\": \"0\", \"label\": \"Classic replication\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {\"0\": {\"text\": \"Normal\", \"level\": \"ok\"}, \"1\": {\"text\": \"SUSPENDED\", \"level\": \"critical\"}}, \"steps\": [[null, \"ok\"], [1, \"critical\"]]}, {\"k\": \"1\", \"label\": \"Classic queue\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"info\"]]}, {\"k\": \"2\", \"label\": \"Unique queue\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"info\"]]}, {\"k\": \"3\", \"label\": \"Oldest unique job age\", \"unit\": \"s\", \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"ok\"], [21600, \"warning\"], [43200, \"critical\"]]}, {\"k\": \"4\", \"label\": \"Newest replica age\", \"unit\": \"s\", \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"ok\"], [86400, \"warning\"], [172800, \"critical\"]]}, {\"k\": \"5\", \"label\": \"Replicas older than 24h\", \"unit\": null, \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"ok\"], [1, \"warning\"]]}]};\nconst num = (row) => {\n  for (const key of Object.keys(row)) {\n    if (key.indexOf('Value') === 0) { return Number(row[key]); }\n  }\n  return NaN;\n};\nconst esc = (s) => String(s).replace(/[&<>\"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' })[ch]);\nconst round = (v, d, auto) => v.toFixed(d !== null ? d : (Math.abs(v) >= auto || Number.isInteger(v) ? 0 : 1));\nconst pad = (n) => String(n).padStart(2, '0');\nconst fmt = (v, t) => {\n  if (!isFinite(v)) { return 'No data'; }\n  switch (t.unit) {\n    case 'percent': return round(v, t.decimals, 100) + '%';\n    case 'bytes': {\n      const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB'];\n      let i = 0;\n      while (Math.abs(v) >= 1024 && i < units.length - 1) { v /= 1024; i += 1; }\n      return round(v, t.decimals, 100) + ' ' + units[i];\n    }\n    case 's': {\n      const a = Math.abs(v);\n      if (a < 90) { return round(v, t.decimals, 10) + ' s'; }\n      if (a < 5400) { return (v / 60).toFixed(1) + ' min'; }\n      if (a < 172800) { return (v / 3600).toFixed(1) + ' h'; }\n      return (v / 86400).toFixed(1) + ' days';\n    }\n    case 'd': return round(v, t.decimals, 10) + ' days';\n    case 'dateTimeAsIso': {\n      const d = new Date(v);\n      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());\n    }\n    default: return round(v, t.decimals, 100);\n  }\n};\nconst level = (v, t) => {\n  if (!isFinite(v)) { return 'unknown'; }\n  let lv = 'info';\n  t.steps.forEach((st) => { if (st[0] === null || v >= st[0]) { lv = st[1]; } });\n  return lv;\n};\nconst show = (row, t) => {\n  const v = num(row);\n  const m = t.maps[String(v)];\n  if (m) { return { text: m.text, level: m.level }; }\n  const text = t.legend ? t.legend.replace(/\\{\\{\\s*(\\w+)\\s*\\}\\}/g, (all, name) => (row[name] === undefined ? '' : row[name])).trim() : fmt(v, t);\n  return { text: text, level: level(v, t) };\n};\nconst WORD = { ok: 'OK', warning: 'Check', critical: 'Action', info: 'Info', unknown: 'No data' };\ncontext.handlebars.registerHelper('storsafeSection', (rows) => {\n  const tiles = SECTION.tiles.map((t) => {\n    const mine = (rows || []).filter((row) => row.k === t.k);\n    let body;\n    let lv = 'unknown';\n    if (mine.length > 1 || (t.list && mine.length)) {\n      // A count per version and the like: one line per series with its count, the tile coloured by the first.\n      lv = show(mine[0], t).level;\n      body = '<div class=\"ss-list\">' + mine.map((row) => '<div><span>' + esc(show(row, t).text) + '</span><b>' + esc(fmt(num(row), Object.assign({}, t, { unit: null }))) + '</b></div>').join('') + '</div>';\n    } else {\n      const r = mine.length ? show(mine[0], t) : { text: 'No data', level: 'unknown' };\n      lv = r.level;\n      body = '<div class=\"ss-value' + (r.text.length > 10 ? ' ss-long' : '') + '\" title=\"' + esc(r.text) + '\">' + esc(r.text) + '</div>';\n    }\n    return '<div class=\"ss-card ' + lv + '\"><div class=\"ss-label\" title=\"' + esc(t.label) + '\">' + esc(t.label) + '</div>' + body +\n      '<div class=\"ss-pill\">' + WORD[lv] + '</div></div>';\n  }).join('');\n  return new context.handlebars.SafeString('<div class=\"ss-section\"><div class=\"ss-head\"><span class=\"ss-dot\"></span>' + esc(SECTION.title) + '</div>' +\n    '<div class=\"ss ss-tiles\" style=\"grid-template-columns: repeat(' + SECTION.tiles.length + ', minmax(0, 1fr))\">' + tiles + '</div></div>');\n});\n",
+        "styles": ".ss-section { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border-radius: 18px; overflow: hidden;\n  background: #141A26; border: 1px solid #1E2738; }\n.ss-head { flex: none; display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 18px; border-radius: 18px;\n  background: linear-gradient(90deg, #1E2738 0%, #141A26 100%); color: #8AB8FF; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }\n.ss-dot { width: 8px; height: 8px; border-radius: 50%; background: #3D71D9; flex: none; }\n.ss { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(240px, 1.4fr) repeat(4, minmax(140px, 1fr)); grid-auto-rows: 1fr; gap: 10px; padding: 10px 12px 12px; }\n.ss-hero { grid-row: span 2; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 16px 20px; border-radius: 14px;\n  background: linear-gradient(135deg, #141A26 0%, #1E2738 100%); border-left: 4px solid #3D71D9; }\n.ss-mark { width: 44px; height: 44px; border-radius: 50%; border: 3px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; }\n.ss-hero-title { font-size: 22px; font-weight: 700; line-height: 1.2; }\n.ss-hero-sub { color: #A3ACB9; font-size: 13px; }\n.ss-card { display: flex; flex-direction: column; justify-content: space-between; gap: 4px; min-width: 0; padding: 10px 14px; border-radius: 14px;\n  background: #1E2738; border-top: 3px solid #5794F2; }\n.ss-label { color: #8AB8FF; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.ss-value { color: #FFFFFF; font-size: 32px; font-weight: 700; line-height: 1.1; }\n.ss-pill { align-self: flex-start; padding: 2px 9px; border-radius: 10px; color: #FFFFFF; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }\n.ss-hero.ok { color: #73BF69; } .ss-hero.warning { color: #FF9830; } .ss-hero.critical { color: #F2495C; } .ss-hero.unknown { color: #A3ACB9; }\n.ss-hero .ss-hero-title { color: #FFFFFF; }\n.ss-card.ok { border-top-color: #73BF69; } .ss-card.ok .ss-pill { background: #73BF69; }\n.ss-card.info .ss-pill { background: #5794F2; }\n.ss-card.warning { border-top-color: #FF9830; background: linear-gradient(180deg, #FF983040 0%, #1E2738 70%); } .ss-card.warning .ss-pill { background: #FF9830; }\n.ss-card.critical { border-top-color: #F2495C; background: linear-gradient(180deg, #F2495C40 0%, #1E2738 70%); } .ss-card.critical .ss-pill { background: #F2495C; }\n.ss-card.unknown { border-top-color: #A3ACB9; } .ss-card.unknown .ss-pill { background: #A3ACB9; color: #141A26; }\n.ss.ss-tiles { grid-auto-rows: auto; grid-template-rows: 1fr; }\n.ss-tiles .ss-hero { grid-row: auto; grid-column: 1 / -1; }\n.ss-value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.ss-value.ss-long { font-size: 20px; line-height: 1.2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }\n.ss-list { display: flex; flex-direction: column; gap: 2px; font-size: 16px; font-weight: 600; color: #FFFFFF; overflow: hidden; }\n.ss-list div { display: flex; justify-content: space-between; gap: 8px; } .ss-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n",
+        "wrap": false,
+        "editors": [
+          "helpers",
+          "styles"
+        ],
+        "editor": {
+          "format": "auto",
+          "language": "html"
+        },
+        "contentPartials": [],
+        "externalStyles": [],
+        "afterRender": "",
+        "status": ""
+      },
+      "description": "Newest replica age: Time since the most recently updated replica tape held here."
+    },
+    {
+      "type": "table",
+      "title": "Replication jobs on this appliance",
+      "id": 18,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 75
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_replication_job_info{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_replication_job_progress_percent{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "C",
+          "expr": "storsafe_replication_job_throughput_bytes_per_second{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "D",
+          "expr": "storsafe_replication_job_remaining_seconds{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "E",
+          "expr": "storsafe_replication_job_first_seen_timestamp_seconds{server=\"$server\"} * 1000",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Throughput"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "Bps"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Remaining"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "First seen"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "state"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": ".*(error|fail|stopped|suspended|offline|incomplete|cancel).*",
+                      "result": {
+                        "color": "red"
+                      }
+                    }
+                  },
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": ".*(running|deduplicating|repli|preparing|queued|pending|waiting|scanning).*",
+                      "result": {
+                        "color": "orange"
+                      }
+                    }
+                  },
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": "^(idle|completed|online|normal|notconfigured|empty|loaded|ready)$",
+                      "result": {
+                        "color": "green"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Progress %"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 80
+                    },
+                    {
+                      "color": "red",
+                      "value": 90
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true,
+              "targetip": true,
+              "mode": true,
+              "Value #A": true
+            },
+            "renameByName": {
+              "Value #B": "Progress %",
+              "Value #C": "Throughput",
+              "Value #D": "Remaining",
+              "Value #E": "First seen"
+            },
+            "indexByName": {
+              "direction": 0,
+              "queue": 1,
+              "policy": 2,
+              "barcode": 3,
+              "tape": 4,
+              "source": 5,
+              "target": 6,
+              "state": 7,
+              "phase": 8,
+              "Progress %": 9,
+              "Throughput": 10,
+              "Remaining": 11,
+              "First seen": 12
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Policy targets",
+      "id": 20,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 83
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_dedupe_policy_info{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_dedupe_policy_replication_suspended{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true,
+              "Value #A": true
+            },
+            "renameByName": {
+              "Value #B": "Target suspended"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Replication partners",
+      "id": 21,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 83
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_dedupe_replication_partner_info{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true,
+              "Value": true
+            },
+            "renameByName": {}
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Replica tapes by source",
+      "id": 22,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 83
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_replica_tapes{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_replica_newest_replicated_timestamp_seconds{server=\"$server\"} * 1000",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "C",
+          "expr": "storsafe_replica_oldest_replicated_timestamp_seconds{server=\"$server\"} * 1000",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "D",
+          "expr": "max by (server, source) (storsafe_replica_tapes_not_replicated_within{server=\"$server\",age=\"24h\"})",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "E",
+          "expr": "max by (server, source) (storsafe_replica_tapes_not_replicated_within{server=\"$server\",age=\"7d\"})",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "F",
+          "expr": "max by (server, source) (storsafe_replica_tapes_not_replicated_within{server=\"$server\",age=\"never\"})",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Newest"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Oldest"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true
+            },
+            "renameByName": {
+              "Value #A": "Replicas",
+              "Value #B": "Newest",
+              "Value #C": "Oldest",
+              "Value #D": "> 24h",
+              "Value #E": "> 7d",
+              "Value #F": "Never"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Replication queues",
+      "id": 23,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 91
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_replication_queue_jobs{server=\"$server\"}",
+          "legendFormat": "{{queue}} {{state}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal"
+            }
+          },
+          "unit": "none",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Replicas not updated within",
+      "id": 24,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 91
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_replica_tapes_not_replicated_within{server=\"$server\"}",
+          "legendFormat": "{{source}} {{age}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
+          "unit": "none",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "text",
+      "title": "",
+      "id": 26,
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 99
+      },
+      "transparent": true,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Tapes and libraries</span></div></div>"
+      }
+    },
+    {
+      "type": "table",
+      "title": "Virtual libraries",
+      "id": 25,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 101
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_vtl_slots{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_vtl_tapes{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "C",
+          "expr": "storsafe_vtl_drives{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "D",
+          "expr": "storsafe_vtl_loaded_drives{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "E",
+          "expr": "storsafe_vtl_tapes_empty{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "F",
+          "expr": "storsafe_vtl_tape_used_bytes{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "G",
+          "expr": "storsafe_vtl_tape_size_bytes{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Used"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Allocated"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true
+            },
+            "renameByName": {
+              "Value #A": "Slots",
+              "Value #B": "Tapes",
+              "Value #C": "Drives",
+              "Value #D": "Loaded",
+              "Value #E": "Scratch",
+              "Value #F": "Used",
+              "Value #G": "Allocated"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Physical libraries and drives",
+      "id": 27,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 101
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_physical_drive_status{server=\"$server\"} == 1",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_physical_drive_disabled{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": ".*(error|fail|stopped|suspended|offline|incomplete|cancel).*",
+                      "result": {
+                        "color": "red"
+                      }
+                    }
+                  },
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": ".*(running|deduplicating|repli|preparing|queued|pending|waiting|scanning).*",
+                      "result": {
+                        "color": "orange"
+                      }
+                    }
+                  },
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": "^(idle|completed|online|normal|notconfigured|empty|loaded|ready)$",
+                      "result": {
+                        "color": "green"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true,
+              "Value #A": true
+            },
+            "renameByName": {
+              "Value #B": "Disabled"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Tapes by location",
+      "id": 28,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 109
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_tapes{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_tapes_empty{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "C",
+          "expr": "storsafe_tapes_used_bytes{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "D",
+          "expr": "storsafe_tapes_size_bytes{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Used"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Allocated"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true
+            },
+            "renameByName": {
+              "Value #A": "Tapes",
+              "Value #B": "Empty",
+              "Value #C": "Used",
+              "Value #D": "Allocated"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Tape status counts",
+      "id": 29,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 109
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_tapes_by_status{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true
+            },
+            "renameByName": {
+              "Value": "Tapes"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "field",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Import/export jobs",
+      "id": 30,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 109
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_iejob_jobs_by_type{server=\"$server\"} > 0",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": ".*(error|fail|stopped|suspended|offline|incomplete|cancel).*",
+                      "result": {
+                        "color": "red"
+                      }
+                    }
+                  },
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": ".*(running|deduplicating|repli|preparing|queued|pending|waiting|scanning).*",
+                      "result": {
+                        "color": "orange"
+                      }
+                    }
+                  },
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": "^(idle|completed|online|normal|notconfigured|empty|loaded|ready)$",
+                      "result": {
+                        "color": "green"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true
+            },
+            "renameByName": {
+              "Value": "Jobs"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Tape data used",
+      "id": 31,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 117
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_tapes_used_bytes{server=\"$server\"}",
+          "legendFormat": "{{location}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
+          "unit": "bytes",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Loaded drives",
+      "id": 32,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 117
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_vtl_loaded_drives{server=\"$server\"}",
+          "legendFormat": "{{library}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
+          "unit": "none",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "text",
+      "title": "",
+      "id": 34,
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 124
+      },
+      "transparent": true,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Events</span></div></div>"
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Events per hour by severity",
+      "id": 33,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 126
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "sum by (severity) (increase(storsafe_events_total{server=\"$server\"}[1h]))",
+          "legendFormat": "{{severity}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal"
+            },
+            "drawStyle": "bars"
+          },
+          "unit": "none",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "table",
+      "title": "Recent warnings, errors and criticals",
+      "id": 35,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 132
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_event_recent{server=\"$server\"} * 1000",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "When"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "severity"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": ".*(error|fail|stopped|suspended|offline|incomplete|cancel).*",
+                      "result": {
+                        "color": "red"
+                      }
+                    }
+                  },
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": ".*(running|deduplicating|repli|preparing|queued|pending|waiting|scanning).*",
+                      "result": {
+                        "color": "orange"
+                      }
+                    }
+                  },
+                  {
+                    "type": "regex",
+                    "options": {
+                      "pattern": "^(idle|completed|online|normal|notconfigured|empty|loaded|ready)$",
+                      "result": {
+                        "color": "green"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true,
+              "time": true,
+              "server": true
+            },
+            "renameByName": {
+              "Value": "When"
+            },
+            "indexByName": {
+              "When": 0,
+              "severity": 1,
+              "id": 2,
+              "message": 3
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "When",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "description": "The 20 newest non-informational events. The full log is archived daily under events\\ on the monitoring host."
+    },
+    {
+      "type": "text",
+      "title": "",
+      "id": 37,
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 142
+      },
+      "transparent": true,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Platform and network</span></div></div>"
+      }
+    },
+    {
+      "type": "table",
+      "title": "Patches",
+      "id": 36,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 144
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_patch_info{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true,
+              "server": true,
+              "Value": true
+            },
+            "renameByName": {}
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Network interfaces",
+      "id": 38,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 144
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_nic_speed_mbps{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_nic_mtu{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "C",
+          "expr": "storsafe_nic_dhcp{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true,
+              "server": true
+            },
+            "renameByName": {
+              "Value #A": "Speed Mb/s",
+              "Value #B": "MTU",
+              "Value #C": "DHCP"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "FC / SCSI adapters",
+      "id": 39,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 151
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_adapter_paths{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true,
+              "server": true
+            },
+            "renameByName": {
+              "Value": "Paths"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Options",
+      "id": 40,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 151
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_server_option_enabled{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_encryption_option{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true,
+              "server": true
+            },
+            "renameByName": {
+              "Value #A": "Enabled",
+              "Value #B": "Enabled "
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Failover setup",
+      "id": 41,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 151
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_failover_config_info{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_failover_autorecovery_enabled{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true,
+              "server": true,
+              "Value #A": true
+            },
+            "renameByName": {
+              "Value #B": "Auto failback"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "marcusolsson-dynamictext-panel",
+      "title": "",
+      "id": 43,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 157
+      },
+      "transparent": true,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "label_replace(storsafe_collector_info, \"k\", \"0\", \"\", \"\") or label_replace(storsafe_collector_last_run_timestamp_seconds * 1000, \"k\", \"1\", \"\", \"\") or label_replace(count(storsafe_check_success{server=\"$server\"} == 0) or vector(0), \"k\", \"2\", \"\", \"\") or label_replace(storsafe_collect_duration_seconds{server=\"$server\"}, \"k\", \"3\", \"\", \"\")",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "options": {
+        "renderMode": "allRows",
+        "content": "{{{storsafeSection data}}}",
+        "defaultContent": "<div class=\"ss-section\"><div class=\"ss-head\"><span class=\"ss-dot\"></span>Collector</div><div class=\"ss ss-tiles\"><div class=\"ss-hero unknown\"><div class=\"ss-hero-title\">No data</div><div class=\"ss-hero-sub\">Prometheus returned nothing for this section.</div></div></div></div>",
+        "helpers": "const SECTION = {\"title\": \"Collector\", \"tiles\": [{\"k\": \"0\", \"label\": \"Package version\", \"unit\": null, \"decimals\": null, \"legend\": \"{{version}}\", \"list\": false, \"maps\": {}, \"steps\": [[null, \"info\"]]}, {\"k\": \"1\", \"label\": \"Last collector run\", \"unit\": \"dateTimeAsIso\", \"decimals\": null, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"info\"]]}, {\"k\": \"2\", \"label\": \"Checks failing\", \"unit\": null, \"decimals\": 0, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"ok\"], [1, \"critical\"]]}, {\"k\": \"3\", \"label\": \"Collection time\", \"unit\": \"s\", \"decimals\": 1, \"legend\": null, \"list\": false, \"maps\": {}, \"steps\": [[null, \"info\"]]}]};\nconst num = (row) => {\n  for (const key of Object.keys(row)) {\n    if (key.indexOf('Value') === 0) { return Number(row[key]); }\n  }\n  return NaN;\n};\nconst esc = (s) => String(s).replace(/[&<>\"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' })[ch]);\nconst round = (v, d, auto) => v.toFixed(d !== null ? d : (Math.abs(v) >= auto || Number.isInteger(v) ? 0 : 1));\nconst pad = (n) => String(n).padStart(2, '0');\nconst fmt = (v, t) => {\n  if (!isFinite(v)) { return 'No data'; }\n  switch (t.unit) {\n    case 'percent': return round(v, t.decimals, 100) + '%';\n    case 'bytes': {\n      const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB'];\n      let i = 0;\n      while (Math.abs(v) >= 1024 && i < units.length - 1) { v /= 1024; i += 1; }\n      return round(v, t.decimals, 100) + ' ' + units[i];\n    }\n    case 's': {\n      const a = Math.abs(v);\n      if (a < 90) { return round(v, t.decimals, 10) + ' s'; }\n      if (a < 5400) { return (v / 60).toFixed(1) + ' min'; }\n      if (a < 172800) { return (v / 3600).toFixed(1) + ' h'; }\n      return (v / 86400).toFixed(1) + ' days';\n    }\n    case 'd': return round(v, t.decimals, 10) + ' days';\n    case 'dateTimeAsIso': {\n      const d = new Date(v);\n      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());\n    }\n    default: return round(v, t.decimals, 100);\n  }\n};\nconst level = (v, t) => {\n  if (!isFinite(v)) { return 'unknown'; }\n  let lv = 'info';\n  t.steps.forEach((st) => { if (st[0] === null || v >= st[0]) { lv = st[1]; } });\n  return lv;\n};\nconst show = (row, t) => {\n  const v = num(row);\n  const m = t.maps[String(v)];\n  if (m) { return { text: m.text, level: m.level }; }\n  const text = t.legend ? t.legend.replace(/\\{\\{\\s*(\\w+)\\s*\\}\\}/g, (all, name) => (row[name] === undefined ? '' : row[name])).trim() : fmt(v, t);\n  return { text: text, level: level(v, t) };\n};\nconst WORD = { ok: 'OK', warning: 'Check', critical: 'Action', info: 'Info', unknown: 'No data' };\ncontext.handlebars.registerHelper('storsafeSection', (rows) => {\n  const tiles = SECTION.tiles.map((t) => {\n    const mine = (rows || []).filter((row) => row.k === t.k);\n    let body;\n    let lv = 'unknown';\n    if (mine.length > 1 || (t.list && mine.length)) {\n      // A count per version and the like: one line per series with its count, the tile coloured by the first.\n      lv = show(mine[0], t).level;\n      body = '<div class=\"ss-list\">' + mine.map((row) => '<div><span>' + esc(show(row, t).text) + '</span><b>' + esc(fmt(num(row), Object.assign({}, t, { unit: null }))) + '</b></div>').join('') + '</div>';\n    } else {\n      const r = mine.length ? show(mine[0], t) : { text: 'No data', level: 'unknown' };\n      lv = r.level;\n      body = '<div class=\"ss-value' + (r.text.length > 10 ? ' ss-long' : '') + '\" title=\"' + esc(r.text) + '\">' + esc(r.text) + '</div>';\n    }\n    return '<div class=\"ss-card ' + lv + '\"><div class=\"ss-label\" title=\"' + esc(t.label) + '\">' + esc(t.label) + '</div>' + body +\n      '<div class=\"ss-pill\">' + WORD[lv] + '</div></div>';\n  }).join('');\n  return new context.handlebars.SafeString('<div class=\"ss-section\"><div class=\"ss-head\"><span class=\"ss-dot\"></span>' + esc(SECTION.title) + '</div>' +\n    '<div class=\"ss ss-tiles\" style=\"grid-template-columns: repeat(' + SECTION.tiles.length + ', minmax(0, 1fr))\">' + tiles + '</div></div>');\n});\n",
+        "styles": ".ss-section { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border-radius: 18px; overflow: hidden;\n  background: #141A26; border: 1px solid #1E2738; }\n.ss-head { flex: none; display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 18px; border-radius: 18px;\n  background: linear-gradient(90deg, #1E2738 0%, #141A26 100%); color: #8AB8FF; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }\n.ss-dot { width: 8px; height: 8px; border-radius: 50%; background: #3D71D9; flex: none; }\n.ss { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(240px, 1.4fr) repeat(4, minmax(140px, 1fr)); grid-auto-rows: 1fr; gap: 10px; padding: 10px 12px 12px; }\n.ss-hero { grid-row: span 2; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 16px 20px; border-radius: 14px;\n  background: linear-gradient(135deg, #141A26 0%, #1E2738 100%); border-left: 4px solid #3D71D9; }\n.ss-mark { width: 44px; height: 44px; border-radius: 50%; border: 3px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; }\n.ss-hero-title { font-size: 22px; font-weight: 700; line-height: 1.2; }\n.ss-hero-sub { color: #A3ACB9; font-size: 13px; }\n.ss-card { display: flex; flex-direction: column; justify-content: space-between; gap: 4px; min-width: 0; padding: 10px 14px; border-radius: 14px;\n  background: #1E2738; border-top: 3px solid #5794F2; }\n.ss-label { color: #8AB8FF; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.ss-value { color: #FFFFFF; font-size: 32px; font-weight: 700; line-height: 1.1; }\n.ss-pill { align-self: flex-start; padding: 2px 9px; border-radius: 10px; color: #FFFFFF; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }\n.ss-hero.ok { color: #73BF69; } .ss-hero.warning { color: #FF9830; } .ss-hero.critical { color: #F2495C; } .ss-hero.unknown { color: #A3ACB9; }\n.ss-hero .ss-hero-title { color: #FFFFFF; }\n.ss-card.ok { border-top-color: #73BF69; } .ss-card.ok .ss-pill { background: #73BF69; }\n.ss-card.info .ss-pill { background: #5794F2; }\n.ss-card.warning { border-top-color: #FF9830; background: linear-gradient(180deg, #FF983040 0%, #1E2738 70%); } .ss-card.warning .ss-pill { background: #FF9830; }\n.ss-card.critical { border-top-color: #F2495C; background: linear-gradient(180deg, #F2495C40 0%, #1E2738 70%); } .ss-card.critical .ss-pill { background: #F2495C; }\n.ss-card.unknown { border-top-color: #A3ACB9; } .ss-card.unknown .ss-pill { background: #A3ACB9; color: #141A26; }\n.ss.ss-tiles { grid-auto-rows: auto; grid-template-rows: 1fr; }\n.ss-tiles .ss-hero { grid-row: auto; grid-column: 1 / -1; }\n.ss-value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.ss-value.ss-long { font-size: 20px; line-height: 1.2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }\n.ss-list { display: flex; flex-direction: column; gap: 2px; font-size: 16px; font-weight: 600; color: #FFFFFF; overflow: hidden; }\n.ss-list div { display: flex; justify-content: space-between; gap: 8px; } .ss-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n",
+        "wrap": false,
+        "editors": [
+          "helpers",
+          "styles"
+        ],
+        "editor": {
+          "format": "auto",
+          "language": "html"
+        },
+        "contentPartials": [],
+        "externalStyles": [],
+        "afterRender": "",
+        "status": ""
+      },
+      "description": "Package version: Version of the installed StorSafe monitoring package (VERSION file in the install folder)."
+    },
+    {
+      "type": "table",
+      "title": "Checks",
+      "id": 42,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 0,
+        "y": 163
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_check_success{server=\"$server\"}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "storsafe_check_last_success_timestamp_seconds{server=\"$server\"} * 1000",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last success"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "OK"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "1": {
+                        "text": "OK",
+                        "color": "green"
+                      },
+                      "0": {
+                        "text": "FAIL",
+                        "color": "red"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true,
+              "server": true
+            },
+            "renameByName": {
+              "Value #A": "OK",
+              "Value #B": "Last success"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "OK",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Collection time",
+      "id": 44,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 12,
+        "y": 163
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_collect_duration_seconds{server=\"$server\"}",
+          "legendFormat": "seconds"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
+          "unit": "s",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    }
+  ]
+}

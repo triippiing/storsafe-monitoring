@@ -14,8 +14,10 @@ SKIP_DIRS = {".git", ".github", ".superpowers", "tools", "docs", "dist", "promet
 # Components the Linux installer unpacks next to the scripts; only at the top level, because
 # monitoring/grafana holds the provisioning files that ship.
 SKIP_TOP_DIRS = {"grafana", "node_exporter"}
-# StorSafe.config.json is a site's own config (a clone that runs as an install has one).
-SKIP_FILES = {".gitignore", ".gitattributes", ".git", "StorSafe.config.json"}
+# StorSafe.config.json and monitoring/theme.json are a site's own (a clone that runs as an install has them).
+SKIP_FILES = {".gitignore", ".gitattributes", ".git", "StorSafe.config.json", "theme.json"}
+# Folders of a site under monitoring/: its theme's logo and the dashboards published from the package's.
+SKIP_SITE_DIRS = {os.path.join("monitoring", "theme"), os.path.join("monitoring", "dashboards-live")}
 # Runtime folders ship with only their README.txt, whatever a dev checkout has in them.
 RUNTIME_DIRS = {"creds", "state", "events", "metrics", "reports", "installers"}
 
@@ -24,7 +26,7 @@ for dirpath, dirnames, filenames in os.walk(ROOT):
     rel = os.path.relpath(dirpath, ROOT)
     parts = [] if rel == "." else rel.split(os.sep)
     skip = SKIP_DIRS if parts else SKIP_DIRS | SKIP_TOP_DIRS
-    dirnames[:] = sorted(d for d in dirnames if d not in skip)
+    dirnames[:] = sorted(d for d in dirnames if d not in skip and os.path.join(rel, d) not in SKIP_SITE_DIRS)
     for name in sorted(filenames):
         if name in SKIP_FILES or name.endswith(".part"):
             continue

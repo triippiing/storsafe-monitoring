@@ -16,7 +16,11 @@ assert_exit 0 first_run
 assert_file "$root/metrics/storsafe.prom"
 assert_file "$root/node_exporter/node_exporter"; assert_eq node_exporter-1.9.1.linux-amd64.tar.gz "$(cat "$root/node_exporter/.version")"
 assert_file "$root/prometheus/prometheus.yml"; assert_file "$root/grafana/bin/grafana"
-assert_grep "$root/grafana/conf/provisioning/dashboards/storsafe-dashboards.yaml" "path: '$root/monitoring/dashboards'"
+assert_grep "$root/grafana/conf/provisioning/dashboards/storsafe-dashboards.yaml" "path: '$root/monitoring/dashboards-live'"
+# the dashboards are published there in the default theme; with no plugin zip, Fleet keeps its stat row
+for f in "$root"/monitoring/dashboards/*.json; do assert_eq "" "$(diff "$f" "$root/monitoring/dashboards-live/${f##*/}")" "published ${f##*/}"; done
+assert_not_grep "$root/monitoring/dashboards-live/storsafe-fleet.json" 'marcusolsson-dynamictext-panel'
+[ -e "$root/grafana/data/plugins/marcusolsson-dynamictext-panel" ] && { echo "FAIL plugin folder without a zip"; FAILED=1; }
 for u in storsafe-collector.service storsafe-collector.timer storsafe-node-exporter.service storsafe-prometheus.service storsafe-grafana.service; do
   assert_file "$tmp/units/$u"; assert_not_grep "$tmp/units/$u" '__[A-Z]*__'
 done
@@ -30,7 +34,7 @@ assert_grep "$tmp/run1.out" '^Grafana  *OK  *extracted grafana-12.0.2.linux-amd6
 assert_grep "$tmp/run1.out" '^Units  *OK  *5 unit file(s) in '
 assert_grep "$tmp/run1.out" 'Open Grafana at http://.*:3000'
 assert_grep "$tmp/run1.out" "^Package permissions  *OK  *readable by $(id -un)\$"
-for p in "" monitoring/dashboards node_exporter prometheus grafana grafana/conf/provisioning/dashboards; do
+for p in "" monitoring/dashboards monitoring/dashboards-live node_exporter prometheus grafana grafana/conf/provisioning/dashboards; do
   assert_eq 755 "$(stat -c %a "$root/$p")" "mode of folder $root/$p"
 done
 for p in StorSafe.psm1 StorSafe.config.json monitoring/prometheus.yml; do assert_eq 644 "$(stat -c %a "$root/$p")" "mode of $p"; done
@@ -59,6 +63,23 @@ assert_eq node_exporter-1.9.2.linux-amd64.tar.gz "$(cat "$root/node_exporter/.ve
 assert_file "$root/node_exporter/data/keep"
 [ -e "$root/node_exporter/stray" ] && { echo "FAIL stray file kept by the upgrade"; FAILED=1; }
 assert_file "$root/node_exporter/node_exporter"
+# a plugin zip in installers/ is unpacked into Grafana's plugin folder and Fleet gets the cards; the same zip is not
+# unpacked again, a newer one replaces the folder
+make_fake_plugin_zip "$root/installers" 6.2.0
+out=$("$inst" --no-services --root "$root" --user "$(id -un)" --unit-dir "$tmp/units" --skip-credentials)
+assert_file "$root/grafana/data/plugins/marcusolsson-dynamictext-panel/plugin.json"
+assert_eq marcusolsson-dynamictext-panel-6.2.0.zip "$(cat "$root/grafana/data/.business-text-zip")" "plugin zip recorded"
+assert_eq "plugin.json" "$(ls -A "$root/grafana/data/plugins/marcusolsson-dynamictext-panel")" "nothing but the zip's files in the plugin folder (Grafana checks its signature)"
+assert_eq "$(id -un)" "$(stat -c %U "$root/grafana/data/plugins/marcusolsson-dynamictext-panel/plugin.json")" "the plugin is in data/, the service account's"
+assert_grep "$root/monitoring/dashboards-live/storsafe-fleet.json" '"type": "marcusolsson-dynamictext-panel"'
+echo "$out" | grep -q 'Extracting marcusolsson-dynamictext-panel-6.2.0.zip' || { echo "FAIL plugin extracted"; FAILED=1; }
+touch "$root/grafana/data/plugins/marcusolsson-dynamictext-panel/stray"
+out=$("$inst" --no-services --root "$root" --user "$(id -un)" --unit-dir "$tmp/units" --skip-credentials)
+echo "$out" | grep -q 'Extracting marcusolsson' && { echo "FAIL the same plugin zip unpacked again"; FAILED=1; }
+make_fake_plugin_zip "$root/installers" 6.3.0
+"$inst" --no-services --root "$root" --user "$(id -un)" --unit-dir "$tmp/units" --skip-credentials > /dev/null
+assert_grep "$root/grafana/data/plugins/marcusolsson-dynamictext-panel/plugin.json" '"version": "6.3.0"'
+[ -e "$root/grafana/data/plugins/marcusolsson-dynamictext-panel/stray" ] && { echo "FAIL stray file kept by the plugin upgrade"; FAILED=1; }
 # collector-only: no Prometheus or Grafana, node_exporter on all interfaces, scrape job printed
 rm -rf "$tmp/units2"
 out=$("$inst" --no-services --collector-only --root "$root" --user "$(id -un)" --unit-dir "$tmp/units2" --skip-credentials)

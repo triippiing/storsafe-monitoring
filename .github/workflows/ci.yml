@@ -132,6 +132,58 @@ jobs:
           sudo git config --system --add safe.directory "$GITHUB_WORKSPACE"
           # sudo resets the PATH, which would hide pwsh and the tools from the tests.
           sudo env PATH="$PATH" bash tools/test/linux/run.sh
+      # The dashboards in a real Grafana with the Business Text plugin, published in the test theme
+      # (tools/test/README.md step 4). After the installer tests, which need port 3000 free.
+      - name: Get Grafana and the Business Text plugin
+        run: |
+          mkdir -p /tmp/grafana /tmp/gf/data/plugins /tmp/gf/prov/datasources /tmp/gf/prov/dashboards /tmp/gf/dash
+          curl -fL --retry 3 -o /tmp/inst/grafana.tar.gz "$(bash linux/get-installers.sh --print-urls | grep '/grafana-')"
+          tar -xzf /tmp/inst/grafana.tar.gz -C /tmp/grafana --strip-components=1
+          curl -fL --retry 3 -o /tmp/inst/plugin.zip "$(bash linux/get-installers.sh --print-urls | grep 'dynamictext')"
+          unzip -q /tmp/inst/plugin.zip -d /tmp/gf/data/plugins
+          test -f /tmp/gf/data/plugins/marcusolsson-dynamictext-panel/plugin.json
+      - name: Publish the dashboards in the test theme
+        run: |
+          pwsh -NoProfile -File ./Publish-StorSafeDashboards.ps1 -ThemePath tools/test/theme-test.json -OutDirectory /tmp/gf/dash -HtmlPanels
+          # The brand is HTML-encoded, and no colour of the example theme and no named status colour is left.
+          grep -q '<!--brand-->Test brand &amp; &lt;markup&gt;<!--/brand-->' /tmp/gf/dash/storsafe-fleet.json
+          grep -q 'data:image/svg+xml;base64,' /tmp/gf/dash/storsafe-fleet.json
+          grep -q '"type": "marcusolsson-dynamictext-panel"' /tmp/gf/dash/storsafe-fleet.json
+          if grep -iqE '#(73BF69|FF9830|F2495C|5794F2|141A26|1E2738|3D71D9|8AB8FF|FADE2A|A3ACB9)|"color": "(green|orange|red|blue)"' /tmp/gf/dash/*.json; then
+            echo 'a colour was not swapped'
+            exit 1
+          fi
+      - name: Start Grafana
+        run: |
+          printf '%s\n' 'apiVersion: 1' 'datasources:' \
+            '  - {name: StorSafe Prometheus, uid: storsafe-prometheus, type: prometheus, access: proxy, url: "http://127.0.0.1:19090"}' \
+            > /tmp/gf/prov/datasources/ds.yaml
+          sed "s|__DASHBOARD_DIR__|/tmp/gf/dash|" monitoring/grafana/storsafe-dashboards.yaml > /tmp/gf/prov/dashboards/storsafe.yaml
+          # The plugin folder is relative to the home path unless set, not to the data path.
+          GF_PATHS_DATA=/tmp/gf/data GF_PATHS_PLUGINS=/tmp/gf/data/plugins GF_PATHS_PROVISIONING=/tmp/gf/prov GF_SERVER_HTTP_ADDR=127.0.0.1 \
+            GF_AUTH_ANONYMOUS_ENABLED=true GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer GF_NEWS_NEWS_FEED_ENABLED=false \
+            setsid nohup /tmp/grafana/bin/grafana server --homepath /tmp/grafana > /tmp/grafana.log 2>&1 &
+          for _ in $(seq 1 60); do
+            if curl -fsS -o /dev/null http://127.0.0.1:3000/api/health; then exit 0; fi
+            sleep 2
+          done
+          tail -n 50 /tmp/grafana.log
+          exit 1
+      - name: Render the dashboards
+        run: |
+          python3 -m pip install --user playwright
+          python3 -m playwright install --with-deps chromium
+          # The plugin must be loaded, and Fleet must show its eight estate cards with no panel error.
+          curl -fsS http://127.0.0.1:3000/api/plugins/marcusolsson-dynamictext-panel/settings > /dev/null || { tail -n 50 /tmp/grafana.log; exit 1; }
+          python3 tools/test/render_dashboards.py --cards --out /tmp/screens
+          python3 tools/test/render_dashboards.py --cards --full --from now-15m --out /tmp/screens/full
+      - name: Keep the screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-screenshots
+          path: /tmp/screens
+          if-no-files-found: ignore
 
   # The Linux collector-only install, in clean containers of the two supported families. No pwsh
   # here: the installer extracts PowerShell from the downloaded tarball, which the job proves.

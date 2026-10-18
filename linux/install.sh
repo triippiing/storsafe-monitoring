@@ -45,6 +45,9 @@ PWSH_HOME=/opt/microsoft/powershell/7
 PWSH_LINK=/usr/bin/pwsh
 PWSH_BIN=""
 
+# Grafana's Business Text panel plugin (the card sections): its id, the folder and zip name prefix.
+BUSINESS_TEXT=marcusolsson-dynamictext-panel
+
 # Unit names whose service must be restarted if it runs: a rendered unit file or a config or
 # program that changed since the last run. Filled by mark_changed, read by the services step.
 CHANGED_UNITS=()
@@ -624,19 +627,30 @@ step_prometheus() {
 }
 
 # Grafana gets the data source and the dashboard provider from monitoring/grafana/, the same files
-# the Windows install uses; the provider's __DASHBOARD_DIR__ becomes the dashboards in this package.
+# the Windows install uses; the provider's __DASHBOARD_DIR__ becomes monitoring/dashboards-live,
+# which Publish-StorSafeDashboards.ps1 writes from the package's dashboards in the site's theme.
 # data/ is chowned recursively: extract_component skips it, and one that came out of a tarball
 # would belong to root (Grafana's data is small, unlike Prometheus's, which is not walked).
 step_grafana() {
-    local dir=$ROOT/grafana prov=$ROOT/grafana/conf/provisioning rendered dashboards
+    local dir=$ROOT/grafana prov=$ROOT/grafana/conf/provisioning rendered dashboards html=()
     log_step 'Grafana'
     if [[ $COLLECTOR_ONLY -eq 1 ]]; then
         summary_add Grafana Skipped '--collector-only'
         return 0
     fi
     extract_component grafana 'grafana-*.linux-amd64.tar.gz' 1 Grafana || return 1
+    install_business_text "$dir/data/plugins" || return 1
+    if [[ -f $dir/data/plugins/$BUSINESS_TEXT/plugin.json ]]; then
+        html=(-HtmlPanels)
+    fi
+    # Root writes the folder (the theme and logo may be root's alone); go+rX lets Grafana read it.
+    if ! "$PWSH_BIN" -NoProfile -NonInteractive -File "$ROOT/Publish-StorSafeDashboards.ps1" -Root "$ROOT" "${html[@]}" ||
+        ! chmod -R go+rX "$ROOT/monitoring/dashboards-live"; then
+        summary_add Grafana Check 'cannot publish the dashboards to monitoring/dashboards-live; see the output above'
+        return 1
+    fi
     # Escape what sed treats specially in the replacement (backslash, ampersand, delimiter).
-    dashboards=$(printf '%s' "$ROOT/monitoring/dashboards" | sed -e 's/[\\&|]/\\&/g')
+    dashboards=$(printf '%s' "$ROOT/monitoring/dashboards-live" | sed -e 's/[\\&|]/\\&/g')
     if ! rendered=$(mktemp); then
         summary_add Grafana Check 'cannot create a temporary file; see the output above'
         return 1
@@ -651,6 +665,39 @@ step_grafana() {
         return 1
     fi
     rm -f "$rendered"
+    return 0
+}
+
+# install_business_text <plugins dir>: unpacks the newest Business Text panel plugin zip from
+# installers/ into Grafana's plugin folder, replacing the copy there when the zip differs from the one
+# it came from (data/.business-text-zip, outside the plugin folder: Grafana refuses a signed plugin with
+# files the signature does not list); a new copy needs a Grafana restart. No zip is fine: the dashboards then
+# keep their stat panels. PowerShell unzips, because unzip is not on every host.
+install_business_text() {
+    local plugins=$1 zip base have="" marker
+    marker=$(dirname "$plugins")/.business-text-zip
+    zip=$(find_installer "$BUSINESS_TEXT-*.zip")
+    if [[ -z $zip ]]; then
+        return 0
+    fi
+    base=$(basename "$zip")
+    if [[ -f $marker ]]; then
+        read -r have < "$marker" || true
+    fi
+    if [[ $have == "$base" ]]; then
+        return 0
+    fi
+    echo "Extracting $base to $plugins"
+    # shellcheck disable=SC2016
+    if ! mkdir -p "$plugins" || ! rm -rf "${plugins:?}/$BUSINESS_TEXT" ||
+        ! STORSAFE_ZIP=$zip STORSAFE_DEST=$plugins "$PWSH_BIN" -NoProfile -NonInteractive -Command \
+            '$ErrorActionPreference = "Stop"; Expand-Archive -LiteralPath $env:STORSAFE_ZIP -DestinationPath $env:STORSAFE_DEST -Force' ||
+        [[ ! -f $plugins/$BUSINESS_TEXT/plugin.json ]] ||
+        ! printf '%s\n' "$base" > "$marker"; then
+        summary_add Grafana Check "cannot unpack $base into $plugins; see the output above"
+        return 1
+    fi
+    mark_changed storsafe-grafana.service
     return 0
 }
 

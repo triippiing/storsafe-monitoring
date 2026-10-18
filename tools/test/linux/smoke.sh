@@ -15,7 +15,7 @@
 # the test output and the extracted prometheus, grafana and node_exporter folders of a used clone;
 # the runtime folders keep only their README.txt), the mock config and credential are put in
 # place, and the installers are downloaded by linux/get-installers.sh. SMOKE_INSTALLERS=<folder>
-# copies the *.tar.gz files of that folder instead, for a host with no internet access. Needs
+# copies the *.tar.gz (and *.zip) files of that folder instead, for a host with no internet access. Needs
 # curl, tar, python3, and port 18080 for the mock API; the PowerShell tarball is extracted by the
 # installer when pwsh is not on the PATH, which needs the ICU library.
 set -euo pipefail
@@ -40,7 +40,7 @@ usage: smoke.sh [--services]
                exercise it (changes the host; for CI runners and throwaway VMs)
   -h, --help   show this text
 
-SMOKE_INSTALLERS=<folder> copies the *.tar.gz files of that folder instead of downloading.
+SMOKE_INSTALLERS=<folder> copies the *.tar.gz and *.zip files of that folder instead of downloading.
 EOF
 }
 
@@ -165,6 +165,10 @@ get_installers() {
             die "no *.tar.gz file in SMOKE_INSTALLERS=$SMOKE_INSTALLERS"
         fi
         cp "$SMOKE_INSTALLERS"/*.tar.gz "$ROOT/installers/"
+        # The Business Text plugin zip is optional.
+        if compgen -G "$SMOKE_INSTALLERS/*.zip" > /dev/null; then
+            cp "$SMOKE_INSTALLERS"/*.zip "$ROOT/installers/"
+        fi
     else
         "$ROOT/linux/get-installers.sh" --dest "$ROOT/installers"
     fi
@@ -238,6 +242,42 @@ check_files() {
 # assert_http <url>: fails unless a GET answers 2xx.
 assert_http() {
     if ! curl -fsS -o /dev/null --noproxy '*' --max-time 10 "$1"; then
+        die "no answer from $1"
+    fi
+    echo "OK $1"
+    return 0
+}
+
+# check_business_text: when the plugin zip was there, Grafana loaded the plugin and serves the Fleet
+# dashboard with its cards panel (as the first-login admin, whose password nobody has changed yet). Grafana
+# answers before its provisioner has loaded the dashboards, so the Fleet check waits for them.
+check_business_text() {
+    local start=$SECONDS
+    if ! compgen -G "$ROOT/installers/marcusolsson-dynamictext-panel-*.zip" > /dev/null; then
+        echo 'No Business Text plugin zip: Fleet keeps its stat row'
+        return 0
+    fi
+    assert_http_admin http://127.0.0.1:3000/api/plugins/marcusolsson-dynamictext-panel/settings
+    while ! fleet_has_cards; do
+        if [[ $((SECONDS - start)) -ge 60 ]]; then
+            die 'Grafana serves no Fleet dashboard with the Business Text cards panel after 60 s'
+        fi
+        sleep 2
+    done
+    echo 'Fleet has the Business Text cards panel'
+    return 0
+}
+
+# fleet_has_cards: succeeds when Grafana serves the Fleet dashboard with the Business Text panel.
+fleet_has_cards() {
+    local json
+    json=$(curl -fsS --noproxy '*' --max-time 10 -u admin:admin http://127.0.0.1:3000/api/dashboards/uid/storsafe-fleet 2> /dev/null) &&
+        [[ $json == *'"type":"marcusolsson-dynamictext-panel"'* ]]
+}
+
+# assert_http_admin <url>: like assert_http, as Grafana's admin.
+assert_http_admin() {
+    if ! curl -fsS -o /dev/null --noproxy '*' --max-time 10 -u admin:admin "$1"; then
         die "no answer from $1"
     fi
     echo "OK $1"
@@ -328,6 +368,8 @@ main() {
         assert_http http://127.0.0.1:9182/metrics
         assert_http http://127.0.0.1:9090/-/ready
         assert_http http://127.0.0.1:3000/api/health
+        step 'Grafana plugin and dashboards'
+        check_business_text
         step 'Metrics in Prometheus'
         wait_for_prometheus_data
         step 'Dashboard queries'

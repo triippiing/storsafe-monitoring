@@ -64,22 +64,41 @@
   },
   "panels": [
     {
-      "type": "row",
-      "title": "Last 24 hours",
+      "type": "text",
+      "title": "",
       "id": 1,
-      "collapsed": false,
       "gridPos": {
-        "h": 1,
+        "h": 3,
         "w": 24,
         "x": 0,
         "y": 0
       },
-      "panels": []
+      "transparent": true,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:center;gap:18px;height:100%;padding:8px 18px;border-radius:6px;background:linear-gradient(90deg,#141A26 0%,#1E2738 100%);border-left:4px solid #3D71D9\"><!--logo--><div style=\"min-width:0\"><div style=\"color:#8AB8FF;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase\"><!--brand-->StorSafe monitoring<!--/brand--></div><div style=\"color:#FFFFFF;font-size:20px;font-weight:700;line-height:1.25\">StorSafe Events</div><div style=\"color:#A3ACB9;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Appliance event logs across the estate. Informational events are counted but not listed.</div></div></div>"
+      }
+    },
+    {
+      "type": "text",
+      "title": "",
+      "id": 2,
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 3
+      },
+      "transparent": true,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Last 24 hours</span></div></div>"
+      }
     },
     {
       "type": "stat",
       "title": "Critical",
-      "id": 2,
+      "id": 3,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -88,7 +107,7 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 1
+        "y": 5
       },
       "targets": [
         {
@@ -139,7 +158,7 @@
     {
       "type": "stat",
       "title": "Error",
-      "id": 3,
+      "id": 4,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -148,7 +167,7 @@
         "h": 4,
         "w": 6,
         "x": 6,
-        "y": 1
+        "y": 5
       },
       "targets": [
         {
@@ -199,7 +218,7 @@
     {
       "type": "stat",
       "title": "Warning",
-      "id": 4,
+      "id": 5,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -208,7 +227,7 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 1
+        "y": 5
       },
       "targets": [
         {
@@ -259,7 +278,7 @@
     {
       "type": "stat",
       "title": "Informational",
-      "id": 5,
+      "id": 6,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -268,7 +287,7 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 1
+        "y": 5
       },
       "targets": [
         {
@@ -315,7 +334,7 @@
     {
       "type": "timeseries",
       "title": "Events per hour by severity",
-      "id": 6,
+      "id": 7,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -324,7 +343,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 5
+        "y": 9
       },
       "targets": [
         {
@@ -370,7 +389,7 @@
     {
       "type": "timeseries",
       "title": "Errors and criticals per hour by appliance",
-      "id": 7,
+      "id": 8,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -379,7 +398,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 5
+        "y": 9
       },
       "targets": [
         {
@@ -423,22 +442,25 @@
       }
     },
     {
-      "type": "row",
-      "title": "Recent events",
-      "id": 8,
-      "collapsed": false,
+      "type": "text",
+      "title": "",
+      "id": 9,
       "gridPos": {
-        "h": 1,
+        "h": 2,
         "w": 24,
         "x": 0,
-        "y": 12
+        "y": 16
       },
-      "panels": []
+      "transparent": true,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Recent events</span></div></div>"
+      }
     },
     {
       "type": "table",
       "title": "Warnings, errors and criticals (20 newest per appliance)",
-      "id": 9,
+      "id": 10,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -447,7 +469,7 @@
         "h": 18,
         "w": 24,
         "x": 0,
-        "y": 13
+        "y": 18
       },
       "targets": [
         {
@@ -592,7 +614,7 @@
     {
       "type": "table",
       "title": "Event log collection",
-      "id": 10,
+      "id": 11,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -601,7 +623,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 31
+        "y": 36
       },
       "targets": [
         {

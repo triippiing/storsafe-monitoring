@@ -1,0 +1,17 @@
+{
+  "_comment": "Test theme for tools/test/README.md step 4 and CI: every colour differs from the example theme, so a missed swap shows.",
+  "brand": "Test brand & <markup>",
+  "logo": "theme-test-logo.svg",
+  "colors": {
+    "ok": "#1B9E77",
+    "warning": "#D95F02",
+    "critical": "#C0392B",
+    "info": "#2C7FB8",
+    "background": "#0B1A2E",
+    "surface": "#18304F",
+    "accent": "#17BECF",
+    "label": "#9ECAE1",
+    "highlight": "#F1C40F",
+    "muted": "#D0D6DC"
+  }
+}

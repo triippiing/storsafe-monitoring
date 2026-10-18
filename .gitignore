@@ -23,6 +23,11 @@ __pycache__/
 
 # Site configuration (appliance names and addresses); start from StorSafe.config.example.json
 StorSafe.config.json
+# Site theme (brand, colours, logo); start from monitoring/theme.example.json. The published
+# dashboards are written from the package's by Publish-StorSafeDashboards.ps1.
+monitoring/theme.json
+monitoring/theme/
+monitoring/dashboards-live/
 
 # Superpowers plan workspaces (ledgers, briefs, review packages)
 .superpowers/
