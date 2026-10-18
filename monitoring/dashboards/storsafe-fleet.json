@@ -64,22 +64,38 @@
   },
   "panels": [
     {
+      "type": "text",
+      "title": "",
+      "id": 1,
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "transparent": true,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:center;gap:18px;height:100%;padding:8px 18px;border-radius:6px;background:linear-gradient(90deg,#141A26 0%,#1E2738 100%);border-left:4px solid #3D71D9\"><!--logo--><div style=\"min-width:0\"><div style=\"color:#8AB8FF;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase\"><!--brand-->StorSafe monitoring<!--/brand--></div><div style=\"color:#FFFFFF;font-size:20px;font-weight:700;line-height:1.25\">StorSafe Fleet</div><div style=\"color:#A3ACB9;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">One row per appliance; red rows need attention. Click a server name to open its Instance page.</div></div></div>"
+      }
+    },
+    {
       "type": "row",
       "title": "Estate",
-      "id": 1,
+      "id": 2,
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 3
       },
       "panels": []
     },
     {
       "type": "stat",
       "title": "Appliances",
-      "id": 2,
+      "id": 3,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -88,7 +104,7 @@
         "h": 4,
         "w": 3,
         "x": 0,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -134,7 +150,7 @@
     {
       "type": "stat",
       "title": "API down",
-      "id": 3,
+      "id": 4,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -143,7 +159,7 @@
         "h": 4,
         "w": 3,
         "x": 3,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -193,7 +209,7 @@
     {
       "type": "stat",
       "title": "Failed checks",
-      "id": 4,
+      "id": 5,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -202,7 +218,7 @@
         "h": 4,
         "w": 3,
         "x": 6,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -252,7 +268,7 @@
     {
       "type": "stat",
       "title": "Failover not normal",
-      "id": 5,
+      "id": 6,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -261,7 +277,7 @@
         "h": 4,
         "w": 3,
         "x": 9,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -311,7 +327,7 @@
     {
       "type": "stat",
       "title": "LUNs / repo devices offline",
-      "id": 6,
+      "id": 7,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -320,7 +336,7 @@
         "h": 4,
         "w": 3,
         "x": 12,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -370,7 +386,7 @@
     {
       "type": "stat",
       "title": "Errors + criticals, 24h",
-      "id": 7,
+      "id": 8,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -379,7 +395,7 @@
         "h": 4,
         "w": 3,
         "x": 15,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -430,7 +446,7 @@
     {
       "type": "stat",
       "title": "Warnings, 24h",
-      "id": 8,
+      "id": 9,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -439,7 +455,7 @@
         "h": 4,
         "w": 3,
         "x": 18,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -490,7 +506,7 @@
     {
       "type": "stat",
       "title": "Collector last run",
-      "id": 9,
+      "id": 10,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -499,7 +515,7 @@
         "h": 4,
         "w": 3,
         "x": 21,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -555,20 +571,20 @@
     {
       "type": "row",
       "title": "Appliances",
-      "id": 10,
+      "id": 11,
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 5
+        "y": 8
       },
       "panels": []
     },
     {
       "type": "table",
       "title": "Fleet status",
-      "id": 11,
+      "id": 12,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -577,7 +593,7 @@
         "h": 16,
         "w": 24,
         "x": 0,
-        "y": 6
+        "y": 9
       },
       "targets": [
         {
@@ -960,20 +976,20 @@
     {
       "type": "row",
       "title": "Trends",
-      "id": 12,
+      "id": 13,
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 25
       },
       "panels": []
     },
     {
       "type": "timeseries",
       "title": "Pool used %",
-      "id": 13,
+      "id": 14,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -982,7 +998,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 23
+        "y": 26
       },
       "targets": [
         {
@@ -1024,7 +1040,7 @@
     {
       "type": "timeseries",
       "title": "Errors and criticals per hour",
-      "id": 14,
+      "id": 15,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1033,7 +1049,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 23
+        "y": 26
       },
       "targets": [
         {
@@ -1079,7 +1095,7 @@
     {
       "type": "timeseries",
       "title": "Dedupe queue depth",
-      "id": 15,
+      "id": 16,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1088,7 +1104,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 31
+        "y": 34
       },
       "targets": [
         {
@@ -1130,7 +1146,7 @@
     {
       "type": "timeseries",
       "title": "Replication queue depth",
-      "id": 16,
+      "id": 17,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1139,7 +1155,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 31
+        "y": 34
       },
       "targets": [
         {

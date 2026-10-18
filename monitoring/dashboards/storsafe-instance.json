@@ -60,22 +60,38 @@
   },
   "panels": [
     {
+      "type": "text",
+      "title": "",
+      "id": 1,
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "transparent": true,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:center;gap:18px;height:100%;padding:8px 18px;border-radius:6px;background:linear-gradient(90deg,#141A26 0%,#1E2738 100%);border-left:4px solid #3D71D9\"><!--logo--><div style=\"min-width:0\"><div style=\"color:#8AB8FF;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase\"><!--brand-->StorSafe monitoring<!--/brand--></div><div style=\"color:#FFFFFF;font-size:20px;font-weight:700;line-height:1.25\">StorSafe Instance</div><div style=\"color:#A3ACB9;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Everything about one appliance. Pick the server at the top.</div></div></div>"
+      }
+    },
+    {
       "type": "row",
       "title": "Health",
-      "id": 1,
+      "id": 2,
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 3
       },
       "panels": []
     },
     {
       "type": "stat",
       "title": "API",
-      "id": 2,
+      "id": 3,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -84,7 +100,7 @@
         "h": 4,
         "w": 3,
         "x": 0,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -149,7 +165,7 @@
     {
       "type": "stat",
       "title": "Failover",
-      "id": 3,
+      "id": 4,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -158,7 +174,7 @@
         "h": 4,
         "w": 3,
         "x": 3,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -205,7 +221,7 @@
     {
       "type": "stat",
       "title": "Failed checks",
-      "id": 4,
+      "id": 5,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -214,7 +230,7 @@
         "h": 4,
         "w": 3,
         "x": 6,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -264,7 +280,7 @@
     {
       "type": "stat",
       "title": "LUNs offline",
-      "id": 5,
+      "id": 6,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -273,7 +289,7 @@
         "h": 4,
         "w": 3,
         "x": 9,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -323,7 +339,7 @@
     {
       "type": "stat",
       "title": "Repo devices offline",
-      "id": 6,
+      "id": 7,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -332,7 +348,7 @@
         "h": 4,
         "w": 3,
         "x": 12,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -382,7 +398,7 @@
     {
       "type": "stat",
       "title": "Errors + criticals, 24h",
-      "id": 7,
+      "id": 8,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -391,7 +407,7 @@
         "h": 4,
         "w": 3,
         "x": 15,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -442,7 +458,7 @@
     {
       "type": "stat",
       "title": "Clock offset",
-      "id": 8,
+      "id": 9,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -451,7 +467,7 @@
         "h": 4,
         "w": 3,
         "x": 18,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -502,7 +518,7 @@
     {
       "type": "stat",
       "title": "Collected",
-      "id": 9,
+      "id": 10,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -511,7 +527,7 @@
         "h": 4,
         "w": 3,
         "x": 21,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -567,7 +583,7 @@
     {
       "type": "table",
       "title": "Appliance",
-      "id": 10,
+      "id": 11,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -576,7 +592,7 @@
         "h": 4,
         "w": 24,
         "x": 0,
-        "y": 5
+        "y": 8
       },
       "targets": [
         {
@@ -701,20 +717,20 @@
     {
       "type": "row",
       "title": "Capacity",
-      "id": 11,
+      "id": 12,
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 12
       },
       "panels": []
     },
     {
       "type": "stat",
       "title": "Pool used",
-      "id": 12,
+      "id": 13,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -723,7 +739,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 10
+        "y": 13
       },
       "targets": [
         {
@@ -779,7 +795,7 @@
     {
       "type": "stat",
       "title": "Pool free",
-      "id": 13,
+      "id": 14,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -788,7 +804,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 10
+        "y": 13
       },
       "targets": [
         {
@@ -835,7 +851,7 @@
     {
       "type": "stat",
       "title": "Days until full (30d trend)",
-      "id": 14,
+      "id": 15,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -844,7 +860,7 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 10
+        "y": 13
       },
       "targets": [
         {
@@ -901,7 +917,7 @@
     {
       "type": "stat",
       "title": "Alert threshold",
-      "id": 15,
+      "id": 16,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -910,7 +926,7 @@
         "h": 4,
         "w": 4,
         "x": 12,
-        "y": 10
+        "y": 13
       },
       "targets": [
         {
@@ -957,7 +973,7 @@
     {
       "type": "stat",
       "title": "Virtualized disk used",
-      "id": 16,
+      "id": 17,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -966,7 +982,7 @@
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 10
+        "y": 13
       },
       "targets": [
         {
@@ -1022,7 +1038,7 @@
     {
       "type": "stat",
       "title": "Repository",
-      "id": 17,
+      "id": 18,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1031,7 +1047,7 @@
         "h": 4,
         "w": 4,
         "x": 20,
-        "y": 10
+        "y": 13
       },
       "targets": [
         {
@@ -1078,7 +1094,7 @@
     {
       "type": "timeseries",
       "title": "Storage pool used",
-      "id": 18,
+      "id": 19,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1087,7 +1103,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 14
+        "y": 17
       },
       "targets": [
         {
@@ -1138,7 +1154,7 @@
     {
       "type": "timeseries",
       "title": "Virtualized disk",
-      "id": 19,
+      "id": 20,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1147,7 +1163,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 14
+        "y": 17
       },
       "targets": [
         {
@@ -1198,7 +1214,7 @@
     {
       "type": "table",
       "title": "LUNs",
-      "id": 20,
+      "id": 21,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1207,7 +1223,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 22
+        "y": 25
       },
       "targets": [
         {
@@ -1358,7 +1374,7 @@
     {
       "type": "table",
       "title": "Repository devices",
-      "id": 21,
+      "id": 22,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1367,7 +1383,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 22
+        "y": 25
       },
       "targets": [
         {
@@ -1495,20 +1511,20 @@
     {
       "type": "row",
       "title": "Deduplication",
-      "id": 22,
+      "id": 23,
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 30
+        "y": 33
       },
       "panels": []
     },
     {
       "type": "table",
       "title": "Policies",
-      "id": 23,
+      "id": 24,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1517,7 +1533,7 @@
         "h": 8,
         "w": 14,
         "x": 0,
-        "y": 31
+        "y": 34
       },
       "targets": [
         {
@@ -1727,7 +1743,7 @@
     {
       "type": "table",
       "title": "Reclamation / prune",
-      "id": 24,
+      "id": 25,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1736,7 +1752,7 @@
         "h": 8,
         "w": 10,
         "x": 14,
-        "y": 31
+        "y": 34
       },
       "targets": [
         {
@@ -1922,7 +1938,7 @@
     {
       "type": "timeseries",
       "title": "Dedupe ratio (N:1)",
-      "id": 25,
+      "id": 26,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1931,7 +1947,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 39
+        "y": 42
       },
       "targets": [
         {
@@ -1982,7 +1998,7 @@
     {
       "type": "timeseries",
       "title": "Scanned vs unique, last 24h",
-      "id": 26,
+      "id": 27,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1991,7 +2007,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 39
+        "y": 42
       },
       "targets": [
         {
@@ -2042,7 +2058,7 @@
     {
       "type": "timeseries",
       "title": "Dedupe queue",
-      "id": 27,
+      "id": 28,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2051,7 +2067,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 47
+        "y": 50
       },
       "targets": [
         {
@@ -2096,7 +2112,7 @@
     {
       "type": "timeseries",
       "title": "Data waiting for dedupe",
-      "id": 28,
+      "id": 29,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2105,7 +2121,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 47
+        "y": 50
       },
       "targets": [
         {
@@ -2147,7 +2163,7 @@
     {
       "type": "timeseries",
       "title": "Dedupe throughput",
-      "id": 29,
+      "id": 30,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2156,7 +2172,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 47
+        "y": 50
       },
       "targets": [
         {
@@ -2207,7 +2223,7 @@
     {
       "type": "table",
       "title": "Dedupe jobs on this appliance",
-      "id": 30,
+      "id": 31,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2216,7 +2232,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 55
+        "y": 58
       },
       "targets": [
         {
@@ -2462,20 +2478,20 @@
     {
       "type": "row",
       "title": "Replication",
-      "id": 31,
+      "id": 32,
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 63
+        "y": 66
       },
       "panels": []
     },
     {
       "type": "stat",
       "title": "Classic replication",
-      "id": 32,
+      "id": 33,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2484,7 +2500,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 64
+        "y": 67
       },
       "targets": [
         {
@@ -2549,7 +2565,7 @@
     {
       "type": "stat",
       "title": "Classic queue",
-      "id": 33,
+      "id": 34,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2558,7 +2574,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 64
+        "y": 67
       },
       "targets": [
         {
@@ -2604,7 +2620,7 @@
     {
       "type": "stat",
       "title": "Unique queue",
-      "id": 34,
+      "id": 35,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2613,7 +2629,7 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 64
+        "y": 67
       },
       "targets": [
         {
@@ -2659,7 +2675,7 @@
     {
       "type": "stat",
       "title": "Oldest unique job age",
-      "id": 35,
+      "id": 36,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2668,7 +2684,7 @@
         "h": 4,
         "w": 4,
         "x": 12,
-        "y": 64
+        "y": 67
       },
       "targets": [
         {
@@ -2723,7 +2739,7 @@
     {
       "type": "stat",
       "title": "Newest replica age",
-      "id": 36,
+      "id": 37,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2732,7 +2748,7 @@
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 64
+        "y": 67
       },
       "targets": [
         {
@@ -2788,7 +2804,7 @@
     {
       "type": "stat",
       "title": "Replicas older than 24h",
-      "id": 37,
+      "id": 38,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2797,7 +2813,7 @@
         "h": 4,
         "w": 4,
         "x": 20,
-        "y": 64
+        "y": 67
       },
       "targets": [
         {
@@ -2847,7 +2863,7 @@
     {
       "type": "table",
       "title": "Replication jobs on this appliance",
-      "id": 38,
+      "id": 39,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -2856,7 +2872,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 68
+        "y": 71
       },
       "targets": [
         {
@@ -3104,7 +3120,7 @@
     {
       "type": "table",
       "title": "Policy targets",
-      "id": 39,
+      "id": 40,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -3113,7 +3129,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 76
+        "y": 79
       },
       "targets": [
         {
@@ -3185,7 +3201,7 @@
     {
       "type": "table",
       "title": "Replication partners",
-      "id": 40,
+      "id": 41,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -3194,7 +3210,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 76
+        "y": 79
       },
       "targets": [
         {
@@ -3242,7 +3258,7 @@
     {
       "type": "table",
       "title": "Replica tapes by source",
-      "id": 41,
+      "id": 42,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -3251,7 +3267,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 76
+        "y": 79
       },
       "targets": [
         {
@@ -3392,7 +3408,7 @@
     {
       "type": "timeseries",
       "title": "Replication queues",
-      "id": 42,
+      "id": 43,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -3401,7 +3417,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 84
+        "y": 87
       },
       "targets": [
         {
@@ -3446,7 +3462,7 @@
     {
       "type": "timeseries",
       "title": "Replicas not updated within",
-      "id": 43,
+      "id": 44,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -3455,7 +3471,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 84
+        "y": 87
       },
       "targets": [
         {
@@ -3497,20 +3513,20 @@
     {
       "type": "row",
       "title": "Tapes and libraries",
-      "id": 44,
+      "id": 45,
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 92
+        "y": 95
       },
       "panels": []
     },
     {
       "type": "table",
       "title": "Virtual libraries",
-      "id": 45,
+      "id": 46,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -3519,7 +3535,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 93
+        "y": 96
       },
       "targets": [
         {
@@ -3671,7 +3687,7 @@
     {
       "type": "table",
       "title": "Physical libraries and drives",
-      "id": 46,
+      "id": 47,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -3680,7 +3696,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 93
+        "y": 96
       },
       "targets": [
         {
@@ -3799,7 +3815,7 @@
     {
       "type": "table",
       "title": "Tapes by location",
-      "id": 47,
+      "id": 48,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -3808,7 +3824,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 101
+        "y": 104
       },
       "targets": [
         {
@@ -3927,7 +3943,7 @@
     {
       "type": "table",
       "title": "Tape status counts",
-      "id": 48,
+      "id": 49,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -3936,7 +3952,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 101
+        "y": 104
       },
       "targets": [
         {
@@ -3996,7 +4012,7 @@
     {
       "type": "table",
       "title": "Import/export jobs",
-      "id": 49,
+      "id": 50,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -4005,7 +4021,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 101
+        "y": 104
       },
       "targets": [
         {
@@ -4101,7 +4117,7 @@
     {
       "type": "timeseries",
       "title": "Tape data used",
-      "id": 50,
+      "id": 51,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -4110,7 +4126,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 109
+        "y": 112
       },
       "targets": [
         {
@@ -4152,7 +4168,7 @@
     {
       "type": "timeseries",
       "title": "Loaded drives",
-      "id": 51,
+      "id": 52,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -4161,7 +4177,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 109
+        "y": 112
       },
       "targets": [
         {
@@ -4203,20 +4219,20 @@
     {
       "type": "row",
       "title": "Events",
-      "id": 52,
+      "id": 53,
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 116
+        "y": 119
       },
       "panels": []
     },
     {
       "type": "timeseries",
       "title": "Events per hour by severity",
-      "id": 53,
+      "id": 54,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -4225,7 +4241,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 117
+        "y": 120
       },
       "targets": [
         {
@@ -4271,7 +4287,7 @@
     {
       "type": "table",
       "title": "Recent warnings, errors and criticals",
-      "id": 54,
+      "id": 55,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -4280,7 +4296,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 123
+        "y": 126
       },
       "targets": [
         {
@@ -4408,20 +4424,20 @@
     {
       "type": "row",
       "title": "Platform and network",
-      "id": 55,
+      "id": 56,
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 133
+        "y": 136
       },
       "panels": []
     },
     {
       "type": "table",
       "title": "Patches",
-      "id": 56,
+      "id": 57,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -4430,7 +4446,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 134
+        "y": 137
       },
       "targets": [
         {
@@ -4479,7 +4495,7 @@
     {
       "type": "table",
       "title": "Network interfaces",
-      "id": 57,
+      "id": 58,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -4488,7 +4504,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 134
+        "y": 137
       },
       "targets": [
         {
@@ -4572,7 +4588,7 @@
     {
       "type": "table",
       "title": "FC / SCSI adapters",
-      "id": 58,
+      "id": 59,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -4581,7 +4597,7 @@
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 141
+        "y": 144
       },
       "targets": [
         {
@@ -4631,7 +4647,7 @@
     {
       "type": "table",
       "title": "Options",
-      "id": 59,
+      "id": 60,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -4640,7 +4656,7 @@
         "h": 6,
         "w": 6,
         "x": 12,
-        "y": 141
+        "y": 144
       },
       "targets": [
         {
@@ -4701,7 +4717,7 @@
     {
       "type": "table",
       "title": "Failover setup",
-      "id": 60,
+      "id": 61,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -4710,7 +4726,7 @@
         "h": 6,
         "w": 6,
         "x": 18,
-        "y": 141
+        "y": 144
       },
       "targets": [
         {
@@ -4783,20 +4799,20 @@
     {
       "type": "row",
       "title": "Collector",
-      "id": 61,
+      "id": 62,
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 147
+        "y": 150
       },
       "panels": []
     },
     {
       "type": "stat",
       "title": "Package version",
-      "id": 62,
+      "id": 63,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -4805,7 +4821,7 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 148
+        "y": 151
       },
       "targets": [
         {
@@ -4853,7 +4869,7 @@
     {
       "type": "stat",
       "title": "Last collector run",
-      "id": 63,
+      "id": 64,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -4862,7 +4878,7 @@
         "h": 4,
         "w": 6,
         "x": 6,
-        "y": 148
+        "y": 151
       },
       "targets": [
         {
@@ -4909,7 +4925,7 @@
     {
       "type": "stat",
       "title": "Checks failing",
-      "id": 64,
+      "id": 65,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -4918,7 +4934,7 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 148
+        "y": 151
       },
       "targets": [
         {
@@ -4969,7 +4985,7 @@
     {
       "type": "stat",
       "title": "Collection time",
-      "id": 65,
+      "id": 66,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -4978,7 +4994,7 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 148
+        "y": 151
       },
       "targets": [
         {
@@ -5026,7 +5042,7 @@
     {
       "type": "table",
       "title": "Checks",
-      "id": 66,
+      "id": 67,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -5035,7 +5051,7 @@
         "h": 12,
         "w": 12,
         "x": 0,
-        "y": 152
+        "y": 155
       },
       "targets": [
         {
@@ -5164,7 +5180,7 @@
     {
       "type": "timeseries",
       "title": "Collection time",
-      "id": 67,
+      "id": 68,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -5173,7 +5189,7 @@
         "h": 12,
         "w": 12,
         "x": 12,
-        "y": 152
+        "y": 155
       },
       "targets": [
         {

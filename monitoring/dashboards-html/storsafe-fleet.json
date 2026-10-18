@@ -1,0 +1,771 @@
+{
+  "title": "StorSafe Fleet",
+  "uid": "storsafe-fleet",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "1m",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "tags": [
+    "storsafe"
+  ],
+  "description": "One row per appliance; red rows need attention. Click a server name to open its Instance page.",
+  "links": [
+    {
+      "title": "StorSafe dashboards",
+      "type": "dashboards",
+      "tags": [
+        "storsafe"
+      ],
+      "asDropdown": false,
+      "includeVars": true,
+      "keepTime": true
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "label": "Data source",
+        "current": {
+          "text": "StorSafe Prometheus",
+          "value": "storsafe-prometheus"
+        }
+      },
+      {
+        "name": "server",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "query": {
+          "query": "label_values(storsafe_up, server)",
+          "refId": "A"
+        },
+        "definition": "label_values(storsafe_up, server)",
+        "includeAll": true,
+        "multi": true,
+        "sort": 1,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "refresh": 2,
+        "label": "Server"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "text",
+      "title": "",
+      "id": 1,
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "transparent": true,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:center;gap:18px;height:100%;padding:8px 18px;border-radius:6px;background:linear-gradient(90deg,#141A26 0%,#1E2738 100%);border-left:4px solid #3D71D9\"><!--logo--><div style=\"min-width:0\"><div style=\"color:#8AB8FF;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase\"><!--brand-->StorSafe monitoring<!--/brand--></div><div style=\"color:#FFFFFF;font-size:20px;font-weight:700;line-height:1.25\">StorSafe Fleet</div><div style=\"color:#A3ACB9;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">One row per appliance; red rows need attention. Click a server name to open its Instance page.</div></div></div>"
+      }
+    },
+    {
+      "type": "row",
+      "title": "Estate",
+      "id": 2,
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 3
+      },
+      "panels": []
+    },
+    {
+      "type": "marcusolsson-dynamictext-panel",
+      "title": "",
+      "id": 3,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "transparent": true,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "label_replace(count(storsafe_up{server=~\"$server\"}), \"k\", \"appliances\", \"\", \"\") or label_replace(count(storsafe_up{server=~\"$server\"} == 0) or vector(0), \"k\", \"api_down\", \"\", \"\") or label_replace(count(storsafe_check_success{server=~\"$server\"} == 0) or vector(0), \"k\", \"checks\", \"\", \"\") or label_replace(count(storsafe_failover_healthy{server=~\"$server\"} == 0) or vector(0), \"k\", \"failover\", \"\", \"\") or label_replace((count(storsafe_physicaldevice_online{server=~\"$server\"} == 0) or vector(0)) + (count(storsafe_dedupe_repository_disk_online{server=~\"$server\"} == 0) or vector(0)), \"k\", \"devices\", \"\", \"\") or label_replace(sum(increase(storsafe_events_total{server=~\"$server\",severity=~\"error|critical\"}[24h])) or vector(0), \"k\", \"errors\", \"\", \"\") or label_replace(sum(increase(storsafe_events_total{server=~\"$server\",severity=\"warning\"}[24h])) or vector(0), \"k\", \"warnings\", \"\", \"\") or label_replace(time() - storsafe_collector_last_run_timestamp_seconds, \"k\", \"lastrun\", \"\", \"\")",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "options": {
+        "renderMode": "allRows",
+        "content": "{{{storsafeCards data}}}",
+        "defaultContent": "<div class=\"ss\"><div class=\"ss-hero unknown\"><div class=\"ss-mark\">?</div><div class=\"ss-hero-title\">No data</div><div class=\"ss-hero-sub\">Prometheus returned nothing for the estate cards.</div></div></div>",
+        "helpers": "const CARDS = [{\"k\": \"appliances\", \"label\": \"Appliances\", \"unit\": null, \"warn\": null, \"crit\": null}, {\"k\": \"api_down\", \"label\": \"API down\", \"unit\": null, \"warn\": null, \"crit\": 1}, {\"k\": \"checks\", \"label\": \"Failed checks\", \"unit\": null, \"warn\": null, \"crit\": 1}, {\"k\": \"failover\", \"label\": \"Failover not normal\", \"unit\": null, \"warn\": null, \"crit\": 1}, {\"k\": \"devices\", \"label\": \"LUNs / repo devices offline\", \"unit\": null, \"warn\": null, \"crit\": 1}, {\"k\": \"errors\", \"label\": \"Errors + criticals, 24h\", \"unit\": null, \"warn\": null, \"crit\": 1}, {\"k\": \"warnings\", \"label\": \"Warnings, 24h\", \"unit\": null, \"warn\": 1, \"crit\": null}, {\"k\": \"lastrun\", \"label\": \"Collector last run\", \"unit\": \"s\", \"warn\": 600, \"crit\": 900}];\nconst num = (row) => {\n  for (const key of Object.keys(row)) {\n    if (key.indexOf('Value') === 0) { return Number(row[key]); }\n  }\n  return NaN;\n};\nconst esc = (s) => String(s).replace(/[&<>\"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' })[ch]);\nconst fmt = (v, unit) => {\n  if (!isFinite(v)) { return '-'; }\n  if (unit === 's') {\n    if (v < 90) { return Math.round(v) + ' s'; }\n    if (v < 5400) { return (v / 60).toFixed(1) + ' min'; }\n    return (v / 3600).toFixed(1) + ' h';\n  }\n  return String(Math.round(v));\n};\nconst level = (v, c) => {\n  if (!isFinite(v)) { return 'unknown'; }\n  if (c.crit !== null && v >= c.crit) { return 'critical'; }\n  if (c.warn !== null && v >= c.warn) { return 'warning'; }\n  return c.crit === null && c.warn === null ? 'info' : 'ok';\n};\nconst WORD = { ok: 'OK', warning: 'Check', critical: 'Action', info: 'Info', unknown: 'No data' };\ncontext.handlebars.registerHelper('storsafeCards', (rows) => {\n  const values = {};\n  (rows || []).forEach((row) => { values[row.k] = num(row); });\n  let attention = 0;\n  let worst = 'ok';\n  const tiles = CARDS.map((c) => {\n    const v = values[c.k];\n    const lv = level(v, c);\n    if (lv === 'critical' || lv === 'warning' || lv === 'unknown') { attention += 1; }\n    if (lv === 'critical' || (lv !== 'ok' && lv !== 'info' && worst === 'ok')) { worst = lv; }\n    return '<div class=\"ss-card ' + lv + '\"><div class=\"ss-label\" title=\"' + esc(c.label) + '\">' + esc(c.label) + '</div>' +\n      '<div class=\"ss-value\">' + esc(fmt(v, c.unit)) + '</div><div class=\"ss-pill\">' + WORD[lv] + '</div></div>';\n  }).join('');\n  const total = values.appliances;\n  const down = values.api_down;\n  const reach = isFinite(total) && isFinite(down) ? (total - down) + ' of ' + total + ' appliances reachable' : 'Appliance count not available';\n  const title = attention === 0 ? 'All appliances healthy' : attention + (attention === 1 ? ' indicator needs' : ' indicators need') + ' attention';\n  const mark = attention === 0 ? '&#10003;' : '!';\n  const hero = '<div class=\"ss-hero ' + (attention === 0 ? 'ok' : worst) + '\"><div class=\"ss-mark\">' + mark + '</div>' +\n    '<div class=\"ss-hero-title\">' + esc(title) + '</div><div class=\"ss-hero-sub\">' + esc(reach) + '</div></div>';\n  return new context.handlebars.SafeString('<div class=\"ss\">' + hero + tiles + '</div>');\n});\n",
+        "styles": ".ss { display: grid; grid-template-columns: minmax(240px, 1.4fr) repeat(4, minmax(140px, 1fr)); grid-auto-rows: 1fr; gap: 10px; height: 100%; }\n.ss-hero { grid-row: span 2; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 16px 20px; border-radius: 8px;\n  background: linear-gradient(135deg, #141A26 0%, #1E2738 100%); border-left: 4px solid #3D71D9; }\n.ss-mark { width: 44px; height: 44px; border-radius: 50%; border: 3px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; }\n.ss-hero-title { font-size: 22px; font-weight: 700; line-height: 1.2; }\n.ss-hero-sub { color: #A3ACB9; font-size: 13px; }\n.ss-card { display: flex; flex-direction: column; justify-content: space-between; gap: 4px; min-width: 0; padding: 10px 14px; border-radius: 8px;\n  background: #1E2738; border-top: 3px solid #5794F2; }\n.ss-label { color: #8AB8FF; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.ss-value { color: #FFFFFF; font-size: 32px; font-weight: 700; line-height: 1.1; }\n.ss-pill { align-self: flex-start; padding: 2px 9px; border-radius: 10px; color: #FFFFFF; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }\n.ss-hero.ok { color: #73BF69; } .ss-hero.warning { color: #FF9830; } .ss-hero.critical { color: #F2495C; } .ss-hero.unknown { color: #A3ACB9; }\n.ss-hero .ss-hero-title { color: #FFFFFF; }\n.ss-card.ok { border-top-color: #73BF69; } .ss-card.ok .ss-pill { background: #73BF69; }\n.ss-card.info .ss-pill { background: #5794F2; }\n.ss-card.warning { border-top-color: #FF9830; background: linear-gradient(180deg, #FF983040 0%, #1E2738 70%); } .ss-card.warning .ss-pill { background: #FF9830; }\n.ss-card.critical { border-top-color: #F2495C; background: linear-gradient(180deg, #F2495C40 0%, #1E2738 70%); } .ss-card.critical .ss-pill { background: #F2495C; }\n.ss-card.unknown { border-top-color: #A3ACB9; } .ss-card.unknown .ss-pill { background: #A3ACB9; color: #141A26; }\n",
+        "wrap": false,
+        "editors": [
+          "helpers",
+          "styles"
+        ],
+        "editor": {
+          "format": "auto",
+          "language": "html"
+        },
+        "contentPartials": [],
+        "externalStyles": [],
+        "afterRender": "",
+        "status": ""
+      },
+      "description": "Estate health at a glance. A tile turns orange or red at the same thresholds as the stat row of the plain Fleet dashboard; 'Collector last run' is the time since the collector last completed a full run."
+    },
+    {
+      "type": "row",
+      "title": "Appliances",
+      "id": 4,
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 11
+      },
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Fleet status",
+      "id": 5,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "max by (server) (storsafe_up{server=~\"$server\"})",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "B",
+          "expr": "sum by (server) (1 - storsafe_check_success{server=~\"$server\"})",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "C",
+          "expr": "max by (server) (storsafe_failover_healthy{server=~\"$server\"})",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "D",
+          "expr": "100 * sum by (server) (storsafe_storagepool_used_bytes{server=~\"$server\"}) / sum by (server) (storsafe_storagepool_size_bytes{server=~\"$server\"})",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "E",
+          "expr": "sum by (server) (1 - storsafe_physicaldevice_online{server=~\"$server\"}) + (sum by (server) (1 - storsafe_dedupe_repository_disk_online{server=~\"$server\"}) or 0 * max by (server) (storsafe_up{server=~\"$server\"}))",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "F",
+          "expr": "sum by (server) (storsafe_dedupe_24h_scanned_bytes{server=~\"$server\"}) / sum by (server) (storsafe_dedupe_24h_unique_bytes{server=~\"$server\"} > 0)",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "G",
+          "expr": "max by (server) (storsafe_dedupe_queue_jobs_total{server=~\"$server\"})",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "H",
+          "expr": "sum by (server) (storsafe_replication_queue_jobs_total{server=~\"$server\"})",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "I",
+          "expr": "sum by (server) (increase(storsafe_events_total{server=~\"$server\",severity=~\"error|critical\"}[24h]))",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "J",
+          "expr": "sum by (server) (increase(storsafe_events_total{server=~\"$server\",severity=\"warning\"}[24h]))",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "K",
+          "expr": "min by (server) (time() - storsafe_replica_newest_replicated_timestamp_seconds{server=~\"$server\"})",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "L",
+          "expr": "max by (server) (abs(storsafe_time_offset_seconds{server=~\"$server\"}))",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "M",
+          "expr": "max by (server, version, build) (storsafe_info{server=~\"$server\"})",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Newest replica age"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Clock offset"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Dedupe ratio 24h"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "none"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "API"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "1": {
+                        "text": "OK",
+                        "color": "green"
+                      },
+                      "0": {
+                        "text": "FAIL",
+                        "color": "red"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Failover OK"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "1": {
+                        "text": "OK",
+                        "color": "green"
+                      },
+                      "0": {
+                        "text": "FAIL",
+                        "color": "red"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Pool used %"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 80
+                    },
+                    {
+                      "color": "red",
+                      "value": 90
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "server"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open instance",
+                    "url": "/d/storsafe-instance/storsafe-instance?var-server=${__data.fields.server}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "exclude": {
+              "pattern": "^(__name__|Time)$"
+            }
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "Time": true,
+              "Value #M": true
+            },
+            "renameByName": {
+              "Value #A": "API",
+              "Value #B": "Failed checks",
+              "Value #C": "Failover OK",
+              "Value #D": "Pool used %",
+              "Value #E": "Devices offline",
+              "Value #F": "Dedupe ratio 24h",
+              "Value #G": "Dedupe queue",
+              "Value #H": "Repl queue",
+              "Value #I": "Err+crit 24h",
+              "Value #J": "Warn 24h",
+              "Value #K": "Newest replica age",
+              "Value #L": "Clock offset"
+            },
+            "indexByName": {
+              "server": 0,
+              "API": 1,
+              "Failed checks": 2,
+              "Failover OK": 3,
+              "Devices offline": 4,
+              "Pool used %": 5,
+              "Dedupe ratio 24h": 6,
+              "Dedupe queue": 7,
+              "Repl queue": 8,
+              "Err+crit 24h": 9,
+              "Warn 24h": 10,
+              "Newest replica age": 11,
+              "Clock offset": 12,
+              "version": 13,
+              "build": 14
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Failed checks",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "description": "Dedupe ratio = scanned / unique over completed runs in the last 24 h. Devices offline counts LUNs and repository devices. Newest replica age is the time since the most recently updated replica tape on that appliance."
+    },
+    {
+      "type": "row",
+      "title": "Trends",
+      "id": 6,
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Pool used %",
+      "id": 7,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 29
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "100 * sum by (server) (storsafe_storagepool_used_bytes{server=~\"$server\"}) / sum by (server) (storsafe_storagepool_size_bytes{server=~\"$server\"})",
+          "legendFormat": "{{server}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
+          "unit": "percent",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Errors and criticals per hour",
+      "id": 8,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 29
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "sum by (server) (increase(storsafe_events_total{server=~\"$server\",severity=~\"error|critical\"}[1h]))",
+          "legendFormat": "{{server}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal"
+            },
+            "drawStyle": "bars"
+          },
+          "unit": "none",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Dedupe queue depth",
+      "id": 9,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 37
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "storsafe_dedupe_queue_jobs_total{server=~\"$server\"}",
+          "legendFormat": "{{server}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
+          "unit": "none",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Replication queue depth",
+      "id": 10,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 37
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "A",
+          "expr": "sum by (server) (storsafe_replication_queue_jobs_total{server=~\"$server\"})",
+          "legendFormat": "{{server}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
+          "unit": "none",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    }
+  ]
+}

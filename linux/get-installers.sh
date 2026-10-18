@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
-# Downloads the four third-party tarballs into installers/ (node_exporter, Prometheus, Grafana,
-# PowerShell). This is the Linux counterpart of Get-StorSafeInstallers.ps1.
+# Downloads the third-party tarballs into installers/ (node_exporter, Prometheus, Grafana, PowerShell)
+# and the zip of Grafana's Business Text panel plugin. This is the Linux counterpart of
+# Get-StorSafeInstallers.ps1.
 #
 # Versions default to the ones this package targets; override them with the --*-version
 # options. Check https://github.com/prometheus/node_exporter/releases, https://prometheus.io/download/,
 # https://grafana.com/grafana/download?platform=linux and
-# https://github.com/PowerShell/PowerShell/releases (the 7.6 LTS line) for newer ones.
+# https://github.com/PowerShell/PowerShell/releases (the 7.6 LTS line) and
+# https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/ (a version that supports the
+# Grafana version: 6.2.0 is the newest for Grafana 12.0) for newer ones.
 # Files that already exist are kept unless --force. curl uses the proxy settings of the environment
 # (https_proxy, no_proxy); run the script with them set if the host needs a proxy.
 #
-# If the host has no internet access, run --print-urls on a machine that has, download the four URLs
+# If the host has no internet access, run --print-urls on a machine that has, download the five URLs
 # there and copy the files into installers/.
 #
 # Exit status: 0 when every file is in place, 1 when the destination folder cannot be created, 2 when a
@@ -24,6 +27,7 @@ set -euo pipefail
 node_exporter_version=1.12.1
 prometheus_version=3.15.0
 grafana_version=12.0.2
+business_text_version=6.2.0
 powershell_version=7.6.6
 dest=""
 force=0
@@ -34,14 +38,16 @@ usage() {
 usage: get-installers.sh [--dest DIR] [--force] [--print-urls]
                          [--node-exporter-version V] [--prometheus-version V]
                          [--grafana-version V] [--powershell-version V]
+                         [--business-text-version V]
 
   --dest DIR                  folder for the tarballs (default: installers/ next to linux/)
   --force                     download again even when the file exists
-  --print-urls                print the four download URLs and exit
+  --print-urls                print the five download URLs and exit
   --node-exporter-version V   default $node_exporter_version
   --prometheus-version V      default $prometheus_version
   --grafana-version V         default $grafana_version
   --powershell-version V      default $powershell_version
+  --business-text-version V   default $business_text_version (Grafana's Business Text panel plugin)
   -h, --help                  show this text
 EOF
 }
@@ -71,6 +77,7 @@ while [[ $# -gt 0 ]]; do
         --prometheus-version) need_value "$@"; prometheus_version=$2; shift 2 ;;
         --grafana-version) need_value "$@"; grafana_version=$2; shift 2 ;;
         --powershell-version) need_value "$@"; powershell_version=$2; shift 2 ;;
+        --business-text-version) need_value "$@"; business_text_version=$2; shift 2 ;;
         *) usage_error "unknown option: $1" ;;
     esac
 done
@@ -86,12 +93,14 @@ names=(
     "prometheus-$prometheus_version.linux-amd64.tar.gz"
     "grafana-$grafana_version.linux-amd64.tar.gz"
     "powershell-$powershell_version-linux-x64.tar.gz"
+    "marcusolsson-dynamictext-panel-$business_text_version.zip"
 )
 urls=(
     "https://github.com/prometheus/node_exporter/releases/download/v$node_exporter_version/${names[0]}"
     "https://github.com/prometheus/prometheus/releases/download/v$prometheus_version/${names[1]}"
     "https://dl.grafana.com/oss/release/${names[2]}"
     "https://github.com/PowerShell/PowerShell/releases/download/v$powershell_version/${names[3]}"
+    "https://grafana.com/api/plugins/marcusolsson-dynamictext-panel/versions/$business_text_version/download"
 )
 
 if [[ $print_urls -eq 1 ]]; then

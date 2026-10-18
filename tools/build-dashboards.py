@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
 """Generates the Grafana dashboards in monitoring/dashboards/:
-Fleet, Activity, Instance, Patch management, Events. Re-run after changing metrics or layout."""
+Fleet, Activity, Instance, Patch management, Events, and in monitoring/dashboards-html/ the variants that use the
+Business Text panel plugin (Fleet's estate cards). Re-run after changing metrics or layout.
+Colours come from monitoring/theme.example.json. Native panels use Grafana's named colours (green, orange, red,
+blue) and the HTML uses the example theme's hex values; Publish-StorSafeDashboards.ps1 swaps both for a site's
+theme.json, so every hex value in the example theme must be unique."""
 import json, os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(ROOT, 'monitoring', 'dashboards')
+HTML_DIR = os.path.join(ROOT, 'monitoring', 'dashboards-html')
+THEME = json.load(open(os.path.join(ROOT, 'monitoring', 'theme.example.json')))
+C = THEME["colors"]
+assert len({v.upper() for v in C.values()}) == len(C), "theme.example.json colours must be unique"
+BT_PANEL = "marcusolsson-dynamictext-panel"
 DS = {"type": "prometheus", "uid": "${datasource}"}
 REFS = "ABCDEFGHIJKLMNOP"
 INSTANCE_URL = "/d/storsafe-instance/storsafe-instance?var-server=${__data.fields.server}"
@@ -20,11 +29,16 @@ STATE_COLORS = [
 ]
 
 
+def esc(text):
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
 class Dashboard:
     def __init__(self, title, uid, server_filter, server_var, time_from="now-24h", refresh="1m", description=""):
         self.title, self.uid, self.S, self.server_var = title, uid, server_filter, server_var
         self.time_from, self.refresh, self.description = time_from, refresh, description
         self.panels, self._id, self._y, self._x, self._h = [], 0, 0, 0, 0
+        self.banner()
 
     def nid(self):
         self._id += 1
@@ -53,6 +67,20 @@ class Dashboard:
         if table:
             t.update({"format": "table", "instant": True})
         return t
+
+    def banner(self):
+        """Header strip above the first row: brand, dashboard title and description. Plain HTML in a core text
+        panel; the <!--brand--> and <!--logo--> markers are where Publish-StorSafeDashboards.ps1 puts the theme's."""
+        html = ('<div style="display:flex;align-items:center;gap:18px;height:100%%;padding:8px 18px;border-radius:6px;'
+                'background:linear-gradient(90deg,%(background)s 0%%,%(surface)s 100%%);border-left:4px solid %(accent)s">'
+                '<!--logo--><div style="min-width:0">'
+                '<div style="color:%(label)s;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase">'
+                '<!--brand-->%(brand)s<!--/brand--></div>'
+                '<div style="color:#FFFFFF;font-size:20px;font-weight:700;line-height:1.25">%(title)s</div>'
+                '<div style="color:%(muted)s;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">%(desc)s</div>'
+                '</div></div>') % dict(C, brand=esc(THEME["brand"]), title=esc(self.title), desc=esc(self.description))
+        self.panels.append({"type": "text", "title": "", "id": self.nid(), "gridPos": self.place(24, 3), "transparent": True,
+                            "options": {"mode": "html", "content": html}})
 
     def text(self, title, content, w=24, h=3):
         self.panels.append({"type": "text", "title": title, "id": self.nid(), "gridPos": self.place(w, h),
@@ -92,6 +120,22 @@ class Dashboard:
              "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": False},
                          "colorMode": "background", "graphMode": "area" if sparkline else "none",
                          "textMode": text_mode or ("value_and_name" if len(exprs) > 1 or "{{" in (exprs[0][1] or "") else "value"), "wideLayout": True}}
+        if desc:
+            p["description"] = desc
+        self.panels.append(p)
+
+    def cards(self, cards, w=24, h=7, desc=None):
+        """Estate cards in a Business Text panel: a health summary and one tile per card. cards: list of
+        (key, label, expr, unit, warn, crit); warn/crit are the lowest values that colour a tile (None for never;
+        both None makes an informational tile). One instant query returns every value, labelled k=<key>."""
+        expr = " or ".join('label_replace(%s, "k", "%s", "", "")' % (e, k) for k, _, e, _, _, _ in cards)
+        spec = [{"k": k, "label": label, "unit": unit, "warn": warn, "crit": crit} for k, label, _, unit, warn, crit in cards]
+        p = {"type": BT_PANEL, "title": "", "id": self.nid(), "datasource": DS, "gridPos": self.place(w, h), "transparent": True,
+             "targets": [self.target(expr, "A", table=True)],
+             "options": {"renderMode": "allRows", "content": "{{{storsafeCards data}}}", "defaultContent": CARDS_EMPTY,
+                         "helpers": CARDS_JS.replace("__CARDS__", json.dumps(spec)), "styles": CARDS_CSS % C, "wrap": False,
+                         "editors": ["helpers", "styles"], "editor": {"format": "auto", "language": "html"},
+                         "contentPartials": [], "externalStyles": [], "afterRender": "", "status": ""}}
         if desc:
             p["description"] = desc
         self.panels.append(p)
@@ -166,28 +210,112 @@ class Dashboard:
         }
 
 
-def write(d):
-    path = os.path.join(OUT_DIR, d.uid + ".json")
+# Business Text helper code for Dashboard.cards. Runs in the browser; the template is {{{storsafeCards data}}}
+# (the rows of the panel's one query, each with the k label and the value). Everything printed is escaped.
+CARDS_JS = r"""const CARDS = __CARDS__;
+const num = (row) => {
+  for (const key of Object.keys(row)) {
+    if (key.indexOf('Value') === 0) { return Number(row[key]); }
+  }
+  return NaN;
+};
+const esc = (s) => String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
+const fmt = (v, unit) => {
+  if (!isFinite(v)) { return '-'; }
+  if (unit === 's') {
+    if (v < 90) { return Math.round(v) + ' s'; }
+    if (v < 5400) { return (v / 60).toFixed(1) + ' min'; }
+    return (v / 3600).toFixed(1) + ' h';
+  }
+  return String(Math.round(v));
+};
+const level = (v, c) => {
+  if (!isFinite(v)) { return 'unknown'; }
+  if (c.crit !== null && v >= c.crit) { return 'critical'; }
+  if (c.warn !== null && v >= c.warn) { return 'warning'; }
+  return c.crit === null && c.warn === null ? 'info' : 'ok';
+};
+const WORD = { ok: 'OK', warning: 'Check', critical: 'Action', info: 'Info', unknown: 'No data' };
+context.handlebars.registerHelper('storsafeCards', (rows) => {
+  const values = {};
+  (rows || []).forEach((row) => { values[row.k] = num(row); });
+  let attention = 0;
+  let worst = 'ok';
+  const tiles = CARDS.map((c) => {
+    const v = values[c.k];
+    const lv = level(v, c);
+    if (lv === 'critical' || lv === 'warning' || lv === 'unknown') { attention += 1; }
+    if (lv === 'critical' || (lv !== 'ok' && lv !== 'info' && worst === 'ok')) { worst = lv; }
+    return '<div class="ss-card ' + lv + '"><div class="ss-label" title="' + esc(c.label) + '">' + esc(c.label) + '</div>' +
+      '<div class="ss-value">' + esc(fmt(v, c.unit)) + '</div><div class="ss-pill">' + WORD[lv] + '</div></div>';
+  }).join('');
+  const total = values.appliances;
+  const down = values.api_down;
+  const reach = isFinite(total) && isFinite(down) ? (total - down) + ' of ' + total + ' appliances reachable' : 'Appliance count not available';
+  const title = attention === 0 ? 'All appliances healthy' : attention + (attention === 1 ? ' indicator needs' : ' indicators need') + ' attention';
+  const mark = attention === 0 ? '&#10003;' : '!';
+  const hero = '<div class="ss-hero ' + (attention === 0 ? 'ok' : worst) + '"><div class="ss-mark">' + mark + '</div>' +
+    '<div class="ss-hero-title">' + esc(title) + '</div><div class="ss-hero-sub">' + esc(reach) + '</div></div>';
+  return new context.handlebars.SafeString('<div class="ss">' + hero + tiles + '</div>');
+});
+"""
+CARDS_EMPTY = '<div class="ss"><div class="ss-hero unknown"><div class="ss-mark">?</div><div class="ss-hero-title">No data</div><div class="ss-hero-sub">Prometheus returned nothing for the estate cards.</div></div></div>'
+CARDS_CSS = """.ss { display: grid; grid-template-columns: minmax(240px, 1.4fr) repeat(4, minmax(140px, 1fr)); grid-auto-rows: 1fr; gap: 10px; height: 100%%; }
+.ss-hero { grid-row: span 2; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 16px 20px; border-radius: 8px;
+  background: linear-gradient(135deg, %(background)s 0%%, %(surface)s 100%%); border-left: 4px solid %(accent)s; }
+.ss-mark { width: 44px; height: 44px; border-radius: 50%%; border: 3px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; }
+.ss-hero-title { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.ss-hero-sub { color: %(muted)s; font-size: 13px; }
+.ss-card { display: flex; flex-direction: column; justify-content: space-between; gap: 4px; min-width: 0; padding: 10px 14px; border-radius: 8px;
+  background: %(surface)s; border-top: 3px solid %(info)s; }
+.ss-label { color: %(label)s; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ss-value { color: #FFFFFF; font-size: 32px; font-weight: 700; line-height: 1.1; }
+.ss-pill { align-self: flex-start; padding: 2px 9px; border-radius: 10px; color: #FFFFFF; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }
+.ss-hero.ok { color: %(ok)s; } .ss-hero.warning { color: %(warning)s; } .ss-hero.critical { color: %(critical)s; } .ss-hero.unknown { color: %(muted)s; }
+.ss-hero .ss-hero-title { color: #FFFFFF; }
+.ss-card.ok { border-top-color: %(ok)s; } .ss-card.ok .ss-pill { background: %(ok)s; }
+.ss-card.info .ss-pill { background: %(info)s; }
+.ss-card.warning { border-top-color: %(warning)s; background: linear-gradient(180deg, %(warning)s40 0%%, %(surface)s 70%%); } .ss-card.warning .ss-pill { background: %(warning)s; }
+.ss-card.critical { border-top-color: %(critical)s; background: linear-gradient(180deg, %(critical)s40 0%%, %(surface)s 70%%); } .ss-card.critical .ss-pill { background: %(critical)s; }
+.ss-card.unknown { border-top-color: %(muted)s; } .ss-card.unknown .ss-pill { background: %(muted)s; color: %(background)s; }
+"""
+
+
+def write(d, out_dir=OUT_DIR):
+    path = os.path.join(out_dir, d.uid + ".json")
     with open(path, 'w') as f:
         json.dump(d.build(), f, indent=2)
     print("%-28s %3d panels  %s" % (d.title, sum(1 for p in d.panels if p['type'] != 'row'), path))
 
 
 # ============================================================================ Fleet
-def fleet():
+def fleet(html=False):
     S = 'server=~"$server"'
     d = Dashboard("StorSafe Fleet", "storsafe-fleet", S, "multi", description="One row per appliance; red rows need attention. Click a server name to open its Instance page.")
     d.row("Estate")
-    d.stat("Appliances", [(f'count(storsafe_up{{{S}}})', None)], w=3)
-    d.stat("API down", [(f'count(storsafe_up{{{S}}} == 0) or vector(0)', None)], w=3, thresholds=GREEN_RED)
-    d.stat("Failed checks", [(f'count(storsafe_check_success{{{S}}} == 0) or vector(0)', None)], w=3, thresholds=GREEN_RED)
-    d.stat("Failover not normal", [(f'count(storsafe_failover_healthy{{{S}}} == 0) or vector(0)', None)], w=3, thresholds=GREEN_RED)
-    d.stat("LUNs / repo devices offline", [(f'(count(storsafe_physicaldevice_online{{{S}}} == 0) or vector(0)) + (count(storsafe_dedupe_repository_disk_online{{{S}}} == 0) or vector(0))', None)], w=3, thresholds=GREEN_RED)
-    d.stat("Errors + criticals, 24h", [(f'sum(increase(storsafe_events_total{{{S},severity=~"error|critical"}}[24h])) or vector(0)', None)], w=3, thresholds=GREEN_RED, decimals=0)
-    d.stat("Warnings, 24h", [(f'sum(increase(storsafe_events_total{{{S},severity="warning"}}[24h])) or vector(0)', None)], w=3, decimals=0,
-           thresholds=[{"color": "green", "value": None}, {"color": "orange", "value": 1}])
-    d.stat("Collector last run", [(f'time() - storsafe_collector_last_run_timestamp_seconds', None)], "s", w=3,
-           thresholds=[{"color": "green", "value": None}, {"color": "orange", "value": 600}, {"color": "red", "value": 900}], desc="Time since the collector last completed a full run.")
+    # (key, title, expr, unit, warn from, crit from): the stat row, or with html the Business Text cards.
+    estate = [
+        ("appliances", "Appliances", f'count(storsafe_up{{{S}}})', None, None, None),
+        ("api_down", "API down", f'count(storsafe_up{{{S}}} == 0) or vector(0)', None, None, 1),
+        ("checks", "Failed checks", f'count(storsafe_check_success{{{S}}} == 0) or vector(0)', None, None, 1),
+        ("failover", "Failover not normal", f'count(storsafe_failover_healthy{{{S}}} == 0) or vector(0)', None, None, 1),
+        ("devices", "LUNs / repo devices offline", f'(count(storsafe_physicaldevice_online{{{S}}} == 0) or vector(0)) + (count(storsafe_dedupe_repository_disk_online{{{S}}} == 0) or vector(0))', None, None, 1),
+        ("errors", "Errors + criticals, 24h", f'sum(increase(storsafe_events_total{{{S},severity=~"error|critical"}}[24h])) or vector(0)', None, None, 1),
+        ("warnings", "Warnings, 24h", f'sum(increase(storsafe_events_total{{{S},severity="warning"}}[24h])) or vector(0)', None, 1, None),
+        ("lastrun", "Collector last run", 'time() - storsafe_collector_last_run_timestamp_seconds', "s", 600, 900),
+    ]
+    if html:
+        d.cards(estate, desc="Estate health at a glance. A tile turns orange or red at the same thresholds as the stat row of the plain Fleet dashboard; "
+                             "'Collector last run' is the time since the collector last completed a full run.")
+    else:
+        for key, title, expr, unit, warn, crit in estate:
+            steps = BLUE if warn is None and crit is None else [{"color": "green", "value": None}]
+            if warn is not None:
+                steps = steps + [{"color": "orange", "value": warn}]
+            if crit is not None:
+                steps = steps + [{"color": "red", "value": crit}]
+            d.stat(title, [(expr, None)], unit, w=3, thresholds=steps, decimals=0 if key in ("errors", "warnings") else None,
+                   desc="Time since the collector last completed a full run." if key == "lastrun" else None)
 
     d.row("Appliances")
     d.table("Fleet status", [
@@ -216,7 +344,7 @@ def fleet():
     d.ts("Errors and criticals per hour", [(f'sum by (server) (increase(storsafe_events_total{{{S},severity=~"error|critical"}}[1h]))', "{{server}}")], "none", w=12, bars=True, stack=True)
     d.ts("Dedupe queue depth", [(f'storsafe_dedupe_queue_jobs_total{{{S}}}', "{{server}}")], "none", w=12)
     d.ts("Replication queue depth", [(f'sum by (server) (storsafe_replication_queue_jobs_total{{{S}}})', "{{server}}")], "none", w=12)
-    write(d)
+    write(d, HTML_DIR if html else OUT_DIR)
 
 
 # ============================================================================ Activity
@@ -470,4 +598,5 @@ def events():
 
 
 if __name__ == '__main__':
-    fleet(); activity(); instance(); patches(); events()
+    os.makedirs(HTML_DIR, exist_ok=True)
+    fleet(); fleet(html=True); activity(); instance(); patches(); events()

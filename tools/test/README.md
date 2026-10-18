@@ -21,4 +21,11 @@ Everything here runs on Linux or Windows with PowerShell 7 (`pwsh`) and Python 3
    ```
    Expect `errors 0`. A few `empty` lines are normal: `increase()` queries need more than one scrape, the 30-day trend needs history, and the mock omits tape caching, policy targets and failover auto-recovery.
 
+4. Render the dashboards in Grafana (optional; CI does it with Grafana 12.0.2 and the Business Text plugin). Publish them in the test theme, which also exercises every colour swap, the brand line and the logo, then provision `tools/test/out/dash` into a Grafana with anonymous access, the plugin in its `data/plugins` and a `StorSafe Prometheus` data source (uid `storsafe-prometheus`) pointing at `http://127.0.0.1:19090` (see the kit job in `.github/workflows/ci.yml`), and screenshot it with Python Playwright:
+   ```
+   pwsh -NoProfile -File ./Publish-StorSafeDashboards.ps1 -ThemePath tools/test/theme-test.json -OutDirectory tools/test/out/dash -HtmlPanels
+   python3 tools/test/render_dashboards.py --cards
+   ```
+   Expect the five screenshots in `tools/test/out/screens` and no `PROBLEM` line. Without the plugin, publish without `-HtmlPanels` and leave out `--cards`.
+
 After changing a dashboard in `tools/build-dashboards.py`, regenerate with `python3 tools/build-dashboards.py` and re-run step 3. `python3 tools/build-package.py` builds the release zip into `dist/`.

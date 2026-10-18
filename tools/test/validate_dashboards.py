@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Runs every panel query of every dashboard in monitoring/dashboards/ against a Prometheus holding collector
+"""Runs every panel query of every dashboard in monitoring/dashboards/ and monitoring/dashboards-html/ against a Prometheus holding collector
 output and reports query errors and empty results. Usage:
   python3 tools/test/validate_dashboards.py [--prom http://127.0.0.1:19090] [--servers MOCK-A,MOCK-B]"""
 import argparse, glob, json, os, re, urllib.error, urllib.parse, urllib.request
@@ -12,7 +12,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 servers = args.servers.split(",")
 ALL = "(" + "|".join(servers) + ")"
 total = errors = empty = 0
-for path in sorted(glob.glob(os.path.join(ROOT, "monitoring", "dashboards", "*.json"))):
+for path in sorted(glob.glob(os.path.join(ROOT, "monitoring", "dashboards", "*.json")) + glob.glob(os.path.join(ROOT, "monitoring", "dashboards-html", "*.json"))):
     d = json.load(open(path))
     single = any(v["name"] == "server" and not v.get("multi") for v in d["templating"]["list"])
     panels = []

@@ -64,22 +64,38 @@
   },
   "panels": [
     {
+      "type": "text",
+      "title": "",
+      "id": 1,
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "transparent": true,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:center;gap:18px;height:100%;padding:8px 18px;border-radius:6px;background:linear-gradient(90deg,#141A26 0%,#1E2738 100%);border-left:4px solid #3D71D9\"><!--logo--><div style=\"min-width:0\"><div style=\"color:#8AB8FF;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase\"><!--brand-->StorSafe monitoring<!--/brand--></div><div style=\"color:#FFFFFF;font-size:20px;font-weight:700;line-height:1.25\">StorSafe Patch Management</div><div style=\"color:#A3ACB9;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Versions, builds, patches and platform details across the estate.</div></div></div>"
+      }
+    },
+    {
       "type": "row",
       "title": "Versions",
-      "id": 1,
+      "id": 2,
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 3
       },
       "panels": []
     },
     {
       "type": "stat",
       "title": "Appliances per version",
-      "id": 2,
+      "id": 3,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -88,7 +104,7 @@
         "h": 4,
         "w": 8,
         "x": 0,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -135,7 +151,7 @@
     {
       "type": "stat",
       "title": "Appliances per build",
-      "id": 3,
+      "id": 4,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -144,7 +160,7 @@
         "h": 4,
         "w": 8,
         "x": 8,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -191,7 +207,7 @@
     {
       "type": "stat",
       "title": "Appliances per OS",
-      "id": 4,
+      "id": 5,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -200,7 +216,7 @@
         "h": 4,
         "w": 8,
         "x": 16,
-        "y": 1
+        "y": 4
       },
       "targets": [
         {
@@ -247,7 +263,7 @@
     {
       "type": "table",
       "title": "Appliances",
-      "id": 5,
+      "id": 6,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -256,7 +272,7 @@
         "h": 16,
         "w": 24,
         "x": 0,
-        "y": 5
+        "y": 8
       },
       "targets": [
         {
@@ -479,20 +495,20 @@
     {
       "type": "row",
       "title": "Patches",
-      "id": 6,
+      "id": 7,
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 24
       },
       "panels": []
     },
     {
       "type": "table",
       "title": "Installed patches",
-      "id": 7,
+      "id": 8,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -501,7 +517,7 @@
         "h": 12,
         "w": 16,
         "x": 0,
-        "y": 22
+        "y": 25
       },
       "targets": [
         {
@@ -560,7 +576,7 @@
     {
       "type": "table",
       "title": "Patch coverage",
-      "id": 8,
+      "id": 9,
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -569,7 +585,7 @@
         "h": 12,
         "w": 8,
         "x": 16,
-        "y": 22
+        "y": 25
       },
       "targets": [
         {

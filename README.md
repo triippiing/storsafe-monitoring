@@ -74,7 +74,7 @@ What you need:
 
 - Windows 10/11 or Windows Server 2016 or later, 64-bit, with Windows PowerShell 5.1 (built in). About 2 GB of disk for the stack plus Prometheus data (roughly 50 MB per appliance per month at the default 180-day retention).
 - A local Administrator account for the install, and the account the collector will run as (it can be the same one; the installer asks for its password so the scheduled task runs while logged off).
-- Network access from this machine to every appliance on the API port (https 443 by default) and, for the installer download step only, to github.com and grafana.com (or the three installer files copied in by hand).
+- Network access from this machine to every appliance on the API port (https 443 by default) and, for the installer download step only, to github.com and grafana.com (or the four installer files copied in by hand).
 - For each appliance, an API account. A read-only (type R) account is recommended.
 
 Steps, from an elevated cmd prompt (right-click Command Prompt > Run as administrator), logged on as the account that will run the collector:
@@ -84,7 +84,7 @@ Steps, from an elevated cmd prompt (right-click Command Prompt > Run as administ
    ```
    powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\StorSafeMonitoring\Get-StorSafeInstallers.ps1
    ```
-   (add `-Proxy http://proxy:port` if the machine needs one; with no internet access, download the three URLs it prints on another machine and copy the files in).
+   (add `-Proxy http://proxy:port` if the machine needs one; with no internet access, download the four URLs it prints on another machine and copy the files in). The fourth file is Grafana's Business Text panel plugin, which draws the Fleet dashboard's estate cards; without it Fleet shows a row of stat panels instead.
 3. Copy `StorSafe.config.example.json` to `StorSafe.config.json` (the installer does this for you if the file is missing, then stops so you can edit it) and fill in the `Servers` list: a name, IP or hostname, and credential file name per appliance. Under `Defaults`, check `Scheme` and `SkipCertificateCheck` (true for self-signed appliance certificates). The example shows every setting; the real file is ignored by git.
 4. Run the installer:
    ```
@@ -103,7 +103,20 @@ Steps, from an elevated cmd prompt (right-click Command Prompt > Run as administ
 - **StorSafe Patch Management**: product version, build and patch level, installed patches and patch coverage, RHEL release, kernel, make/model, memory, clock offset.
 - **StorSafe Events**: warnings, errors and criticals across the estate, with counts over time and a filterable table.
 
-The dashboards are file-provisioned from `monitoring\dashboards\`; deleting a JSON file there removes that dashboard from Grafana.
+The dashboards are file-provisioned from `monitoring\dashboards-live\`, which `Publish-StorSafeDashboards.ps1` writes from the package's `monitoring\dashboards\` (the installer runs it). Deleting a JSON file from `monitoring\dashboards\` and re-running the publish script removes that dashboard from Grafana.
+
+### Theme and branding
+
+Every dashboard opens with a banner (brand line, title, description), and with the Business Text plugin installed the Fleet dashboard's estate row is a set of cards: a health summary and one tile per indicator, coloured by the same thresholds as the stat row it replaces. The colours, the brand line and a logo come from a theme file that stays on the monitoring host:
+
+1. Copy `monitoring\theme.example.json` to `monitoring\theme.json` (ignored by git and left out of the release packages) and set `brand`, the colours (`#RRGGBB`) and optionally `logo`, an SVG or PNG for a dark background (up to 512 KB), with a path relative to the theme file, e.g. `theme\logo.svg` in `monitoring\theme\`.
+2. Publish:
+   ```
+   powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\StorSafeMonitoring\Publish-StorSafeDashboards.ps1 -HtmlPanels
+   ```
+   (leave out `-HtmlPanels` if the plugin is not installed). Grafana loads the result within a minute; nothing needs restarting.
+
+`ok`, `warning`, `critical` and `info` replace Grafana's green, orange, red and blue in every threshold and value mapping; `background`, `surface`, `accent`, `label` and `muted` colour the banner and cards. Without a `theme.json` the dashboards keep Grafana's own colours. On Linux the same command runs under `pwsh` (`sudo pwsh -NoProfile -File /opt/storsafe-monitoring/Publish-StorSafeDashboards.ps1 -HtmlPanels`), or re-run `linux/install.sh`, which publishes as part of its Grafana step.
 
 Ports: Grafana 3000 (all interfaces; put it behind the Windows firewall or bind it to 127.0.0.1 in Grafana's `conf\custom.ini` if only local use is wanted), Prometheus 9090 and windows_exporter 9182 (127.0.0.1 only, nothing to open). Everything restarts by itself after a reboot.
 
@@ -125,7 +138,7 @@ What you need:
 - Root through sudo. The installer creates a system account, `storsafe`, and the collector and every service run as it, so unlike the Windows install you do not log on as the collector account.
 - `curl`, `tar` and `gzip` (the installer checks for them), and the ICU library that PowerShell needs if the host does not have it yet: `dnf install libicu` on the RHEL family, `apt-get install libicu72` on Debian 12, `apt-get install libicu74` on Ubuntu 24.04 (other Debian-family releases: `apt-cache search --names-only '^libicu[0-9]+$'` finds the package name). The installer stops with this hint when `pwsh` does not start.
 - PowerShell 7: the installer uses a `pwsh` that is already on the PATH, otherwise it unpacks the PowerShell tarball (7.6.6, the LTS line; PowerShell 7.4 reaches end of support on 2026-11-10).
-- Network access from this machine to every appliance on the API port (https 443 by default) and, for the download step only, to github.com and dl.grafana.com (or the four tarballs copied in by hand).
+- Network access from this machine to every appliance on the API port (https 443 by default) and, for the download step only, to github.com, dl.grafana.com and grafana.com (or the four tarballs and the plugin zip copied in by hand).
 - For each appliance, an API account. A read-only (type R) account is recommended.
 
 Steps, from a shell on the host. Commands that need root start with `sudo`; the ones after step 1 run from the install folder (`cd /opt/storsafe-monitoring`):
@@ -144,7 +157,7 @@ Steps, from a shell on the host. Commands that need root start with `sudo`; the 
    ```
    sudo linux/get-installers.sh
    ```
-   It downloads node_exporter 1.12.1, Prometheus 3.15.0, Grafana 12.0.2 and PowerShell 7.6.6, and keeps files that are already there (`--force` downloads again, `--dest DIR` picks another folder, `--node-exporter-version`, `--prometheus-version`, `--grafana-version` and `--powershell-version` pick other versions). curl takes its proxy from the environment, and sudo drops that, so with a proxy run `sudo env https_proxy=http://proxy:port linux/get-installers.sh`. With no internet access, `linux/get-installers.sh --print-urls` prints the four URLs: download them on another machine and copy the files into `installers/`.
+   It downloads node_exporter 1.12.1, Prometheus 3.15.0, Grafana 12.0.2, PowerShell 7.6.6 and the Business Text panel plugin 6.2.0 (Fleet's estate cards; optional), and keeps files that are already there (`--force` downloads again, `--dest DIR` picks another folder, `--node-exporter-version`, `--prometheus-version`, `--grafana-version`, `--powershell-version` and `--business-text-version` pick other versions). curl takes its proxy from the environment, and sudo drops that, so with a proxy run `sudo env https_proxy=http://proxy:port linux/get-installers.sh`. With no internet access, `linux/get-installers.sh --print-urls` prints the five URLs: download them on another machine and copy the files into `installers/`.
 3. Create `StorSafe.config.json` from `StorSafe.config.example.json` (the installer does this for you if the file is missing, then stops so you can edit it) and fill in the `Servers` list as in step 3 of the Windows install: a name, IP or hostname, and credential file name per appliance, and under `Defaults` the `Scheme` and `SkipCertificateCheck` settings. The example's `creds\storsafe-01.xml` paths work on Linux as written (`creds/storsafe-01.xml` is the same file).
    ```
    sudo cp StorSafe.config.example.json StorSafe.config.json
@@ -175,7 +188,7 @@ The installer's steps:
 | 5 | Package permissions | Adds read permission for everyone over the install folder (`creds/` and the data folders excepted, nothing is ever taken away), so `storsafe` can read the package whatever root's umask was when it was unpacked; stops if a folder above the install folder still blocks it |
 | 6 | Credentials | Prompts for each missing credential file and saves it as `storsafe` (see below) |
 | 7 | Collector test | Runs the collector once as `storsafe` and reports the result |
-| 8 | node_exporter, Prometheus, Grafana | Unpacks the newest tarball of each from `installers/` into `node_exporter/`, `prometheus/` and `grafana/` (a newer tarball there is an upgrade; `data/` is kept; the files stay root-owned, only `data/` belongs to `storsafe`), puts `monitoring/prometheus.yml` and the Grafana data source and dashboard provisioning in place |
+| 8 | node_exporter, Prometheus, Grafana | Unpacks the newest tarball of each from `installers/` into `node_exporter/`, `prometheus/` and `grafana/` (a newer tarball there is an upgrade; `data/` is kept; the files stay root-owned, only `data/` belongs to `storsafe`), puts `monitoring/prometheus.yml` and the Grafana data source and dashboard provisioning in place, unpacks the Business Text plugin zip into `grafana/data/plugins/` when there is one, and publishes the dashboards to `monitoring/dashboards-live/` |
 | 9 | Units and services | Renders the unit files from `linux/systemd/` into `/etc/systemd/system`, enables and starts them (starting the collector's timer runs the collector straight away, then every 5 minutes or your `--interval-minutes`), restarts what changed, and waits for the three ports to answer; a unit whose component reported Missing installer or Check is left disabled and named in the Services row |
 
 Switches (`linux/install.sh --help` lists them). Give the same ones again when you re-run the installer, because the unit files are rendered from them:
@@ -212,7 +225,7 @@ Add this job to `scrape_configs` in that Prometheus's `prometheus.yml` and reloa
         action: keep
 ```
 
-The `keep` rule is the one in `monitoring/prometheus.yml`: it keeps the StorSafe series and the textfile collector's own health metrics and nothing else from the host. Import the five dashboards, `monitoring/dashboards/*.json`, into that Grafana (Dashboards > New > Import) and choose your Prometheus in each dashboard's Data source box (they open on a data source with the uid `storsafe-prometheus`, which is the one the full-stack install provisions).
+The `keep` rule is the one in `monitoring/prometheus.yml`: it keeps the StorSafe series and the textfile collector's own health metrics and nothing else from the host. Import the five dashboards, `monitoring/dashboards/*.json` (or, for the site theme, the files `Publish-StorSafeDashboards.ps1` writes to `monitoring/dashboards-live/`), into that Grafana (Dashboards > New > Import) and choose your Prometheus in each dashboard's Data source box (they open on a data source with the uid `storsafe-prometheus`, which is the one the full-stack install provisions).
 
 **Credentials on Linux.** There is no DPAPI on Linux: `New-StorSafeCredentialFile` saves the credential with Export-Clixml and the file is **not encrypted**. What protects it is file permissions: `creds/` is mode 0700 and each credential file 0600, owned by the service account `storsafe`, so only that account and root can read them. The installer prompts for each missing file (as `storsafe`; a file that several appliances share is asked for once) unless you pass `--skip-credentials`. Unlike a DPAPI file, one of these works on any machine it is copied to, so keep `creds/` out of backups that others can read.
 
@@ -237,6 +250,12 @@ del C:\StorSafeMonitoring\monitoring\dashboards\storsafe-estate.json C:\StorSafe
 ```
 
 Nothing needs restarting. The next collector run picks up the new checks (run it by hand to see the output straight away), and Grafana loads the new dashboard within a minute.
+
+Upgrading from 5.1 or earlier: Grafana now loads the dashboards from `monitoring\dashboards-live\` (see [Theme and branding](#theme-and-branding)). Get the plugin with `Get-StorSafeInstallers.ps1`, then re-run the installer once so that it installs the plugin, publishes the dashboards and points Grafana at the new folder; the switches leave the other components alone:
+
+```
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\StorSafeMonitoring\Install-StorSafeMonitoring.ps1 -SkipCredentials -SkipExporter -SkipPrometheus -SkipCollectorTask
+```
 
 **On Linux**, read `CHANGELOG.md` the same way, then unpack the new tarball over the install folder, keeping your config and credentials (the two `--exclude` options leave `StorSafe.config.json` and `creds/` alone, and `--no-overwrite-dir` keeps the owner and mode of the folders that already exist, such as `creds/` and `state/`, which belong to `storsafe`):
 
@@ -288,7 +307,7 @@ The installer steps are:
 | 2 | Collector test | Runs the collector once and reports the result |
 | 3 | windows_exporter | Silent MSI install with the textfile collector pointed at `metrics\` |
 | 4 | Prometheus | Extracts to `prometheus\` and runs at startup as SYSTEM (scheduled task "StorSafe Prometheus"). Listens on localhost only, 180-day retention |
-| 5 | Grafana | Silent MSI install, plus a provisioned data source ("StorSafe Prometheus") and dashboard |
+| 5 | Grafana | Silent MSI install, plus a provisioned data source ("StorSafe Prometheus") and dashboards; unpacks the Business Text plugin zip into `<GrafanaHome>\data\plugins` when it is in `installers\` and publishes the dashboards (with `-HtmlPanels` when the plugin is there) |
 | 6 | Collector task | Scheduled task "StorSafe Metrics Collector", every 5 minutes |
 
 Switches:
@@ -441,9 +460,9 @@ The package is the repository root, so a clone is an install folder. Not part of
 
 | Path | Contents |
 |---|---|
-| `tools\build-dashboards.py` | Generates the five dashboards in `monitoring\dashboards\` (edit this, not the JSON) |
+| `tools\build-dashboards.py` | Generates the five dashboards in `monitoring\dashboards\` and the Business Text variant of Fleet in `monitoring\dashboards-html\` (edit this, not the JSON) |
 | `tools\build-package.py` | Builds `dist\StorSafe-monitoring-v<VERSION>.zip` and `.tar.gz` (the same files; the scripts under `linux\` are executable in the tarball) |
-| `tools\test\` | Mock StorSafe API, test config and dashboard query validator; see `tools\test\README.md` |
+| `tools\test\` | Mock StorSafe API, test config, dashboard query validator, test theme and dashboard renderer; see `tools\test\README.md` |
 | `tools\test\linux\` | Tests of the Linux scripts (`bash tools/test/linux/run.sh`) and the install smoke test (`smoke.sh`) |
 | `.github\workflows\ci.yml` | CI: shellcheck and parse checks, the test kit against the mock API, the Linux install in clean containers and a full systemd run |
 | `docs\` | API map and plan, review of the original scripts, dashboard design notes; `docs\images\` holds the screenshots above |

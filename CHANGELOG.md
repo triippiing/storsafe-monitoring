@@ -2,6 +2,13 @@
 
 The package version is in `VERSION`, printed by the installer, and published by the collector as `storsafe_collector_info{version="..."}` (visible on the Instance dashboard, Collector row).
 
+## 5.2.0 (2026-10-18)
+
+- Dashboard theme: every dashboard opens with a banner (brand line, title, description). `monitoring/theme.example.json` lists the colours, brand line and logo; a site copies it to `monitoring/theme.json` (git-ignored, not shipped) and `Publish-StorSafeDashboards.ps1` writes the dashboards in that theme to `monitoring/dashboards-live/`, which is now the folder Grafana's provider loads. Without a theme the dashboards keep Grafana's colours.
+- Fleet estate cards: with Grafana's Business Text panel plugin (`marcusolsson-dynamictext-panel` 6.2.0) installed, Fleet's Estate row is a health summary and one card per indicator instead of eight stat panels, at the same thresholds. The variant lives in `monitoring/dashboards-html/`; without the plugin Fleet keeps the stat row.
+- Installers: `Get-StorSafeInstallers.ps1` (`-BusinessTextVersion`) and `linux/get-installers.sh` (`--business-text-version`) also download the plugin zip; `Install-StorSafeMonitoring.ps1` and `linux/install.sh` unpack it into Grafana's plugin folder, publish the dashboards and point the provider at `monitoring/dashboards-live`. An existing install re-runs the installer once (README, Upgrading).
+- Test kit: `validate_dashboards.py` also checks the queries of `monitoring/dashboards-html/`.
+
 ## 5.1.0 (2026-10-06)
 
 - Linux host support: `linux/install.sh` installs the stack on RHEL family 8/9, Debian 12 or Ubuntu LTS (x86_64, systemd) and is idempotent: service account `storsafe`, PowerShell 7 from its tarball when `pwsh` is missing, credential prompts, node_exporter, Prometheus and Grafana unpacked into the install folder, systemd units and a collector timer rendered from `linux/systemd/`, and `--uninstall`. `linux/storsafe-control.sh` (status / stop / start / pause / resume) and `linux/get-installers.sh` (downloads the four tarballs; `--print-urls` for offline hosts) are the counterparts of the Windows scripts. Nothing in the collector, the module or the dashboards changed.
