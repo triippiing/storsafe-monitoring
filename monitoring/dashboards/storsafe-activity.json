@@ -68,7 +68,7 @@
       "title": "",
       "id": 1,
       "gridPos": {
-        "h": 3,
+        "h": 2,
         "w": 24,
         "x": 0,
         "y": 0
@@ -76,7 +76,7 @@
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:center;gap:18px;height:100%;padding:8px 18px;border-radius:6px;background:linear-gradient(90deg,#141A26 0%,#1E2738 100%);border-left:4px solid #3D71D9\"><!--logo--><div style=\"min-width:0\"><div style=\"color:#8AB8FF;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase\"><!--brand-->StorSafe monitoring<!--/brand--></div><div style=\"color:#FFFFFF;font-size:20px;font-weight:700;line-height:1.25\">StorSafe Activity</div><div style=\"color:#A3ACB9;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Live jobs across the estate: deduplication, replication and repository maintenance.</div></div></div>"
+        "content": "<div style=\"display:flex;align-items:center;gap:18px;height:100%;padding:0 18px;border-radius:6px;background:linear-gradient(90deg,#141A26 0%,#1E2738 100%);border-left:4px solid #3D71D9\"><!--logo--><div style=\"min-width:0;color:#8AB8FF;font-size:15px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\"><!--brand-->StorSafe monitoring<!--/brand--> &middot; <!--version-->v5.2.1<!--/version--></div></div>"
       }
     },
     {
@@ -87,12 +87,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 3
+        "y": 2
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Now</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Now</span></div></div>"
       }
     },
     {
@@ -107,7 +107,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 5
+        "y": 4
       },
       "targets": [
         {
@@ -162,7 +162,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 5
+        "y": 4
       },
       "targets": [
         {
@@ -217,7 +217,7 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 5
+        "y": 4
       },
       "targets": [
         {
@@ -276,7 +276,7 @@
         "h": 4,
         "w": 4,
         "x": 12,
-        "y": 5
+        "y": 4
       },
       "targets": [
         {
@@ -331,7 +331,7 @@
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 5
+        "y": 4
       },
       "targets": [
         {
@@ -390,7 +390,7 @@
         "h": 4,
         "w": 4,
         "x": 20,
-        "y": 5
+        "y": 4
       },
       "targets": [
         {
@@ -441,12 +441,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 8
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Deduplication jobs</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Deduplication jobs</span></div></div>"
       }
     },
     {
@@ -461,7 +461,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 10
       },
       "targets": [
         {
@@ -794,7 +794,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 23
+        "y": 22
       },
       "targets": [
         {
@@ -845,7 +845,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 23
+        "y": 22
       },
       "targets": [
         {
@@ -895,12 +895,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 30
+        "y": 29
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Replication jobs</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Replication jobs</span></div></div>"
       }
     },
     {
@@ -915,7 +915,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 31
       },
       "targets": [
         {
@@ -1310,7 +1310,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 44
+        "y": 43
       },
       "targets": [
         {
@@ -1361,7 +1361,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 44
+        "y": 43
       },
       "targets": [
         {
@@ -1411,12 +1411,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 51
+        "y": 50
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Repository maintenance (space reclamation and index pruning)</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Repository maintenance (space reclamation and index pruning)</span></div></div>"
       }
     },
     {
@@ -1431,7 +1431,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 53
+        "y": 52
       },
       "targets": [
         {
@@ -1606,7 +1606,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 53
+        "y": 52
       },
       "targets": [
         {
@@ -1795,7 +1795,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 61
+        "y": 60
       },
       "targets": [
         {
@@ -1843,12 +1843,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 68
+        "y": 67
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Policy runs and import/export</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Policy runs and import/export</span></div></div>"
       }
     },
     {
@@ -1863,7 +1863,7 @@
         "h": 10,
         "w": 14,
         "x": 0,
-        "y": 70
+        "y": 69
       },
       "targets": [
         {
@@ -2118,7 +2118,7 @@
         "h": 10,
         "w": 10,
         "x": 14,
-        "y": 70
+        "y": 69
       },
       "targets": [
         {

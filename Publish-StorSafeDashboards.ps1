@@ -15,6 +15,8 @@ monitoring\theme.json exists, swaps in that file's colours, brand line and logo:
   - the brand line in each dashboard's banner becomes "brand", and "logo" (an SVG or PNG for a dark
     background, relative to theme.json) is embedded in front of it.
 
+The banner's version always becomes the one in the install folder's VERSION file.
+
 With -HtmlPanels a dashboard that has a variant in monitoring\dashboards-html (the Business Text
 plugin's card sections) is published from there instead; the installers pass it when the plugin is
 installed in Grafana. Dashboards in the output folder that are no longer in monitoring\dashboards
@@ -84,6 +86,12 @@ if ($brand) {
     $brandJson = (ConvertTo-Json ([System.Net.WebUtility]::HtmlEncode($brand))).Trim('"')
 }
 $brandEval = [System.Text.RegularExpressions.MatchEvaluator] { param($m) '<!--brand-->' + $brandJson + '<!--/brand-->' }
+$versionFile = Join-Path $Root 'VERSION'
+$versionJson = $null
+if (Test-Path -LiteralPath $versionFile) {
+    $versionJson = (ConvertTo-Json ('v' + [System.Net.WebUtility]::HtmlEncode((Get-Content -LiteralPath $versionFile -Raw).Trim()))).Trim('"')
+}
+$versionEval = [System.Text.RegularExpressions.MatchEvaluator] { param($m) '<!--version-->' + $versionJson + '<!--/version-->' }
 
 New-Item -ItemType Directory -Path $OutDirectory -Force | Out-Null
 $utf8 = New-Object System.Text.UTF8Encoding($false)
@@ -94,6 +102,7 @@ foreach ($file in @(Get-ChildItem -LiteralPath $source -Filter '*.json' -File | 
     $variant = Join-Path $htmlSource $file.Name
     if ($HtmlPanels -and (Test-Path -LiteralPath $variant)) { $path = $variant; $html++ }
     $text = [IO.File]::ReadAllText($path)
+    if ($versionJson) { $text = [regex]::Replace($text, '<!--version-->.*?<!--/version-->', $versionEval) }
     if ($siteTheme) {
         $text = [regex]::Replace($text, $hexPattern, $hexEval)
         $text = [regex]::Replace($text, '("(?:color|fixedColor)"\s*:\s*)"(green|orange|red|blue)"', $namedEval)

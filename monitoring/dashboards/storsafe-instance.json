@@ -64,7 +64,7 @@
       "title": "",
       "id": 1,
       "gridPos": {
-        "h": 3,
+        "h": 2,
         "w": 24,
         "x": 0,
         "y": 0
@@ -72,7 +72,7 @@
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:center;gap:18px;height:100%;padding:8px 18px;border-radius:6px;background:linear-gradient(90deg,#141A26 0%,#1E2738 100%);border-left:4px solid #3D71D9\"><!--logo--><div style=\"min-width:0\"><div style=\"color:#8AB8FF;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase\"><!--brand-->StorSafe monitoring<!--/brand--></div><div style=\"color:#FFFFFF;font-size:20px;font-weight:700;line-height:1.25\">StorSafe Instance</div><div style=\"color:#A3ACB9;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Everything about one appliance. Pick the server at the top.</div></div></div>"
+        "content": "<div style=\"display:flex;align-items:center;gap:18px;height:100%;padding:0 18px;border-radius:6px;background:linear-gradient(90deg,#141A26 0%,#1E2738 100%);border-left:4px solid #3D71D9\"><!--logo--><div style=\"min-width:0;color:#8AB8FF;font-size:15px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\"><!--brand-->StorSafe monitoring<!--/brand--> &middot; <!--version-->v5.2.1<!--/version--></div></div>"
       }
     },
     {
@@ -83,12 +83,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 3
+        "y": 2
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Health</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Health</span></div></div>"
       }
     },
     {
@@ -103,7 +103,7 @@
         "h": 4,
         "w": 3,
         "x": 0,
-        "y": 5
+        "y": 4
       },
       "targets": [
         {
@@ -177,7 +177,7 @@
         "h": 4,
         "w": 3,
         "x": 3,
-        "y": 5
+        "y": 4
       },
       "targets": [
         {
@@ -233,7 +233,7 @@
         "h": 4,
         "w": 3,
         "x": 6,
-        "y": 5
+        "y": 4
       },
       "targets": [
         {
@@ -292,7 +292,7 @@
         "h": 4,
         "w": 3,
         "x": 9,
-        "y": 5
+        "y": 4
       },
       "targets": [
         {
@@ -351,7 +351,7 @@
         "h": 4,
         "w": 3,
         "x": 12,
-        "y": 5
+        "y": 4
       },
       "targets": [
         {
@@ -410,7 +410,7 @@
         "h": 4,
         "w": 3,
         "x": 15,
-        "y": 5
+        "y": 4
       },
       "targets": [
         {
@@ -470,7 +470,7 @@
         "h": 4,
         "w": 3,
         "x": 18,
-        "y": 5
+        "y": 4
       },
       "targets": [
         {
@@ -530,7 +530,7 @@
         "h": 4,
         "w": 3,
         "x": 21,
-        "y": 5
+        "y": 4
       },
       "targets": [
         {
@@ -595,7 +595,7 @@
         "h": 4,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 8
       },
       "targets": [
         {
@@ -725,12 +725,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 13
+        "y": 12
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Capacity</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Capacity</span></div></div>"
       }
     },
     {
@@ -745,7 +745,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 15
+        "y": 14
       },
       "targets": [
         {
@@ -810,7 +810,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 15
+        "y": 14
       },
       "targets": [
         {
@@ -866,7 +866,7 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 15
+        "y": 14
       },
       "targets": [
         {
@@ -932,7 +932,7 @@
         "h": 4,
         "w": 4,
         "x": 12,
-        "y": 15
+        "y": 14
       },
       "targets": [
         {
@@ -988,7 +988,7 @@
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 15
+        "y": 14
       },
       "targets": [
         {
@@ -1053,7 +1053,7 @@
         "h": 4,
         "w": 4,
         "x": 20,
-        "y": 15
+        "y": 14
       },
       "targets": [
         {
@@ -1109,7 +1109,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 19
+        "y": 18
       },
       "targets": [
         {
@@ -1169,7 +1169,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 19
+        "y": 18
       },
       "targets": [
         {
@@ -1229,7 +1229,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 27
+        "y": 26
       },
       "targets": [
         {
@@ -1389,7 +1389,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 27
+        "y": 26
       },
       "targets": [
         {
@@ -1522,12 +1522,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 35
+        "y": 34
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Deduplication</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Deduplication</span></div></div>"
       }
     },
     {
@@ -1542,7 +1542,7 @@
         "h": 8,
         "w": 14,
         "x": 0,
-        "y": 37
+        "y": 36
       },
       "targets": [
         {
@@ -1761,7 +1761,7 @@
         "h": 8,
         "w": 10,
         "x": 14,
-        "y": 37
+        "y": 36
       },
       "targets": [
         {
@@ -1956,7 +1956,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 45
+        "y": 44
       },
       "targets": [
         {
@@ -2016,7 +2016,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 45
+        "y": 44
       },
       "targets": [
         {
@@ -2076,7 +2076,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 53
+        "y": 52
       },
       "targets": [
         {
@@ -2130,7 +2130,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 53
+        "y": 52
       },
       "targets": [
         {
@@ -2181,7 +2181,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 53
+        "y": 52
       },
       "targets": [
         {
@@ -2241,7 +2241,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 61
+        "y": 60
       },
       "targets": [
         {
@@ -2492,12 +2492,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 69
+        "y": 68
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Replication</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Replication</span></div></div>"
       }
     },
     {
@@ -2512,7 +2512,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 71
+        "y": 70
       },
       "targets": [
         {
@@ -2586,7 +2586,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 71
+        "y": 70
       },
       "targets": [
         {
@@ -2641,7 +2641,7 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 71
+        "y": 70
       },
       "targets": [
         {
@@ -2696,7 +2696,7 @@
         "h": 4,
         "w": 4,
         "x": 12,
-        "y": 71
+        "y": 70
       },
       "targets": [
         {
@@ -2760,7 +2760,7 @@
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 71
+        "y": 70
       },
       "targets": [
         {
@@ -2825,7 +2825,7 @@
         "h": 4,
         "w": 4,
         "x": 20,
-        "y": 71
+        "y": 70
       },
       "targets": [
         {
@@ -2884,7 +2884,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 75
+        "y": 74
       },
       "targets": [
         {
@@ -3141,7 +3141,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 83
+        "y": 82
       },
       "targets": [
         {
@@ -3222,7 +3222,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 83
+        "y": 82
       },
       "targets": [
         {
@@ -3279,7 +3279,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 83
+        "y": 82
       },
       "targets": [
         {
@@ -3429,7 +3429,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 91
+        "y": 90
       },
       "targets": [
         {
@@ -3483,7 +3483,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 91
+        "y": 90
       },
       "targets": [
         {
@@ -3530,12 +3530,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 99
+        "y": 98
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Tapes and libraries</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Tapes and libraries</span></div></div>"
       }
     },
     {
@@ -3550,7 +3550,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 101
+        "y": 100
       },
       "targets": [
         {
@@ -3711,7 +3711,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 101
+        "y": 100
       },
       "targets": [
         {
@@ -3839,7 +3839,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 109
+        "y": 108
       },
       "targets": [
         {
@@ -3967,7 +3967,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 109
+        "y": 108
       },
       "targets": [
         {
@@ -4036,7 +4036,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 109
+        "y": 108
       },
       "targets": [
         {
@@ -4141,7 +4141,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 117
+        "y": 116
       },
       "targets": [
         {
@@ -4192,7 +4192,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 117
+        "y": 116
       },
       "targets": [
         {
@@ -4239,12 +4239,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 124
+        "y": 123
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Events</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Events</span></div></div>"
       }
     },
     {
@@ -4259,7 +4259,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 126
+        "y": 125
       },
       "targets": [
         {
@@ -4314,7 +4314,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 132
+        "y": 131
       },
       "targets": [
         {
@@ -4447,12 +4447,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 142
+        "y": 141
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Platform and network</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Platform and network</span></div></div>"
       }
     },
     {
@@ -4467,7 +4467,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 144
+        "y": 143
       },
       "targets": [
         {
@@ -4525,7 +4525,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 144
+        "y": 143
       },
       "targets": [
         {
@@ -4618,7 +4618,7 @@
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 151
+        "y": 150
       },
       "targets": [
         {
@@ -4677,7 +4677,7 @@
         "h": 6,
         "w": 6,
         "x": 12,
-        "y": 151
+        "y": 150
       },
       "targets": [
         {
@@ -4747,7 +4747,7 @@
         "h": 6,
         "w": 6,
         "x": 18,
-        "y": 151
+        "y": 150
       },
       "targets": [
         {
@@ -4825,12 +4825,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 157
+        "y": 156
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Collector</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Collector</span></div></div>"
       }
     },
     {
@@ -4845,7 +4845,7 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 159
+        "y": 158
       },
       "targets": [
         {
@@ -4902,7 +4902,7 @@
         "h": 4,
         "w": 6,
         "x": 6,
-        "y": 159
+        "y": 158
       },
       "targets": [
         {
@@ -4958,7 +4958,7 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 159
+        "y": 158
       },
       "targets": [
         {
@@ -5018,7 +5018,7 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 159
+        "y": 158
       },
       "targets": [
         {
@@ -5075,7 +5075,7 @@
         "h": 12,
         "w": 12,
         "x": 0,
-        "y": 163
+        "y": 162
       },
       "targets": [
         {
@@ -5213,7 +5213,7 @@
         "h": 12,
         "w": 12,
         "x": 12,
-        "y": 163
+        "y": 162
       },
       "targets": [
         {

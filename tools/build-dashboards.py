@@ -8,6 +8,7 @@ theme.json, so every hex value in the example theme must be unique."""
 import json, os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+VERSION = open(os.path.join(ROOT, 'VERSION')).read().strip()
 OUT_DIR = os.path.join(ROOT, 'monitoring', 'dashboards')
 HTML_DIR = os.path.join(ROOT, 'monitoring', 'dashboards-html')
 LEVEL = {"green": "ok", "orange": "warning", "red": "critical", "blue": "info"}
@@ -84,7 +85,6 @@ class Dashboard:
         html = ('<div style="display:flex;align-items:flex-end;width:100%%;height:100%%"><div style="display:flex;align-items:center;gap:10px;'
                 'width:100%%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;'
                 'background:linear-gradient(90deg,%(surface)s 0%%,%(background)s 100%%);border:1px solid %(surface)s">'
-                '<span style="width:8px;height:8px;border-radius:50%%;background:%(accent)s;flex:none"></span>'
                 '<span style="color:%(label)s;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;'
                 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis">%(title)s</span></div></div>') % dict(C, title=esc(title))
         self.panels.append({"type": "text", "title": "", "id": self.nid(), "gridPos": self.place(24, 2), "transparent": True,
@@ -101,17 +101,16 @@ class Dashboard:
         return t
 
     def banner(self):
-        """Header strip above the first row: brand, dashboard title and description. Plain HTML in a core text
-        panel; the <!--brand--> and <!--logo--> markers are where Publish-StorSafeDashboards.ps1 puts the theme's."""
-        html = ('<div style="display:flex;align-items:center;gap:18px;height:100%%;padding:8px 18px;border-radius:6px;'
+        """Header strip above the first section: logo, brand line and package version. Plain HTML in a core text
+        panel; Publish-StorSafeDashboards.ps1 puts the theme's logo and brand at the <!--logo--> and <!--brand-->
+        markers and the installed VERSION at <!--version-->."""
+        html = ('<div style="display:flex;align-items:center;gap:18px;height:100%%;padding:0 18px;border-radius:6px;'
                 'background:linear-gradient(90deg,%(background)s 0%%,%(surface)s 100%%);border-left:4px solid %(accent)s">'
-                '<!--logo--><div style="min-width:0">'
-                '<div style="color:%(label)s;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase">'
-                '<!--brand-->%(brand)s<!--/brand--></div>'
-                '<div style="color:#FFFFFF;font-size:20px;font-weight:700;line-height:1.25">%(title)s</div>'
-                '<div style="color:%(muted)s;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">%(desc)s</div>'
-                '</div></div>') % dict(C, brand=esc(THEME["brand"]), title=esc(self.title), desc=esc(self.description))
-        self.panels.append({"type": "text", "title": "", "id": self.nid(), "gridPos": self.place(24, 3), "transparent": True,
+                '<!--logo--><div style="min-width:0;color:%(label)s;font-size:15px;font-weight:700;letter-spacing:1.5px;'
+                'text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
+                '<!--brand-->%(brand)s<!--/brand--> &middot; <!--version-->v%(version)s<!--/version--></div></div>'
+                ) % dict(C, brand=esc(THEME["brand"]), version=esc(VERSION))
+        self.panels.append({"type": "text", "title": "", "id": self.nid(), "gridPos": self.place(24, 2), "transparent": True,
                             "options": {"mode": "html", "content": html}})
 
     def text(self, title, content, w=24, h=3):
@@ -328,16 +327,15 @@ context.handlebars.registerHelper('storsafeCards', (rows) => {
   const mark = attention === 0 ? '&#10003;' : '!';
   const hero = '<div class="ss-hero ' + (attention === 0 ? 'ok' : worst) + '"><div class="ss-mark">' + mark + '</div>' +
     '<div class="ss-hero-title">' + esc(title) + '</div><div class="ss-hero-sub">' + esc(reach) + '</div></div>';
-  return new context.handlebars.SafeString('<div class="ss-section"><div class="ss-head"><span class="ss-dot"></span>' + esc(TITLE) + '</div>' +
+  return new context.handlebars.SafeString('<div class="ss-section"><div class="ss-head">' + esc(TITLE) + '</div>' +
     '<div class="ss">' + hero + tiles + '</div></div>');
 });
 """
-CARDS_EMPTY = '<div class="ss-section"><div class="ss-head"><span class="ss-dot"></span>%s</div><div class="ss"><div class="ss-hero unknown"><div class="ss-mark">?</div><div class="ss-hero-title">No data</div><div class="ss-hero-sub">Prometheus returned nothing for the estate cards.</div></div></div></div>'
+CARDS_EMPTY = '<div class="ss-section"><div class="ss-head">%s</div><div class="ss"><div class="ss-hero unknown"><div class="ss-mark">?</div><div class="ss-hero-title">No data</div><div class="ss-hero-sub">Prometheus returned nothing for the estate cards.</div></div></div></div>'
 CARDS_CSS = """.ss-section { display: flex; flex-direction: column; height: 100%%; box-sizing: border-box; border-radius: 18px; overflow: hidden;
   background: %(background)s; border: 1px solid %(surface)s; }
 .ss-head { flex: none; display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 18px; border-radius: 18px;
   background: linear-gradient(90deg, %(surface)s 0%%, %(background)s 100%%); color: %(label)s; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
-.ss-dot { width: 8px; height: 8px; border-radius: 50%%; background: %(accent)s; flex: none; }
 .ss { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(240px, 1.4fr) repeat(4, minmax(140px, 1fr)); grid-auto-rows: 1fr; gap: 10px; padding: 10px 12px 12px; }
 .ss-hero { grid-row: span 2; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 16px 20px; border-radius: 14px;
   background: linear-gradient(135deg, %(background)s 0%%, %(surface)s 100%%); border-left: 4px solid %(accent)s; }
@@ -428,11 +426,11 @@ context.handlebars.registerHelper('storsafeSection', (rows) => {
     return '<div class="ss-card ' + lv + '"><div class="ss-label" title="' + esc(t.label) + '">' + esc(t.label) + '</div>' + body +
       '<div class="ss-pill">' + WORD[lv] + '</div></div>';
   }).join('');
-  return new context.handlebars.SafeString('<div class="ss-section"><div class="ss-head"><span class="ss-dot"></span>' + esc(SECTION.title) + '</div>' +
+  return new context.handlebars.SafeString('<div class="ss-section"><div class="ss-head">' + esc(SECTION.title) + '</div>' +
     '<div class="ss ss-tiles" style="grid-template-columns: repeat(' + SECTION.tiles.length + ', minmax(0, 1fr))">' + tiles + '</div></div>');
 });
 """
-SECTION_EMPTY = '<div class="ss-section"><div class="ss-head"><span class="ss-dot"></span>%s</div><div class="ss ss-tiles"><div class="ss-hero unknown"><div class="ss-hero-title">No data</div><div class="ss-hero-sub">Prometheus returned nothing for this section.</div></div></div></div>'
+SECTION_EMPTY = '<div class="ss-section"><div class="ss-head">%s</div><div class="ss ss-tiles"><div class="ss-hero unknown"><div class="ss-hero-title">No data</div><div class="ss-hero-sub">Prometheus returned nothing for this section.</div></div></div></div>'
 SECTION_CSS = """.ss.ss-tiles { grid-auto-rows: auto; grid-template-rows: 1fr; }
 .ss-tiles .ss-hero { grid-row: auto; grid-column: 1 / -1; }
 .ss-value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

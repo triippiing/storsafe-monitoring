@@ -68,7 +68,7 @@
       "title": "",
       "id": 1,
       "gridPos": {
-        "h": 3,
+        "h": 2,
         "w": 24,
         "x": 0,
         "y": 0
@@ -76,7 +76,7 @@
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:center;gap:18px;height:100%;padding:8px 18px;border-radius:6px;background:linear-gradient(90deg,#141A26 0%,#1E2738 100%);border-left:4px solid #3D71D9\"><!--logo--><div style=\"min-width:0\"><div style=\"color:#8AB8FF;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase\"><!--brand-->StorSafe monitoring<!--/brand--></div><div style=\"color:#FFFFFF;font-size:20px;font-weight:700;line-height:1.25\">StorSafe Patch Management</div><div style=\"color:#A3ACB9;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Versions, builds, patches and platform details across the estate.</div></div></div>"
+        "content": "<div style=\"display:flex;align-items:center;gap:18px;height:100%;padding:0 18px;border-radius:6px;background:linear-gradient(90deg,#141A26 0%,#1E2738 100%);border-left:4px solid #3D71D9\"><!--logo--><div style=\"min-width:0;color:#8AB8FF;font-size:15px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\"><!--brand-->StorSafe monitoring<!--/brand--> &middot; <!--version-->v5.2.1<!--/version--></div></div>"
       }
     },
     {
@@ -87,12 +87,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 3
+        "y": 2
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Versions</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Versions</span></div></div>"
       }
     },
     {
@@ -107,7 +107,7 @@
         "h": 4,
         "w": 8,
         "x": 0,
-        "y": 5
+        "y": 4
       },
       "targets": [
         {
@@ -163,7 +163,7 @@
         "h": 4,
         "w": 8,
         "x": 8,
-        "y": 5
+        "y": 4
       },
       "targets": [
         {
@@ -219,7 +219,7 @@
         "h": 4,
         "w": 8,
         "x": 16,
-        "y": 5
+        "y": 4
       },
       "targets": [
         {
@@ -275,7 +275,7 @@
         "h": 16,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 8
       },
       "targets": [
         {
@@ -503,12 +503,12 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 25
+        "y": 24
       },
       "transparent": true,
       "options": {
         "mode": "html",
-        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Patches</span></div></div>"
+        "content": "<div style=\"display:flex;align-items:flex-end;width:100%;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Patches</span></div></div>"
       }
     },
     {
@@ -523,7 +523,7 @@
         "h": 12,
         "w": 16,
         "x": 0,
-        "y": 27
+        "y": 26
       },
       "targets": [
         {
@@ -591,7 +591,7 @@
         "h": 12,
         "w": 8,
         "x": 16,
-        "y": 27
+        "y": 26
       },
       "targets": [
         {
