@@ -68,7 +68,8 @@ assert_file "$root/node_exporter/node_exporter"
 make_fake_plugin_zip "$root/installers" 6.2.0
 out=$("$inst" --no-services --root "$root" --user "$(id -un)" --unit-dir "$tmp/units" --skip-credentials)
 assert_file "$root/grafana/data/plugins/marcusolsson-dynamictext-panel/plugin.json"
-assert_eq marcusolsson-dynamictext-panel-6.2.0.zip "$(cat "$root/grafana/data/plugins/marcusolsson-dynamictext-panel/.storsafe-zip")" "plugin zip recorded"
+assert_eq marcusolsson-dynamictext-panel-6.2.0.zip "$(cat "$root/grafana/data/.business-text-zip")" "plugin zip recorded"
+assert_eq "plugin.json" "$(ls -A "$root/grafana/data/plugins/marcusolsson-dynamictext-panel")" "nothing but the zip's files in the plugin folder (Grafana checks its signature)"
 assert_eq "$(id -un)" "$(stat -c %U "$root/grafana/data/plugins/marcusolsson-dynamictext-panel/plugin.json")" "the plugin is in data/, the service account's"
 assert_grep "$root/monitoring/dashboards-live/storsafe-fleet.json" '"type": "marcusolsson-dynamictext-panel"'
 echo "$out" | grep -q 'Extracting marcusolsson-dynamictext-panel-6.2.0.zip' || { echo "FAIL plugin extracted"; FAILED=1; }

@@ -670,17 +670,19 @@ step_grafana() {
 
 # install_business_text <plugins dir>: unpacks the newest Business Text panel plugin zip from
 # installers/ into Grafana's plugin folder, replacing the copy there when the zip differs from the one
-# it came from (.storsafe-zip in the plugin folder); a new copy needs a Grafana restart. No zip is
-# fine: Fleet then keeps its stat row. PowerShell unzips, because unzip is not on every host.
+# it came from (data/.business-text-zip, outside the plugin folder: Grafana refuses a signed plugin with
+# files the signature does not list); a new copy needs a Grafana restart. No zip is fine: Fleet then
+# keeps its stat row. PowerShell unzips, because unzip is not on every host.
 install_business_text() {
-    local plugins=$1 zip base have=""
+    local plugins=$1 zip base have="" marker
+    marker=$(dirname "$plugins")/.business-text-zip
     zip=$(find_installer "$BUSINESS_TEXT-*.zip")
     if [[ -z $zip ]]; then
         return 0
     fi
     base=$(basename "$zip")
-    if [[ -f $plugins/$BUSINESS_TEXT/.storsafe-zip ]]; then
-        read -r have < "$plugins/$BUSINESS_TEXT/.storsafe-zip" || true
+    if [[ -f $marker ]]; then
+        read -r have < "$marker" || true
     fi
     if [[ $have == "$base" ]]; then
         return 0
@@ -691,7 +693,7 @@ install_business_text() {
         ! STORSAFE_ZIP=$zip STORSAFE_DEST=$plugins "$PWSH_BIN" -NoProfile -NonInteractive -Command \
             '$ErrorActionPreference = "Stop"; Expand-Archive -LiteralPath $env:STORSAFE_ZIP -DestinationPath $env:STORSAFE_DEST -Force' ||
         [[ ! -f $plugins/$BUSINESS_TEXT/plugin.json ]] ||
-        ! printf '%s\n' "$base" > "$plugins/$BUSINESS_TEXT/.storsafe-zip"; then
+        ! printf '%s\n' "$base" > "$marker"; then
         summary_add Grafana Check "cannot unpack $base into $plugins; see the output above"
         return 1
     fi
