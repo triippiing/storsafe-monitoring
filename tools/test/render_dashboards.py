@@ -48,9 +48,12 @@ with sync_playwright() as pw:
         line = "%-20s %s" % (uid, path)
         if uid == "storsafe-fleet":
             cards = page.locator(".ss-card").count()
-            line += "  cards %d" % cards
+            values = page.locator(".ss-card .ss-value").all_inner_texts()
+            line += "  cards %d %s" % (cards, values)
             if args.cards and cards != 8:
                 problems.append("storsafe-fleet: %d estate cards, expected 8" % cards)
+            if args.cards and "-" in values:
+                problems.append("storsafe-fleet: a card has no value (%s)" % values)
         print(line)
     browser.close()
 
