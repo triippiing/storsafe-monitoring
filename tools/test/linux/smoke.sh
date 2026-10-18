@@ -249,19 +249,30 @@ assert_http() {
 }
 
 # check_business_text: when the plugin zip was there, Grafana loaded the plugin and serves the Fleet
-# dashboard with its cards panel (as the first-login admin, whose password nobody has changed yet).
+# dashboard with its cards panel (as the first-login admin, whose password nobody has changed yet). Grafana
+# answers before its provisioner has loaded the dashboards, so the Fleet check waits for them.
 check_business_text() {
+    local start=$SECONDS
     if ! compgen -G "$ROOT/installers/marcusolsson-dynamictext-panel-*.zip" > /dev/null; then
         echo 'No Business Text plugin zip: Fleet keeps its stat row'
         return 0
     fi
     assert_http_admin http://127.0.0.1:3000/api/plugins/marcusolsson-dynamictext-panel/settings
-    if ! curl -fsS --noproxy '*' --max-time 10 -u admin:admin http://127.0.0.1:3000/api/dashboards/uid/storsafe-fleet |
-        grep -q '"type":"marcusolsson-dynamictext-panel"'; then
-        die 'Grafana serves the Fleet dashboard without the Business Text cards panel'
-    fi
+    while ! fleet_has_cards; do
+        if [[ $((SECONDS - start)) -ge 60 ]]; then
+            die 'Grafana serves no Fleet dashboard with the Business Text cards panel after 60 s'
+        fi
+        sleep 2
+    done
     echo 'Fleet has the Business Text cards panel'
     return 0
+}
+
+# fleet_has_cards: succeeds when Grafana serves the Fleet dashboard with the Business Text panel.
+fleet_has_cards() {
+    local json
+    json=$(curl -fsS --noproxy '*' --max-time 10 -u admin:admin http://127.0.0.1:3000/api/dashboards/uid/storsafe-fleet 2> /dev/null) &&
+        [[ $json == *'"type":"marcusolsson-dynamictext-panel"'* ]]
 }
 
 # assert_http_admin <url>: like assert_http, as Grafana's admin.
