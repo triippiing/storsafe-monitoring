@@ -58,10 +58,10 @@ class Dashboard:
         styled), so every section heading matches the banner and the cards. Sections are always open."""
         self._y += self._h
         self._x, self._h = 0, 0
-        # Two grid units (one leaves the text panel too little room inside its padding); the pill sits at the bottom,
-        # next to the panels it heads.
-        html = ('<div style="display:flex;align-items:flex-end;height:100%%"><div style="display:flex;align-items:center;gap:10px;'
-                'max-width:100%%;height:36px;padding:0 18px;border-radius:999px;'
+        # Two grid units (one leaves the text panel too little room inside its padding); the pill spans the dashboard
+        # and sits at the bottom, next to the panels it heads.
+        html = ('<div style="display:flex;align-items:flex-end;width:100%%;height:100%%"><div style="display:flex;align-items:center;gap:10px;'
+                'width:100%%;box-sizing:border-box;height:36px;padding:0 18px;border-radius:999px;'
                 'background:linear-gradient(90deg,%(surface)s 0%%,%(background)s 100%%);border:1px solid %(surface)s">'
                 '<span style="width:8px;height:8px;border-radius:50%%;background:%(accent)s;flex:none"></span>'
                 '<span style="color:%(label)s;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;'
@@ -135,16 +135,19 @@ class Dashboard:
             p["description"] = desc
         self.panels.append(p)
 
-    def cards(self, cards, w=24, h=7, desc=None):
-        """Estate cards in a Business Text panel: a health summary and one tile per card. cards: list of
+    def cards(self, cards, title, w=24, h=9, desc=None):
+        """A whole section in a Business Text panel: the section header, and under it on a navy ground a health
+        summary and one rounded tile per card (in place of row() and a row of stat panels). cards: list of
         (key, label, expr, unit, warn, crit); warn/crit are the lowest values that colour a tile (None for never;
         both None makes an informational tile). One instant query returns every value, labelled k=<key>."""
+        self._y += self._h
+        self._x, self._h = 0, 0
         expr = " or ".join('label_replace(%s, "k", "%s", "", "")' % (e, k) for k, _, e, _, _, _ in cards)
         spec = [{"k": k, "label": label, "unit": unit, "warn": warn, "crit": crit} for k, label, _, unit, warn, crit in cards]
         p = {"type": BT_PANEL, "title": "", "id": self.nid(), "datasource": DS, "gridPos": self.place(w, h), "transparent": True,
              "targets": [self.target(expr, "A", table=True)],
-             "options": {"renderMode": "allRows", "content": "{{{storsafeCards data}}}", "defaultContent": CARDS_EMPTY,
-                         "helpers": CARDS_JS.replace("__CARDS__", json.dumps(spec)), "styles": CARDS_CSS % C, "wrap": False,
+             "options": {"renderMode": "allRows", "content": "{{{storsafeCards data}}}", "defaultContent": CARDS_EMPTY % esc(title),
+                         "helpers": CARDS_JS.replace("__CARDS__", json.dumps(spec)).replace("__TITLE__", json.dumps(title)), "styles": CARDS_CSS % C, "wrap": False,
                          "editors": ["helpers", "styles"], "editor": {"format": "auto", "language": "html"},
                          "contentPartials": [], "externalStyles": [], "afterRender": "", "status": ""}}
         if desc:
@@ -224,6 +227,7 @@ class Dashboard:
 # Business Text helper code for Dashboard.cards. Runs in the browser; the template is {{{storsafeCards data}}}
 # (the rows of the panel's one query, each with the k label and the value). Everything printed is escaped.
 CARDS_JS = r"""const CARDS = __CARDS__;
+const TITLE = __TITLE__;
 const num = (row) => {
   for (const key of Object.keys(row)) {
     if (key.indexOf('Value') === 0) { return Number(row[key]); }
@@ -267,17 +271,23 @@ context.handlebars.registerHelper('storsafeCards', (rows) => {
   const mark = attention === 0 ? '&#10003;' : '!';
   const hero = '<div class="ss-hero ' + (attention === 0 ? 'ok' : worst) + '"><div class="ss-mark">' + mark + '</div>' +
     '<div class="ss-hero-title">' + esc(title) + '</div><div class="ss-hero-sub">' + esc(reach) + '</div></div>';
-  return new context.handlebars.SafeString('<div class="ss">' + hero + tiles + '</div>');
+  return new context.handlebars.SafeString('<div class="ss-section"><div class="ss-head"><span class="ss-dot"></span>' + esc(TITLE) + '</div>' +
+    '<div class="ss">' + hero + tiles + '</div></div>');
 });
 """
-CARDS_EMPTY = '<div class="ss"><div class="ss-hero unknown"><div class="ss-mark">?</div><div class="ss-hero-title">No data</div><div class="ss-hero-sub">Prometheus returned nothing for the estate cards.</div></div></div>'
-CARDS_CSS = """.ss { display: grid; grid-template-columns: minmax(240px, 1.4fr) repeat(4, minmax(140px, 1fr)); grid-auto-rows: 1fr; gap: 10px; height: 100%%; }
-.ss-hero { grid-row: span 2; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 16px 20px; border-radius: 8px;
+CARDS_EMPTY = '<div class="ss-section"><div class="ss-head"><span class="ss-dot"></span>%s</div><div class="ss"><div class="ss-hero unknown"><div class="ss-mark">?</div><div class="ss-hero-title">No data</div><div class="ss-hero-sub">Prometheus returned nothing for the estate cards.</div></div></div></div>'
+CARDS_CSS = """.ss-section { display: flex; flex-direction: column; height: 100%%; box-sizing: border-box; border-radius: 18px; overflow: hidden;
+  background: %(background)s; border: 1px solid %(surface)s; }
+.ss-head { flex: none; display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 18px; border-radius: 18px;
+  background: linear-gradient(90deg, %(surface)s 0%%, %(background)s 100%%); color: %(label)s; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+.ss-dot { width: 8px; height: 8px; border-radius: 50%%; background: %(accent)s; flex: none; }
+.ss { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(240px, 1.4fr) repeat(4, minmax(140px, 1fr)); grid-auto-rows: 1fr; gap: 10px; padding: 10px 12px 12px; }
+.ss-hero { grid-row: span 2; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 16px 20px; border-radius: 14px;
   background: linear-gradient(135deg, %(background)s 0%%, %(surface)s 100%%); border-left: 4px solid %(accent)s; }
 .ss-mark { width: 44px; height: 44px; border-radius: 50%%; border: 3px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; }
 .ss-hero-title { font-size: 22px; font-weight: 700; line-height: 1.2; }
 .ss-hero-sub { color: %(muted)s; font-size: 13px; }
-.ss-card { display: flex; flex-direction: column; justify-content: space-between; gap: 4px; min-width: 0; padding: 10px 14px; border-radius: 8px;
+.ss-card { display: flex; flex-direction: column; justify-content: space-between; gap: 4px; min-width: 0; padding: 10px 14px; border-radius: 14px;
   background: %(surface)s; border-top: 3px solid %(info)s; }
 .ss-label { color: %(label)s; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ss-value { color: #FFFFFF; font-size: 32px; font-weight: 700; line-height: 1.1; }
@@ -303,8 +313,7 @@ def write(d, out_dir=OUT_DIR):
 def fleet(html=False):
     S = 'server=~"$server"'
     d = Dashboard("StorSafe Fleet", "storsafe-fleet", S, "multi", description="One row per appliance; red rows need attention. Click a server name to open its Instance page.")
-    d.row("Estate")
-    # (key, title, expr, unit, warn from, crit from): the stat row, or with html the Business Text cards.
+    # (key, title, expr, unit, warn from, crit from): the stat row, or with html the Business Text section.
     estate = [
         ("appliances", "Appliances", f'count(storsafe_up{{{S}}})', None, None, None),
         ("api_down", "API down", f'count(storsafe_up{{{S}}} == 0) or vector(0)', None, None, 1),
@@ -316,9 +325,10 @@ def fleet(html=False):
         ("lastrun", "Collector last run", 'time() - storsafe_collector_last_run_timestamp_seconds', "s", 600, 900),
     ]
     if html:
-        d.cards(estate, desc="Estate health at a glance. A tile turns orange or red at the same thresholds as the stat row of the plain Fleet dashboard; "
+        d.cards(estate, "Estate", desc="Estate health at a glance. A tile turns orange or red at the same thresholds as the stat row of the plain Fleet dashboard; "
                              "'Collector last run' is the time since the collector last completed a full run.")
     else:
+        d.row("Estate")
         for key, title, expr, unit, warn, crit in estate:
             steps = BLUE if warn is None and crit is None else [{"color": "green", "value": None}]
             if warn is not None:
