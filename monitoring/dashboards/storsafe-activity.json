@@ -80,17 +80,20 @@
       }
     },
     {
-      "type": "row",
-      "title": "Now",
+      "type": "text",
+      "title": "",
       "id": 2,
-      "collapsed": false,
       "gridPos": {
-        "h": 1,
+        "h": 2,
         "w": 24,
         "x": 0,
         "y": 3
       },
-      "panels": []
+      "transparent": true,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:flex-end;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;max-width:100%;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Now</span></div></div>"
+      }
     },
     {
       "type": "stat",
@@ -104,7 +107,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 4
+        "y": 5
       },
       "targets": [
         {
@@ -159,7 +162,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 4
+        "y": 5
       },
       "targets": [
         {
@@ -214,7 +217,7 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 4
+        "y": 5
       },
       "targets": [
         {
@@ -273,7 +276,7 @@
         "h": 4,
         "w": 4,
         "x": 12,
-        "y": 4
+        "y": 5
       },
       "targets": [
         {
@@ -328,7 +331,7 @@
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 4
+        "y": 5
       },
       "targets": [
         {
@@ -387,7 +390,7 @@
         "h": 4,
         "w": 4,
         "x": 20,
-        "y": 4
+        "y": 5
       },
       "targets": [
         {
@@ -431,17 +434,20 @@
       }
     },
     {
-      "type": "row",
-      "title": "Deduplication jobs",
+      "type": "text",
+      "title": "",
       "id": 9,
-      "collapsed": false,
       "gridPos": {
-        "h": 1,
+        "h": 2,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 9
       },
-      "panels": []
+      "transparent": true,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:flex-end;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;max-width:100%;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Deduplication jobs</span></div></div>"
+      }
     },
     {
       "type": "table",
@@ -455,7 +461,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 11
       },
       "targets": [
         {
@@ -788,7 +794,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 21
+        "y": 23
       },
       "targets": [
         {
@@ -839,7 +845,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 21
+        "y": 23
       },
       "targets": [
         {
@@ -882,17 +888,20 @@
       }
     },
     {
-      "type": "row",
-      "title": "Replication jobs",
+      "type": "text",
+      "title": "",
       "id": 13,
-      "collapsed": false,
       "gridPos": {
-        "h": 1,
+        "h": 2,
         "w": 24,
         "x": 0,
-        "y": 28
+        "y": 30
       },
-      "panels": []
+      "transparent": true,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:flex-end;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;max-width:100%;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Replication jobs</span></div></div>"
+      }
     },
     {
       "type": "table",
@@ -906,7 +915,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 29
+        "y": 32
       },
       "targets": [
         {
@@ -1301,7 +1310,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 41
+        "y": 44
       },
       "targets": [
         {
@@ -1352,7 +1361,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 41
+        "y": 44
       },
       "targets": [
         {
@@ -1395,17 +1404,20 @@
       }
     },
     {
-      "type": "row",
-      "title": "Repository maintenance (space reclamation and index pruning)",
+      "type": "text",
+      "title": "",
       "id": 17,
-      "collapsed": false,
       "gridPos": {
-        "h": 1,
+        "h": 2,
         "w": 24,
         "x": 0,
-        "y": 48
+        "y": 51
       },
-      "panels": []
+      "transparent": true,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:flex-end;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;max-width:100%;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Repository maintenance (space reclamation and index pruning)</span></div></div>"
+      }
     },
     {
       "type": "table",
@@ -1419,7 +1431,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 49
+        "y": 53
       },
       "targets": [
         {
@@ -1594,7 +1606,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 49
+        "y": 53
       },
       "targets": [
         {
@@ -1783,7 +1795,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 57
+        "y": 61
       },
       "targets": [
         {
@@ -1824,17 +1836,20 @@
       }
     },
     {
-      "type": "row",
-      "title": "Policy runs and import/export",
+      "type": "text",
+      "title": "",
       "id": 21,
-      "collapsed": false,
       "gridPos": {
-        "h": 1,
+        "h": 2,
         "w": 24,
         "x": 0,
-        "y": 64
+        "y": 68
       },
-      "panels": []
+      "transparent": true,
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:flex-end;height:100%\"><div style=\"display:flex;align-items:center;gap:10px;max-width:100%;height:36px;padding:0 18px;border-radius:999px;background:linear-gradient(90deg,#1E2738 0%,#141A26 100%);border:1px solid #1E2738\"><span style=\"width:8px;height:8px;border-radius:50%;background:#3D71D9;flex:none\"></span><span style=\"color:#8AB8FF;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">Policy runs and import/export</span></div></div>"
+      }
     },
     {
       "type": "table",
@@ -1848,7 +1863,7 @@
         "h": 10,
         "w": 14,
         "x": 0,
-        "y": 65
+        "y": 70
       },
       "targets": [
         {
@@ -2103,7 +2118,7 @@
         "h": 10,
         "w": 10,
         "x": 14,
-        "y": 65
+        "y": 70
       },
       "targets": [
         {

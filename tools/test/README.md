@@ -26,6 +26,6 @@ Everything here runs on Linux or Windows with PowerShell 7 (`pwsh`) and Python 3
    pwsh -NoProfile -File ./Publish-StorSafeDashboards.ps1 -ThemePath tools/test/theme-test.json -OutDirectory tools/test/out/dash -HtmlPanels
    python3 tools/test/render_dashboards.py --cards
    ```
-   Expect the five screenshots in `tools/test/out/screens` and no `PROBLEM` line. Without the plugin, publish without `-HtmlPanels` and leave out `--cards`.
+   Expect the five screenshots in `tools/test/out/screens` and no `PROBLEM` line. Without the plugin, publish without `-HtmlPanels` and leave out `--cards`. The README screenshots in `docs/images` are `--full --from now-15m` renders (Grafana's menu and the whole page, anonymous Viewer) of the default theme, from a collector run against the mock with the template names `STORSAFE-01` to `STORSAFE-04` and a few minutes of history.
 
 After changing a dashboard in `tools/build-dashboards.py`, regenerate with `python3 tools/build-dashboards.py` and re-run step 3. `python3 tools/build-package.py` builds the release zip into `dist/`.

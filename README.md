@@ -107,7 +107,7 @@ The dashboards are file-provisioned from `monitoring\dashboards-live\`, which `P
 
 ### Theme and branding
 
-Every dashboard opens with a banner (brand line, title, description), and with the Business Text plugin installed the Fleet dashboard's estate row is a set of cards: a health summary and one tile per indicator, coloured by the same thresholds as the stat row it replaces. The colours, the brand line and a logo come from a theme file that stays on the monitoring host:
+Every dashboard opens with a banner (brand line, title, description), each section is headed by a rounded pill, and with the Business Text plugin installed the Fleet dashboard's estate row is a set of cards: a health summary and one tile per indicator, coloured by the same thresholds as the stat row it replaces. The colours, the brand line and a logo come from a theme file that stays on the monitoring host:
 
 1. Copy `monitoring\theme.example.json` to `monitoring\theme.json` (ignored by git and left out of the release packages) and set `brand`, the colours (`#RRGGBB`) and optionally `logo`, an SVG or PNG for a dark background (up to 512 KB), with a path relative to the theme file, e.g. `theme\logo.svg` in `monitoring\theme\`.
 2. Publish:

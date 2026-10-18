@@ -159,7 +159,8 @@ jobs:
             '  - {name: StorSafe Prometheus, uid: storsafe-prometheus, type: prometheus, access: proxy, url: "http://127.0.0.1:19090"}' \
             > /tmp/gf/prov/datasources/ds.yaml
           sed "s|__DASHBOARD_DIR__|/tmp/gf/dash|" monitoring/grafana/storsafe-dashboards.yaml > /tmp/gf/prov/dashboards/storsafe.yaml
-          GF_PATHS_DATA=/tmp/gf/data GF_PATHS_PROVISIONING=/tmp/gf/prov GF_SERVER_HTTP_ADDR=127.0.0.1 \
+          # The plugin folder is relative to the home path unless set, not to the data path.
+          GF_PATHS_DATA=/tmp/gf/data GF_PATHS_PLUGINS=/tmp/gf/data/plugins GF_PATHS_PROVISIONING=/tmp/gf/prov GF_SERVER_HTTP_ADDR=127.0.0.1 \
             GF_AUTH_ANONYMOUS_ENABLED=true GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer GF_NEWS_NEWS_FEED_ENABLED=false \
             setsid nohup /tmp/grafana/bin/grafana server --homepath /tmp/grafana > /tmp/grafana.log 2>&1 &
           for _ in $(seq 1 60); do
@@ -173,8 +174,9 @@ jobs:
           python3 -m pip install --user playwright
           python3 -m playwright install --with-deps chromium
           # The plugin must be loaded, and Fleet must show its eight estate cards with no panel error.
-          curl -fsS http://127.0.0.1:3000/api/plugins/marcusolsson-dynamictext-panel/settings > /dev/null
+          curl -fsS http://127.0.0.1:3000/api/plugins/marcusolsson-dynamictext-panel/settings > /dev/null || { tail -n 50 /tmp/grafana.log; exit 1; }
           python3 tools/test/render_dashboards.py --cards --out /tmp/screens
+          python3 tools/test/render_dashboards.py --cards --full --from now-15m --out /tmp/screens/full
       - name: Keep the screenshots
         if: always()
         uses: actions/upload-artifact@v4

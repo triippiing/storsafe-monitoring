@@ -53,12 +53,23 @@ class Dashboard:
         self._h = max(self._h, h)
         return pos
 
-    def row(self, title, collapsed=False):
+    def row(self, title):
+        """Section header: a rounded pill in a core text panel, in place of a Grafana row (whose header cannot be
+        styled), so every section heading matches the banner and the cards. Sections are always open."""
         self._y += self._h
         self._x, self._h = 0, 0
-        self.panels.append({"type": "row", "title": title, "id": self.nid(), "collapsed": collapsed,
-                            "gridPos": {"h": 1, "w": 24, "x": 0, "y": self._y}, "panels": []})
-        self._y += 1
+        # Two grid units (one leaves the text panel too little room inside its padding); the pill sits at the bottom,
+        # next to the panels it heads.
+        html = ('<div style="display:flex;align-items:flex-end;height:100%%"><div style="display:flex;align-items:center;gap:10px;'
+                'max-width:100%%;height:36px;padding:0 18px;border-radius:999px;'
+                'background:linear-gradient(90deg,%(surface)s 0%%,%(background)s 100%%);border:1px solid %(surface)s">'
+                '<span style="width:8px;height:8px;border-radius:50%%;background:%(accent)s;flex:none"></span>'
+                '<span style="color:%(label)s;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;'
+                'white-space:nowrap;overflow:hidden;text-overflow:ellipsis">%(title)s</span></div></div>') % dict(C, title=esc(title))
+        self.panels.append({"type": "text", "title": "", "id": self.nid(), "gridPos": self.place(24, 2), "transparent": True,
+                            "options": {"mode": "html", "content": html}})
+        self._y += self._h
+        self._x, self._h = 0, 0
 
     def target(self, expr, ref, legend=None, table=False):
         t = {"datasource": DS, "refId": ref, "expr": expr}
